@@ -1,0 +1,17 @@
+diff --git a/node_modules/jwt-decode/build/cjs/index.js b/node_modules/jwt-decode/build/cjs/index.js
+index fcbec7c..4e5eef6 100644
+--- a/node_modules/jwt-decode/build/cjs/index.js
++++ b/node_modules/jwt-decode/build/cjs/index.js
+@@ -5,6 +5,12 @@ class InvalidTokenError extends Error {
+ }
+ exports.InvalidTokenError = InvalidTokenError;
+ InvalidTokenError.prototype.name = "InvalidTokenError";
++
++var Buffer = require('buffer/').Buffer;
++function atob(str) {
++  return Buffer.from(str, 'base64').toString('binary');
++}
++
+ function b64DecodeUnicode(str) {
+     return decodeURIComponent(atob(str).replace(/(.)/g, (m, p) => {
+         let code = p.charCodeAt(0).toString(16).toUpperCase();

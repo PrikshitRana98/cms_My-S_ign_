@@ -1,0 +1,12 @@
+import {combineReducers} from 'redux';
+import CommonReducer from './commonReducer';
+import ResolutionReducer from './resolutionReducer';
+import TemplateReducer from './templateReducer';
+import MediaLibReducer from './MediaLibReducer';
+import CampaignReducer from './campaignReducer';
+import CampaignStringReducer from './campaignStringReducer';
+import plonogramReducer from './plonogramReducer';
+import userReducer from './userReducer';
+import deviceReducer from './deviceReducer';
+import schedulerReducer from './schedulerReducer';
+export default combineReducers({deviceReducer,schedulerReducer,plonogramReducer,CampaignStringReducer,CommonReducer, ResolutionReducer, TemplateReducer,CampaignReducer,MediaLibReducer,userReducer});

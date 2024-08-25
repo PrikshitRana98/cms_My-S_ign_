@@ -29,28 +29,36 @@ import AppText from "./CustomText";
 import { Portal } from "react-native-paper";
 import Separator from "./Separator";
 import { NotificationApiService } from "../../Services/AxiosService";
-import { getStorageForKey } from "../../Services/Storage/asyncStorage";
+import { getStorageForKey, removeKeyInStorage, setStorageForKey } from "../../Services/Storage/asyncStorage";
 import { FlatList } from "react-native-gesture-handler";
 import ModalDropdownComp from "./DropDown";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
-import { NotiicationModal } from "../Organisms/Dashboard/NotificationModal";
+
+import { useDispatch, useSelector } from "react-redux";
+import { useInterpolateConfig } from "react-native-reanimated";
+import { ASYNC_STORAGE } from "../../Constants/asyncConstants";
+import NotificationModal from "../Organisms/Dashboard/NotificationModal";
+import moment from "moment";
+import { resetUserReducer } from "../../appConfig/Redux/Action/userAction";
 
 const ClockHeader = () => {
   const navigation = useNavigation();
+  const dispatch=useDispatch()
   const dropdownCategoryref = useRef();
   const themeColor = useContext(ThemeContext);
   const Styles = clockHeaderStyles(themeColor);
   const mStyles = ModalStyles(themeColor);
 
   const [noticationData, setNoticationData] = useState({});
-  const [notificationCount,setNoticationCount]=useState(0);
+  const [notificationCount, setNoticationCount] = useState(0);
   const [notiModal, setNotiModal] = useState(false);
   const [isNotiLoading, setIsNotiLoading] = useState(false);
   const [isOpenChangePwd, setisOpenChangePwd] = useState(false);
+  const [username, setusername] = useState("");
 
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+  const userInfo = useSelector((state) => state.userReducer.userRole);
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentTime(new Date());
@@ -61,19 +69,19 @@ const ClockHeader = () => {
     };
   }, []);
 
-  
   useFocusEffect(
     React.useCallback(() => {
-      const call=123;
+      const call = 123;
       getAllNotification();
-      // setselectAllMediaFlag(false)
-      return () => true
+      return () => true;
     }, [])
   );
 
-  // useEffect(()=>{
-  //   console.log("motiModal",String(notiModal))
-  // },[notiModal])
+  useEffect(() => {
+    if (userInfo?.fullName) {
+      getInitials(userInfo?.fullName);
+    }
+  }, [userInfo?.fullName]);
 
   const getAllNotification = async () => {
     // console.log("\n\ngetAllNotification\n\n\n\n\n\n\n\n\n\n\n called")
@@ -81,11 +89,16 @@ const ClockHeader = () => {
     setIsNotiLoading(true);
 
     const successCallBack = async (response) => {
-      
-      console.log("getAllNotification notication", JSON.stringify(response.data.unreadCount));
-      if ((response.status == "OK" || response.code == "200")&&JSON.stringify(noticationData)!=JSON.stringify(response.data)) {
+      console.log(
+        "getAllNotification notication",
+        JSON.stringify(response.data.unreadCount?response.data.unreadCount:0)
+      );
+      if (
+        (response.status == "OK" || response.code == "200") &&
+        JSON.stringify(noticationData) != JSON.stringify(response.data)
+      ) {
         // setMediaDetails(response.data.mediaDetails[0]);
-        setNoticationCount(response.data.unreadCount)
+        setNoticationCount(response.data.unreadCount);
         setNoticationData(response.data);
       }
       setTimeout(() => {
@@ -93,10 +106,48 @@ const ClockHeader = () => {
       }, 300);
     };
 
+    const logout = async () => {
+      await removeKeyInStorage(ASYNC_STORAGE.USER_DETAILS);
+      await setStorageForKey(ASYNC_STORAGE.LOGGED, false);
+      await removeKeyInStorage("slugId");
+      await removeKeyInStorage("is_scheduler_enabled");
+      await removeKeyInStorage("authorities");
+      await removeKeyInStorage("authToken");
+      await removeKeyInStorage("userDetails");
+      dispatch(resetUserReducer())
+      navigation.reset({
+        index: 0,
+        routes: [{ name: NAVIGATION_CONSTANTS.LOGIN }],
+      });
+      try {
+        // await AsyncStorage.clear();
+        console.log("Storage cleared successfully");
+      } catch (error) {
+        console.log("Error clearing storage:", error);
+      }
+    };
+
     const errorCallBack = (error) => {
-      Alert.alert(slugId,error.message);
-      console.log("Error getAllNotification [notication]", JSON.stringify(error));
+      // Alert.alert(slugId,error.message);
+      console.log(
+        "Error getAllNotification--> [notication]",
+        JSON.stringify(error.response.data)
+      );
       // console.log("Error getAllNotification", error.config.url);
+      if (error?.response?.data) {
+        if (error.response.data.name == "UnAuthorized") {
+          Alert.alert("Unauthorized", error.response.data?.message, [
+            {
+              text: "Ok",
+              onPress: () => {
+                logout();
+                navigation.navigate(NAVIGATION_CONSTANTS.LOGIN);
+                
+              },
+            },
+          ]);
+        }
+      }
       setIsNotiLoading(false);
     };
     const endPoint = `user-management/ums/${slugId}/v1/push/web/notifications`;
@@ -105,6 +156,29 @@ const ClockHeader = () => {
       successCallBack,
       errorCallBack
     );
+  };
+
+  const getInitials = (name) => {
+    let userna = "";
+    if (!name) {
+      userna = "";
+    }
+
+    const words = name.split(" ");
+    console.log("0-0-0->>>>>>", words.length);
+    if (words.length === 1) {
+      userna = words[0].charAt(0).toUpperCase();
+      setusername(userna);
+      return true;
+    } else {
+      userna = `${words[0].charAt(0).toUpperCase()}${words[words.length - 1]
+        .charAt(0)
+        .toUpperCase()}`;
+      setusername(userna);
+      return true;
+    }
+
+    //return `${words[0].charAt(0).toUpperCase()}${words[words.length - 1].charAt(0).toUpperCase()}`;
   };
 
   return (
@@ -116,7 +190,7 @@ const ClockHeader = () => {
           color={themeColor.themeColor}
         />
         <AppText style={Styles.timeTextStyle}>
-          AEST {currentTime.toLocaleTimeString()}
+          {moment(currentTime).format("HH:mm:ss")}
         </AppText>
       </View>
       <View style={Styles.endView}>
@@ -136,9 +210,9 @@ const ClockHeader = () => {
 
         <ModalDropdownComp
           onSelect={(_, res2) => {
-            console.log("-------------------------", res2);            
-            if(res2=="Change Password"){
-              navigation.navigate(NAVIGATION_CONSTANTS.CHANGE_PASSWORD)
+            console.log("-------------------------", res2);
+            if (res2 == "Change Password") {
+              navigation.navigate(NAVIGATION_CONSTANTS.CHANGE_PASSWORD);
             }
           }}
           options={["Change Password"]}
@@ -172,28 +246,47 @@ const ClockHeader = () => {
           dropdownStyle={{ width: 200, backgroundColor: "white" }}
           renderSeparator={(obj) => null}
         >
-          <TouchableOpacity
-            style={Styles.bulkAction}
-            onPress={() => {
-              dropdownCategoryref.current._onButtonPress();
-            }}
-          >
-            <View style={Styles.profileDropView}>
-              <Image source={ProfileImage} style={Styles.imageStyle} />
+          {userInfo?.fullName ? (
+            <View
+              style={[
+                Styles.profileDropView,
+                { justifyContent: "center", alignItems: "center" },
+              ]}
+            >
+              <AppText
+                style={[
+                  Styles.timeTextStyle,
+                  { width: "100%", textAlign: "center" },
+                ]}
+              >
+                {username}
+              </AppText>
             </View>
-          </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={Styles.bulkAction}
+              onPress={() => {
+                dropdownCategoryref.current._onButtonPress();
+              }}
+            >
+              <View style={Styles.profileDropView}>
+                <Image source={ProfileImage} style={Styles.imageStyle} />
+              </View>
+            </TouchableOpacity>
+          )}
         </ModalDropdownComp>
       </View>
       {notiModal && (
-        <NotiicationModal
+        <NotificationModal
           notiModal={notiModal}
           setModal={setNotiModal}
           // setNoticationData={setNoticationData}
           // noticationData={noticationData}
-          getNotifiCount={()=>{getAllNotification()}}
+          getNotifiCount={() => {
+            getAllNotification();
+          }}
         />
       )}
-      
     </View>
   );
 };
@@ -219,7 +312,7 @@ const clockHeaderStyles = (COLORS) =>
       fontFamily: FONT_FAMILY.OPEN_SANS_SEMI_BOLD,
     },
     bulkAction: {
-      flexDirection: "row",
+      // flexDirection: "row",
       alignItems: "baseline",
       // padding: moderateScale(5),
     },
@@ -245,7 +338,12 @@ const clockHeaderStyles = (COLORS) =>
       justifyContent: "space-between",
     },
     profileDropView: {
+      height: moderateScale(32),
+      width: moderateScale(33),
+      borderRadius: 20,
+      backgroundColor: "#D3D3D3",
       flexDirection: "row",
+      justifyContent: "center",
       alignItems: "center",
     },
     endView: {
@@ -267,7 +365,7 @@ const clockHeaderStyles = (COLORS) =>
       alignItems: "center",
     },
     topText: {
-      textAlign:'center',
+      textAlign: "center",
       fontSize: moderateScale(9),
       color: COLORS.white,
       fontFamily: FONT_FAMILY.OPEN_SANS_BOLD,
@@ -282,28 +380,28 @@ const clockHeaderStyles = (COLORS) =>
       borderRadius: 10,
       borderColor: "black",
       paddingHorizontal: 5,
-      marginVertical:2
+      marginVertical: 2,
     },
-    ChgPwdTxt:{
-      fontSize:moderateScale(14),
-      color:COLORS.white,
-      fontFamily:FONT_FAMILY.OPEN_SANS_BOLD,
-      textAlign:'center'
+    ChgPwdTxt: {
+      fontSize: moderateScale(14),
+      color: COLORS.white,
+      fontFamily: FONT_FAMILY.OPEN_SANS_BOLD,
+      textAlign: "center",
     },
-    ChgPwdBtn:{
-      justifyContent:'center',
-      borderWidth:1,
-      borderRadius:10,
-      backgroundColor:COLORS.themeColor,
-      height:moderateScale(50),
-      width:"100%",
-      marginVertical:15,
+    ChgPwdBtn: {
+      justifyContent: "center",
+      borderWidth: 1,
+      borderRadius: 10,
+      backgroundColor: COLORS.themeColor,
+      height: moderateScale(50),
+      width: "100%",
+      marginVertical: 15,
       // marginHorizontal:10,
     },
-    errTxt:{
-      color:'red',
-      fontSize:moderateScale(14),
-    }
+    errTxt: {
+      color: "red",
+      fontSize: moderateScale(14),
+    },
   });
 
 const ModalStyles = (COLORS) =>

@@ -1,7 +1,8 @@
 import {
     GET_CAMPAIGN_STRING_DATA,
     REMOVE_CAMPAIGN_STRING_DATA,
-    GET_CAMPAIGN_STRING_ARCHIVE_DATA
+    GET_CAMPAIGN_STRING_ARCHIVE_DATA,
+    RESET
     } from '../ActionTypes/commonActionTypes';
     
     const initialState = {
@@ -13,6 +14,7 @@ import {
   
     const campaignReducer = (state = initialState, action) => {
       switch (action.type) {
+        case RESET:()=>initialState;
         case GET_CAMPAIGN_STRING_DATA:
           return {
             ...state,

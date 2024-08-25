@@ -1,6 +1,7 @@
 import {
   GET_ACTIVE_DATA,
   GET_USER_DATA,
+  RESET,
   SET_CUSTOMER_INFO,
   SET_CUSTOMER_ROLE,
   SET_IS_SCHEDULER_ENABLED,
@@ -31,6 +32,7 @@ const initialState = {
 
 const userReducer = (state = initialState, action) => {
   switch (action.type) {
+    case RESET:()=>initialState;
     case GET_USER_DATA:
       return {
         ...state,

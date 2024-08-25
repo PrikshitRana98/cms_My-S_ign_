@@ -1,6 +1,7 @@
 import {
     GET_RESOLUTION_DATA,
     REMOVE_RESOLUTION_DATA,
+    RESET,
   } from '../ActionTypes/commonActionTypes';
   
   const initialState = {
@@ -10,7 +11,7 @@ import {
   };
   const resolutionReducer = (state = initialState, action) => {
     switch (action.type) {
-
+      case RESET:()=>initialState;
       case GET_RESOLUTION_DATA:
         return {
           ...state,

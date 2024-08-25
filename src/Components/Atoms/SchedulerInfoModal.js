@@ -28,7 +28,7 @@ const SchedulerInfoModal = ({setModal,details=[]}) => {
                   <>
                     <View style={{marginBottom:10}}>
                       <AppText key={index}>
-                        {itm.workFlowActivityType} by {itm.fullName} @ {moment(itm.timestampOfActivity).format('DD-MM-YYYY, h:mm:ss a')} 
+                        {itm.workFlowActivityType}{itm?.approverLevel?" Level "+itm?.approverLevel:""} by {itm.fullName} @ {moment(itm.timestampOfActivity).format('DD-MM-YYYY, h:mm:ss a')} 
                         </AppText>
                         {itm.reason&&<AppText>Reason {itm.reason}</AppText>}
                     </View>

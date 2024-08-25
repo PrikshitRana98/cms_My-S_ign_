@@ -207,6 +207,7 @@ const SchedulerIndexView = ({ navigation }) => {
                     {
                       campaignId: item?.campaignId,
                       campaigName: item?.campaignTitle,
+                      approveState:""
                     },
                   ],
                   viewDetails: true,
@@ -679,7 +680,7 @@ const SchedulerIndexView = ({ navigation }) => {
 
           <View style={Styles.bodyContainer}>
             <AppText style={Styles.bodyHeaderText}>
-              CAMPAIGN/CAMPAIGNSTRING LIST
+              CAMPAIGN / CAMPAIGN STRING LIST
             </AppText>
 
             <ScrollView
@@ -699,7 +700,7 @@ const SchedulerIndexView = ({ navigation }) => {
           </View>
           <View style={Styles.bodyContainer}>
             <AppText style={Styles.bodyHeaderText}>
-              DEVICES/DEVICES GROUP LIST
+              DEVICES / DEVICES GROUP LIST
             </AppText>
 
             <ScrollView

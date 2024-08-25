@@ -13,6 +13,7 @@ import {
   PlanogramManagerService,
   getDeviceGroupByLocation,
 } from "../../../screens/Planogram/PlonogramApi";
+import { LocationChildContainer } from "../../Molecules/LocationBrandViewDash";
 
 const LocationsForDasboard = ({
   data = null,
@@ -26,7 +27,7 @@ const LocationsForDasboard = ({
   const themeColor = useThemeContext();
   const Styles = LocationStyles(themeColor);
   // const [viewing, setViewing] = useState({ country: 'India', state: null });
-  const [viewing, setViewing] = useState({ country: null, state: null,rootId:0 });
+  const [viewing, setViewing] = useState({ country: null, state: null,rootId:0,childNode:null });
 
   const getIsCheckedRoot = (id) => {
     return selectedLocations.includes(id) ? true : false;
@@ -62,6 +63,22 @@ const LocationsForDasboard = ({
     ) {
       return true;
     } else {
+      return false;
+    }
+  };
+
+  const getIsCheckedChild = (rootId, countryId, stateId, cityId,childId) => {
+    if (
+      selectedLocations?.includes(stateId) ||
+      selectedLocations?.includes(countryId) ||
+      selectedLocations?.includes(cityId) ||
+      selectedLocations?.includes(rootId)||
+      selectedLocations?.includes(childId)
+    ) {
+      
+      return true;
+    } else {
+      
       return false;
     }
   };
@@ -163,6 +180,92 @@ const LocationsForDasboard = ({
     }
   };
 
+  const expandCity = (name) => {
+    
+    if (viewing?.city === name) {
+      setViewing({
+        ...viewing,
+        city:null,
+      });
+    } else {
+      setViewing({
+        ...viewing,
+        city:name,
+      });
+    }
+  };
+
+  const expandChild = (name,value) => {
+    console.log("expandChild-->",viewing?.cityChild,value)
+    if (viewing?.cityChild === value) {
+      setViewing({
+        ...viewing,
+        cityChild: null,
+      });
+    } else {
+      setViewing({
+        ...viewing,
+        cityChild: value,
+      });
+    }
+  };
+
+  const renderChild=(item,data,country,state,city)=>{
+
+    return(item.length>0&&
+      item.map((ele, cityIndex) => {
+        return (<>{
+          <React.Fragment
+            key={
+              ele?.locationName +
+              "city" +
+              cityIndex
+            }
+          >
+            <View style={Styles.separatorLine} />
+            <LocationChildContainer
+              isChecked={getIsCheckedChild(
+                data?.locationId,
+                country?.locationId,
+                state?.locationId,
+                city?.locationId,
+                ele?.locationId
+              )}
+              locId={ele?.locationId}
+              title={ele?.locationName}
+              count={{
+                high: ele?.activeDeviceCount,
+                low: ele?.inactiveDeviceCount,
+              }}
+              isChevron={ele?.childNode}
+              isChevronUp={viewing.cityChild==ele.locationName}
+              onPressArrow={()=>{
+                expandChild("cityChild",ele.locationName);
+                console.log("0-00-0\n",ele?.childNode[0],viewing.cityChild,ele.locationName)
+              }}
+              onClickChecked={() =>
+                addChild(
+                  data?.locationId,
+                  country?.locationId,
+                  state?.locationId,
+                  city?.locationId,
+                  ele?.locationId,
+                  ele
+                )
+              }
+            />
+            {ele?.childNode!=null&&renderChild(ele.childNode,data,country,state,city)}
+          </React.Fragment>
+      }</>);
+      })    )
+
+    // return (
+    //   <>
+    //   <Text style={{color:"red"}}>No more Data</Text>
+    //   </>
+    // )
+  }
+
   return (
     <View style={Styles.mainContainer}>
       <ScrollView nestedScrollEnabled style={Styles.scrollViewStyle}>
@@ -225,7 +328,7 @@ const LocationsForDasboard = ({
                           locId={ state?.locationId}
                           isCheckedIconShow={true}
                           onPressArrow={() => expandState(state?.locationName)}
-                          title={state?.locationName}
+                          title={state?.locationName+"ss"}
                           count={{
                             high: state?.activeDeviceCount,
                             low: state?.inactiveDeviceCount,
@@ -254,13 +357,15 @@ const LocationsForDasboard = ({
                                     state?.locationId,
                                     city?.locationId
                                   )}
-                                  locId={ city?.locationId}
-                                  isCheckedIconShow={true}
-                                  title={city?.locationName}
+                                  locId={city?.locationId}
+                                  title={city?.locationName }
+                                  isChevron={city?.childNode}
                                   count={{
                                     high: city?.activeDeviceCount,
                                     low: city?.inactiveDeviceCount,
                                   }}
+                                  isChevronUp={viewing?.city === city?.locationName}
+                                  onPressArrow={()=>expandCity(city?.locationName)}
                                   onClickChecked={() =>
                                     addCity(
                                       data?.locationId,
@@ -270,7 +375,14 @@ const LocationsForDasboard = ({
                                       city
                                     )
                                   }
+                                  
                                 />
+                                {(city?.childNode&&viewing.city === city?.locationName) &&renderChild(city.childNode,data={locationId:data?.locationId},
+                                    country={locationId:country?.locationId},
+                                    state={locationId:state?.locationId},
+                                    city={locationId:city?.locationId})
+                                  
+                                }
                               </React.Fragment>
                             );
                           })}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  ScrollView,KeyboardAvoidingView,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -107,6 +107,28 @@ const AddNewResolution = ({ navigation, route }) => {
       );
     }
   };
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setIsKeyboardOpen(true);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setIsKeyboardOpen(false);
+      }
+    );
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
 
   const handleCalculate = async () => {
     Keyboard.dismiss()
@@ -163,7 +185,11 @@ const AddNewResolution = ({ navigation, route }) => {
   return (
     <View style={Styles.mainContainer}>
       <ClockHeader />
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{flex: 1,marginBottom:(Platform.OS === 'ios' && isKeyboardOpen) ? 100 : 0 ,}}
+    >
+      <ScrollView  bounces={false} showsVerticalScrollIndicator={false} >
         <View style={Styles.subContainer}>
           <View style={Styles.headerContainer}>
             <CreateNewHeader
@@ -257,6 +283,7 @@ const AddNewResolution = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {!isCalculate && (
         <TouchableOpacity

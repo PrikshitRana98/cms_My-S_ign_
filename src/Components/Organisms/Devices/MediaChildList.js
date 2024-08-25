@@ -12,11 +12,19 @@ import MoveFolder from '../../../Assets/Images/PNG/moveassign.png';
 import { mediaGroupManagerService } from '../../../screens/MediaPlayerGroups/MediaGroupApi';
 import Loader from '../CMS/Loader';
 import ConfirmBox from '../CMS/ConfirmBox';
-const MediaChildList = ({data}) => {
+import SuccessModal from '../../Molecules/SuccessModal';
+const MediaChildList = ({data,getDevicePlanogram}) => {
   // console.log("ddddaaaatttaaaaa",JSON.stringify(data))
+  const [successModal,setSuccessModal]=useState(false)
+  const [msg,setMsg]=useState("")
+  const onComplete=()=>{
+    setSuccessModal(false)
+  }
   const themeColor = useThemeContext();
   const Styles = CampaignStyles(themeColor);
   const [isLoading,setIsLoading]=useState(false)
+
+  const [deleteDeviceId,setDeleteDeviceId]=useState(0)
 
   const [confirmBoxData, setConfirmBoxData] = useState({
     loading: false,
@@ -34,13 +42,11 @@ const MediaChildList = ({data}) => {
     
       setIsLoading(false)
       if (response.code ==200) {
-        setTimeout(() => {
-          Alert.alert('Success!', `Data delete Successfully`, [
-            {text: 'Okay', onPress: () => {
-              getDevicePlanogram()
-            }},
-          ]);
-        }, 300);
+        console.log("sss==>",response)
+        getDevicePlanogram()
+        setMsg(response.message)
+        setSuccessModal(true)
+        getDevicePlanogram()
       } else {
         if (response?.data?.length > 0) {
           Alert.alert("Alert",response?.data[0]?.message);
@@ -53,7 +59,7 @@ const MediaChildList = ({data}) => {
     };
     const failureCallBack = (error) => {
       setIsLoading(false)
-      console.log("campaignDeleteError", error?.response?.data?.message);
+      console.log("campaignDeleteError from group", error?.response?.data?.message);
       
       if(error?.response?.data){
         Alert.alert("Error",error?.response?.data?.message);
@@ -63,8 +69,9 @@ const MediaChildList = ({data}) => {
     
     let params = {
       "deviceGroupId": id,
+      "deviceIds":{deviceIds:[deleteDeviceId]}
     }
-    mediaGroupManagerService.deleteMPData(
+    mediaGroupManagerService.removeDevice(
       params,
       succussCallBack,
       failureCallBack
@@ -130,7 +137,8 @@ const MediaChildList = ({data}) => {
       </View>
     );
   };
-  const renderAction = (id) => {
+  const renderAction = (id,a) => {
+    console.log("Dsds",a.deviceId)
     return (
       <View style={[Styles.commonView, {width: '19%'}]}>
         <View style={Styles.iconBackContainer}>
@@ -153,6 +161,7 @@ const MediaChildList = ({data}) => {
             //     btnDelete(id)
             // }},
             // ])
+            setDeleteDeviceId(a.deviceId)
             setConfirmBoxData({
               ...confirmBoxData,
               title: "Delete confirm",
@@ -192,7 +201,7 @@ const MediaChildList = ({data}) => {
         <AppText style={Styles.campaignNameText}>{item.deviceName}</AppText>
       </View>
       {renderState(item.status, index)}
-      {renderAction(item.deviceGroupId)}
+      {renderAction(item.deviceGroupId,item)}
     </View>
   );
   const HeaderComp = () => {
@@ -227,6 +236,7 @@ const MediaChildList = ({data}) => {
   return (
     <View style={Styles.campaignContainer}>
       <Loader visible={isLoading}/>
+      {successModal&&<SuccessModal Msg={msg} onComplete={onComplete}/>}
       <ConfirmBox
         title={confirmBoxData.title}
         description={confirmBoxData.description}
@@ -244,11 +254,12 @@ const MediaChildList = ({data}) => {
           });
         }}
       />
-      <FlatList
-        data={data}
-        renderItem={renderCampaignRow}
-        ListHeaderComponent={HeaderComp}
-      />
+      {data.length>0&&<FlatList
+          data={data}
+          renderItem={renderCampaignRow}
+          ListHeaderComponent={HeaderComp}
+        />
+      }
     </View>
   );
 };

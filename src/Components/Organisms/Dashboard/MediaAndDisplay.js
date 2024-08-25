@@ -108,7 +108,7 @@ const MediaAndDisplay = ({ data, mpData }) => {
                 color: themeColor.black,
               }}
             >
-              Total{" "}
+              Total{" - "}
               <AppText
                 style={{
                   fontSize: moderateScale(15),
@@ -126,7 +126,7 @@ const MediaAndDisplay = ({ data, mpData }) => {
                 color: themeColor.black,
               }}
             >
-              Total Online{" "}
+              Total Online{" - "}
               <AppText
                 style={{
                   fontSize: moderateScale(15),
@@ -144,7 +144,7 @@ const MediaAndDisplay = ({ data, mpData }) => {
                 color: themeColor.black,
               }}
             >
-              Total Offline{" "}
+              Total Offline{" - "}
               <AppText
                 style={{
                   fontSize: moderateScale(15),

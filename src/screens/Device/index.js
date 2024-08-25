@@ -42,6 +42,12 @@ import LocationsListForDivceSearch from "../../Components/Organisms/Dashboard/Lo
 import DeviceListBodyLocation from "../../Components/Organisms/Devices/DeviceListBodyLocation";
 import SuccessModal from "../../Components/Molecules/SuccessModal";
 import moment from "moment";
+import { useFocusEffect } from "@react-navigation/native";
+import { PlanogramManagerService } from "../Planogram/PlonogramApi";
+import { Dropdown } from "react-native-element-dropdown";
+import { FONT_FAMILY } from "../../Assets/Fonts/fontNames";
+import { SchedulerManagerService } from "../Scheduler/SchedulerApi";
+
 
 const Device = ({ navigation }) => {
   const themeColor = useThemeContext();
@@ -141,16 +147,18 @@ const Device = ({ navigation }) => {
 
   // register media================================
 
-  const getRegisterMedia = async (endPoint) => {
-    
+  const getRegisterMedia = async (endPoint,setIsLoading=()=>{}) => {
+    setIsLoading(true);
     const successCallBack = async (response) => {
-      console.log("getRegisterMedia success", response.result);
+     console.log("getRegisterMedia success", response.result);
+      setIsLoading(false);
       setMediaData(response.result);
       setPaginationData(response.pagination)
       
     };
 
     const errorCallBack = (response) => {
+      setIsLoading(false);
       console.log("getRegisterMedia error", response);
       Alert.alert("Error",error.response.data.message)
       
@@ -176,6 +184,7 @@ const Device = ({ navigation }) => {
     panelStatus: null,
     isUsedForUseEffect: "",
   });
+  const [locationData, setLocationData] = useState([]);
 
   useEffect(() => {
     getDeviceGroup();
@@ -198,8 +207,9 @@ const Device = ({ navigation }) => {
 
   useEffect(()=>{
     makeRegisterMediaDataUrl()
-    
-  },[searchData.MediaPlayerName,searchData.Location])
+  },[searchData.MediaPlayerName,searchData.Location,searchData.os])
+
+ 
 
   const makeRegisterMediaDataUrl = () => {
     let endPoint = `device-management/api/device/getAllByAdvanceSearchandFilter`;
@@ -233,7 +243,7 @@ const Device = ({ navigation }) => {
       endPoint += `?${queryParams.join("&")}`;
     }
 
-    getRegisterMedia(endPoint);
+    getRegisterMedia(endPoint,()=>{});
     console.log("endPoint", endPoint);
   };
   // end register media================================
@@ -573,6 +583,11 @@ const Device = ({ navigation }) => {
           alert("Please select devices");
         }
         break;
+        case "Redownload":{
+          btnMuteUnmuteDevice([id], [10]);
+          console.log(id,[10])
+        }
+          break;
       case "Force App Update":
         if (selectedData.length > 0) {
           setConfirmBoxData({
@@ -647,8 +662,9 @@ const Device = ({ navigation }) => {
         btnMuteUnmuteDevice(selectedData, [2]);
         break;
       case "Content re-download":
-        btnMuteUnmuteDevice(selectedData, [1]);
+        btnMuteUnmuteDevice(selectedData, [2]);
         break;
+      
       default:
         break;
     }
@@ -745,11 +761,11 @@ const Device = ({ navigation }) => {
       deviceIds: ids,
       pushIds: action,
     };
-    console.log("params", params);
+    console.log("params--->", params);
     setConfirmBoxData({ ...confirmBoxData, loading: true });
 
     const succussCallBack = async (response) => {
-      console.log("0-0-0-00-0-0-0-0-0-0-",JSON.stringify(response))
+      
       setSelectedData([]);
       setConfirmBoxData({
         ...confirmBoxData,
@@ -772,7 +788,7 @@ const Device = ({ navigation }) => {
             // ]);
           } else {
             if (response?.result?.badRequest.length > 0) {
-              alert(response?.result?.badRequest[0].message);
+              alert("Error",response?.result?.badRequest[0].message);
             }
           }
         } else {
@@ -790,11 +806,12 @@ const Device = ({ navigation }) => {
         }
       } else {
         if (response?.data?.length > 0) {
-          alert(response?.data[0]?.message);
+          alert("12",response?.data[0]?.message);
         } else if (response?.error) {
-          alert(response?.error);
+          console.log("sasas--->",response)
+          // alert("1233",response?.error);
         } else {
-          alert(response?.message);
+          // alert("122",response?.message);
         }
       }
     };
@@ -814,7 +831,7 @@ const Device = ({ navigation }) => {
         alert(error?.message);
       }
     };
-    console.log("btnDeleteDevice error--paramss12212-----------", params);
+    // console.log("btnDeleteDevice error--paramss12212-----------", params);
     deviceManagerService.offOnNoti(params, succussCallBack, failureCallBack);
   };
   const btnConnectDisconnect = (ids) => {
@@ -857,6 +874,52 @@ const Device = ({ navigation }) => {
     };
 
     deviceManagerService.offOnNoti(params, succussCallBack, failureCallBack);
+  };
+  const searchLocationApi = async (searchLoc) => {
+    const slugId = await getStorageForKey("slugId");
+    const successCallBack = async (response) => {
+      console.log("location success", JSON.stringify(response.data));
+      setLocationData([]);
+      setLocationData(response.data);
+      setIsLoading(false);
+    };
+
+    const errorCallBack = (error) => {
+      console.log("location error", error);
+      setIsLoading(false);
+      setLocationData([]);
+    };
+
+    SchedulerManagerService.fetchLocationListSearch(
+      { slugId, searchLoc },
+      successCallBack,
+      errorCallBack
+    );
+  };
+  const getLocationPlanogram = async (id) => {
+    let slugId = await getStorageForKey("slugId");
+
+    const params = {
+      slugId: slugId,
+    };
+    const succussCallBack = async (response) => {
+      
+      if (response && response.data) {
+        setLocationData([]);
+        setLocationData(response.data);
+      }
+    };
+
+    const failureCallBack = (error) => {
+      console.log("error", error);
+    };
+
+    setConfirmBoxData({ ...confirmBoxData, loading: true });
+    PlanogramManagerService.locationList(
+      params,
+      succussCallBack,
+      failureCallBack
+    );
   };
 
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
@@ -951,30 +1014,85 @@ const Device = ({ navigation }) => {
               </View>
 
               {/* Search by location============= */}
-              <View style={{ marginTop: moderateScale(9) }}>
-                <AppTextInput
-                  containerStyle={Styles.tagInput}
-                  onChangeText={(inputText) => {
-                    setSearchData({ ...searchData, Location: inputText });
-                  }}
-                  placeHolderText="Search by location"
-                  value={searchData?.Location}
-                  placeholderTextColor={themeColor.placeHolder}
-                  textInputStyle={{
-                    fontSize: moderateScale(13),
-                  }}
-                />
-              </View>
+              {locationData && (
+                  <View
+                    style={{
+                      width: "100%",
+                      marginVertical: moderateScale(5),
+                      // marginBottom: isKeyboardOpen ? 200 : 0,
+                    }}
+                  >
+                    <Dropdown
+                      style={{
+                        borderColor: "#00000026",
+                        borderRadius: moderateScale(10),
+                        borderWidth: moderateScale(1),
+                        paddingVertical: moderateScale(10),
+                        paddingHorizontal: moderateScale(15),
+                        marginTop: 0,
+                      }}
+                      placeholderStyle={{
+                        fontSize: moderateScale(14),
+                        fontFamily: FONT_FAMILY.OPEN_SANS_REGULAR,
+                        color:searchData.Location?"black":"#ADB2C3",
+                      }}
+                      selectedTextStyle={{
+                        fontSize: moderateScale(14),
+                        fontFamily: FONT_FAMILY.OPEN_SANS_REGULAR,
+                        color: "black"
+                      }}
+                      inputSearchStyle={{
+                        height: 40,
+                        fontSize: 16,
+                        color: "black",
+                      }}
+                      // onFocus={() => scrollToHeight()}
+                      iconStyle={{
+                        height: moderateScale(18),
+                        width: moderateScale(18),
+                        resizeMode: "contain",
+                      }}
+                      itemTextStyle={{ color: "#000000" }}
+                      data={locationData?.map((item) => ({
+                        label: item.locationId,
+                        value: item.locationName,
+                      }))}
+                      search={true}
+                      keyboardAvoiding={true}
+                      maxHeight={200}
+                      disable={false}
+                      dropdownPosition="auto"
+                      labelField="value"
+                      valueField="label"
+                      placeholder={searchData.Location?searchData.Location:"Select Location"}
+                      searchPlaceholder="Search Location..."
+                      value={searchData.Location?searchData.Location.toString():null}
+                      onChangeText={(item) => {
+                        if (item?.length > 1) {
+                          searchLocationApi(item);
+                        } else if (item?.length == 0) {
+                          getLocationPlanogram();
+                        }
+                      }}
+                      onChange={(item) => {
+                        setSearchData({ ...searchData, Location: item.value });
+                        console.log("0000--,",item)                        
+                        getLocationPlanogram();
+                      }}
+                    />
+                  </View>
+                )}
+              
 
               {/* connected disconnected ======== */}
-              <View style={{ width: "100%", marginTop: moderateScale(5) }}>
+              {/* <View style={{ width: "100%", marginTop: moderateScale(5) }}>
                 <CampaignDropDown
                   dataList={[
                     { label: "All", value: null },
                     { label: "CONNECTED", value: true },
                     { label: "DISCONNECTED", value: false },
                   ]}
-                  placeHolderText="Media player connectivity"
+                  placeHolderText="Media Player Connectivity"
                   onChange={(item) => {
                     setSearchData({
                       ...searchData,
@@ -983,7 +1101,7 @@ const Device = ({ navigation }) => {
                   }}
                   value={searchData?.connectivity}
                 />
-              </View>
+              </View> */}
 
               {/* Panelstatus ========= */}
               <View style={{ width: "100%", marginTop: moderateScale(7) }}>
@@ -1013,7 +1131,7 @@ const Device = ({ navigation }) => {
                       connectivity: null, //true|false
                       isUsedForUseEffect: "reset",
                     });
-                    setAdvenceSearchFlag(false);
+                    //setAdvenceSearchFlag(false);
                   }}
                   style={Styles.resetBox}
                 >
@@ -1022,7 +1140,7 @@ const Device = ({ navigation }) => {
                 <TouchableOpacity
                   onPress={() => {
                     getdata();
-                    setAdvenceSearchFlag(false);
+                    setAdvenceSearchFlag(false)
                   }}
                   style={Styles.submitBox}
                 >
@@ -1096,6 +1214,7 @@ const Device = ({ navigation }) => {
           <ThemedButton
             onClick={() => {
               setAdvenceSearchFlag(true);
+              getLocationPlanogram()
               setSearchData({
                 ...searchData,
                 isUsedForUseEffect: "openSearch",

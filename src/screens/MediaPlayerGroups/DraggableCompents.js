@@ -136,6 +136,8 @@ export default function DraggableCompents({ navigation, route }) {
           let unassignDevices = response?.result?.filter(
             (item, ind) => item.isUngroupedDevices == true
           );
+          console.log("assignedDevices--->",JSON.stringify(assignedDevices));
+          console.log("unassignDevices--->",unassignDevices);
           setState((prev) => {
             return {
               ...prev,
@@ -300,7 +302,7 @@ export default function DraggableCompents({ navigation, route }) {
       underlayColor={"#AAA"}
     >
       <View>
-        <Text>{data.item.deviceName}</Text>
+        <Text style={{color:"black"}} numberOfLines={1}>{data.item.deviceName}</Text>
       </View>
     </TouchableHighlight>
   );
@@ -361,6 +363,23 @@ export default function DraggableCompents({ navigation, route }) {
       </TouchableOpacity>
     </View>
   );
+
+  const ListEmptyComponent = ({ item }) => {
+    return (
+     <View style={{backgroundColor:themeColor.appBackground}}>
+       <Text
+        style={{
+          padding: 10,
+          fontSize: 14,
+          margin: 10 ,
+          color: "black",
+        }}
+      >
+        No Device
+      </Text>
+     </View>
+    );
+  };
 
   const onRowDidOpen = (rowKey) => {
     console.log("This row opened", rowKey);
@@ -458,12 +477,16 @@ export default function DraggableCompents({ navigation, route }) {
                   getAssignUnAssignDevices()
                 }
               }}
+              handleOnSubmitEditing={()=>{
+                unassignedSrch.length==0&&getAssignUnAssignDevices()
+              }}
             />
 
             <SwipeListView
               data={state.unassignendDevice}
               renderItem={renderItem}
               renderHiddenItem={renderHiddenItem}
+              ListEmptyComponent={ListEmptyComponent}
               leftOpenValue={75}
               rightOpenValue={-75}
               previewRowKey={"0"}
@@ -484,7 +507,7 @@ export default function DraggableCompents({ navigation, route }) {
               onChangeText={t=>{
                 setAssignedsrch(t)
                 const data=state.assignedDevice.filter(ele=>ele.deviceName.toLowerCase().includes(t.toLowerCase()))
-                // console.log(data)
+                console.log("assi device--->",t.length,data)
                 if(state.assignedDevice!=undefined){
                   if(state.assignedDevice.length>0){
                 const data=state.assignedDevice.filter(ele=>ele.deviceName.toLowerCase().includes(t.toLowerCase()))
@@ -500,13 +523,14 @@ export default function DraggableCompents({ navigation, route }) {
                   getAssignUnAssignDevices()
                 }
               }}
-              // handleOnSubmitEditing={()=>{}}
+              handleOnSubmitEditing={()=>{assignedSrch.length==0&&getAssignUnAssignDevices()}}
             />
 
             <SwipeListView
               renderItem={renderItem}
               renderHiddenItem={renderHiddenItem}
               data={state.assignedDevice}
+              ListEmptyComponent={ListEmptyComponent}
               leftOpenValue={75}
               rightOpenValue={-75}
               previewRowKey={"0"}
@@ -587,6 +611,7 @@ const DeviceStyles = (COLORS) =>
       paddingVertical: moderateScale(4),
       paddingHorizontal: moderateScale(15),
       marginVertical: moderateScale(5),
+      color:"black"
     },
     rowFront: {
       alignItems: "center",

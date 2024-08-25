@@ -1,6 +1,7 @@
 import {
   GET_ACTIVE_DATA,
   GET_USER_DATA,
+  RESET,
   SET_CUSTOMER_INFO,
   SET_CUSTOMER_ROLE,
   SET_IS_SCHEDULER_ENABLED,
@@ -12,10 +13,16 @@ import {
   UPDATE_USER_WORK_FLOW,
 } from "../ActionTypes/commonActionTypes";
 
+export const resetUserReducer = (data = []) => ({
+  type: RESET,
+  payload: data,
+});
+
 export const updateUserList = (data = []) => ({
   type: GET_USER_DATA,
   payload: data,
 });
+
 export const updateActiveList = (data = []) => ({
   type: GET_ACTIVE_DATA,
   payload: data,

@@ -68,6 +68,10 @@ export const SchedulerManagerService = {
   searchList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService("GET", params.endpoint, {}, {}, success, failure, "Loading");
   },
+  updateCampaginById: (params = {}, success = () => {}, failure = () => {}) => {
+    console.log("end point od updat dta",params.id)
+    AxiosService("PUT", `capsuling-service/api/capsuling/updateCampaign/${params.id}`, params.data, {}, success, failure, "Loading");
+  },
   getDeviceGroupListByLocations:(params = {}, success = () => {}, failure = () => {})=>{
     let ids="";
     if(params.ids.length>0){
@@ -135,14 +139,17 @@ export const SchedulerManagerService = {
   },
 
   fetchDeviceLogicList: (params = {}, success = () => {}, failure = () => {}) => {
-    AxiosService("GET", `content-management/cms/${params?.slugId}/planogram/device-logic/${params?.planogramID}`, {}, {}, success, failure, "Loading");
+    AxiosService("GET", `service-gateway/cms/${params?.slugId}/planogram/device-logic/${params?.planogramID}`, {}, {}, success, failure, "Loading");
   },
-  
+
   fetchmediaid1: (params = {}, success = () => {}, failure = () => {}) => {
-    AxiosService("GET", `content-management/cms/${params?.slugId}/v1/media/${params?.mediaid}`, {}, {}, success, failure, "Loading");
+    AxiosService("GET", `service-gateway/cms/${params?.slugId}/v1/media/${params?.mediaid}`, {}, {}, success, failure, "Loading");
+  },
+  fetchmediaiddetails: (params = {}, success = () => {}, failure = () => {}) => {
+    AxiosService("GET", `service-gateway/cms/${params?.slugId}/v1/media/${params?.mediaid}`, {}, {}, success, failure, "Loading");
   },
   fetchmediaid: (params = {}, success = () => {}, failure = () => {}) => {
-    AxiosService("GET", `content-management/cms/${params?.slugId}/v1/campaign/${params?.campid}`, {}, {}, success, failure, "Loading");
+    AxiosService("GET", `service-gateway/cms/${params?.slugId}/v1/campaign/${params?.campid}`, {}, {}, success, failure, "Loading");
   },
   editschedduler: (params = {},success = () => {},failure = () => {}) => {
     AxiosService("PUT",`capsuling-service/api/capsuling/updatePlanogram/${params.planogramId}`,params.data,{},success,failure,"Loading");
@@ -155,7 +162,7 @@ export const SchedulerManagerService = {
     
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/v1/aspect-ratio/${params.ids}`,
+      `service-gateway/cms/${params.slugId}/v1/aspect-ratio/${params.ids}`,
       {},
       {},
       success,
@@ -214,6 +221,7 @@ export const SchedulerManagerService = {
   },
   
   getAllDevices:(params = {}, success = () => {}, failure = () => {})=>{
+    console.log("getAllBySearchCriteria--> sechduler",JSON.stringify(params))
     AxiosService("POST",`device-management/api/device/getAllBySearchCriteria`,params, {},success,failure,"Loading");
   },
 
@@ -270,10 +278,11 @@ export const getDeviceByLocation=async(params,setIsLoading = () => {},)=>{
   const errorCallBack = (error) => {
     
     setIsLoading(false);
-    if(error?.message){
+    if(error?.message!="JSON Parse error: Unexpected end of input"){
       Alert.alert(error.message);
     }
   };
+  console.log("params.ids.length-->",params.ids.length)
   if(params.ids.length>0){
     SchedulerManagerService.getDeviceListByLocations(
       { slugId,ids:params.ids },

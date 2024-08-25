@@ -9,6 +9,8 @@ import {
   Image,
   FlatList,
   Pressable,
+  AppState,
+  BackHandler,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { getStorageForKey } from "../../Services/Storage/asyncStorage";
@@ -34,11 +36,13 @@ import { useDispatch, useSelector } from "react-redux";
 import CmpDetailMediaApproval from "../Campaign/CampaignDetailMedia";
 import CampaignStringPrewiewActions from "../../Components/Organisms/CMS/CampaignString/CampaignStringPrewiewActions";
 import { opacity } from "react-native-reanimated";
+import TrackPlayer, { AppKilledPlaybackBehavior, Capability } from "react-native-track-player";
+import { err } from "react-native-svg/lib/typescript/xml";
 
 export default function CampaignStringDetails({ navigation, route }) {
   const themeColor = useThemeContext();
   const Styles = CampaignStyles(themeColor);
- 
+
   let viewDetails = route?.params?.viewDetails;
   let campaignString = route?.params?.campaignString;
   const [selectedCampaignId, setselectedCampaignId] = useState(null);
@@ -64,22 +68,129 @@ export default function CampaignStringDetails({ navigation, route }) {
   const [BGColor, setBGColor] = useState("");
   const [mediaAudios, setMediaAudios] = useState(null);
   const [resetPreviewAgain, setResetPreviewAgain] = useState(0);
+  const [audioDetails,setAudioDetails]=useState({})
+  const[trackIPlayerId,settrackIPlayerId]=useState("")
+  const [isPlay,setIsPlay]=useState(true)
   const workFlow = useSelector((state) => state.userReducer.workFlow);
 
   let camapignsData = route?.params?.campaigns;
-  useEffect(()=>{
+  useEffect(() => {
     for (let index = 0; index < camapignsData.length; index++) {
       const element = camapignsData[index];
-      if(element?.campaignType!='ADVERTISEMENT'){
-        setselectedCampaignId(element.campaignId)
+      if (element?.campaignType != "ADVERTISEMENT") {
+        setselectedCampaignId(element.campaignId);
         break;
       }
-
     }
-  },[route?.params])
+  }, [route?.params]);
   useEffect(() => {
-    selectedCampaignId!=null && getCamapaignDetails(selectedCampaignId);
+    selectedCampaignId != null && getCamapaignDetails(selectedCampaignId);
   }, [selectedCampaignId]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      async () => {
+        // if(type=='AUDIO'||type=="VIDEO"||type.toLowerCase()=='audio'||type.toLowerCase()=="video"){
+        
+        TrackPlayer.reset();
+        onBack();
+      }
+    );
+    return BackHandler.removeEventListener(backHandler)
+  }, [navigation]);
+
+  const appStateChangeHandler = async (newState) => {
+    if (newState === "active") {
+      getCamapaignDetails(selectedCampaignId);
+      await TrackPlayer.play();
+      setIsPlay(true)
+      await setStorageForKey("appstates", newState);
+    } else if (newState === "background") {
+      await setStorageForKey("appstates", newState);
+      console.log("app state background");
+      try {
+        await TrackPlayer.pause();
+        await TrackPlayer.reset();
+      } catch (error) {
+        console.log("error can stop track player");
+      }
+    }
+  };
+
+  useEffect(() => {
+    AppState.addEventListener("change", (state) => {
+      appStateChangeHandler(state);
+    });
+  }, []);
+
+  const onBack = async () => {
+    
+    clearTimeout(trackIPlayerId);
+    settrackIPlayerId(null)
+    console.log("close audio--->");
+    setIsPlay(false);
+    try {
+      await TrackPlayer.pause();
+      await TrackPlayer.reset();
+      console.log("----> stop track player");
+    } catch (error) {
+      console.log("error can stop track player");
+    }
+    // const backId=setTimeout(()=>{
+    navigation.goBack();
+    // },200);
+  };
+
+  const setupPlayer = async () => {
+    let isSetup = false;
+    try {
+      await TrackPlayer.getCurrentTrack();
+      isSetup = true;
+    } catch {
+      await TrackPlayer.setupPlayer();
+      await TrackPlayer.updateOptions({
+        stopWithApp: true,
+        android: {
+          appKilledPlaybackBehavior:
+            AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+        },
+        capabilities: [Capability.Play, Capability.Pause],
+        compactCapabilities: [Capability.Play, Capability.Pause],
+        progressUpdateEventInterval: 2,
+      });
+
+      isSetup = true;
+    } finally {
+      return isSetup;
+    }
+  };
+
+  const startAudio = async (songurl) => {
+    let stateedd = await getStorageForKey("appstates");
+    if (isPlay) {
+      const track = {
+        id: "1",
+        url: songurl,
+        title: "Audio Title",
+        artist: "Audio Artist",
+        // ... other track details
+      };
+      const isSetup = await setupPlayer();
+      // Check if the track is already in the queue, and add it if not
+      const currentTrack = await TrackPlayer.getCurrentTrack();
+      if (!currentTrack || (currentTrack.id !== track.id && isSetup)) {
+        // console.log("If the track is already in the queue, just play it================>",isSetup,songurl)
+        await TrackPlayer.reset();
+        await TrackPlayer.add([track]);
+        await TrackPlayer.play();
+      } else {
+        // If the track is already in the queue, just play it
+        await TrackPlayer.play();
+      }
+    }
+  };
+
 
   const getCamapaignDetails = async (selectedCampaignId) => {
     setIsLoading(true);
@@ -92,7 +203,7 @@ export default function CampaignStringDetails({ navigation, route }) {
       // setIsLoading(false);
       formateCamapign(response);
       if (response?.data) {
-        console.log("getCamapaignDetails success", response);
+        console.log("getCamapaignDetails success-1212->", JSON.stringify(response.data));
       }
     };
 
@@ -107,7 +218,7 @@ export default function CampaignStringDetails({ navigation, route }) {
       failureCallBack
     );
   };
-  const btnGetMediaById = async (mediaId) => {
+  const btnGetMediaById = async (mediaId, XYZ) => {
     const token = await getStorageForKey("authToken");
     const slugId = await getStorageForKey("slugId");
     const authHeader = {
@@ -117,13 +228,14 @@ export default function CampaignStringDetails({ navigation, route }) {
     };
     return new Promise((resolve, reject) => {
       axios
-        .get(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaId}`, {
+        .get(`${baseUrl}service-gateway/cms/${slugId}/v1/media/${mediaId}`, {
           headers: authHeader,
         })
         .then((response) => {
           resolve(response?.data);
         })
         .catch((error) => {
+          console.log("erro128", XYZ, error);
           reject(error);
         });
     });
@@ -131,47 +243,59 @@ export default function CampaignStringDetails({ navigation, route }) {
   const formateCamapign = async (res) => {
     if (res && res?.data) {
       const campaignDetailsData = res?.data;
-      if (
-        campaignDetailsData &&
-        campaignDetailsData?.regions &&
-        campaignDetailsData?.regions?.length > 0
-      ) {
-        for (const r of campaignDetailsData.regions) {
-          if (
-            r.globalRegionContentPlaylistContents &&
-            r?.globalRegionContentPlaylistContents &&
-            r?.globalRegionContentPlaylistContents?.length > 0
-          ) {
-            for await (const rg of r.globalRegionContentPlaylistContents) {
-              await btnGetMediaById(rg.mediaDetailId).then((res) => {
-                if (res?.status === "OK") {
-                  if (
-                    res?.data &&
-                    res?.data?.mediaDetails &&
-                    res.data.mediaDetails.length > 0
-                  ) {
-                    rg.mediaName = res.data.mediaDetails[0]?.name;
-                  }
-                }
-              });
-            }
-          }
-        }
-      }
+      // if (
+      //   campaignDetailsData &&
+      //   campaignDetailsData?.regions &&
+      //   campaignDetailsData?.regions?.length > 0
+      // ) {
+      //   for (const r of campaignDetailsData.regions) {
+      //     if (
+      //       r.globalRegionContentPlaylistContents &&
+      //       r?.globalRegionContentPlaylistContents &&
+      //       r?.globalRegionContentPlaylistContents?.length > 0
+      //     ) {
+      //       for await (const rg of r.globalRegionContentPlaylistContents) {
+      //         console.log("rg,-->", rg);
+      //         if (rg.hasOwnProperty("mediaDetailId")) {
+      //           await btnGetMediaById(rg.mediaDetailId, 148)
+      //             .then((res) => {
+      //               setIsLoading(false);
+      //               if (res?.status === "OK") {
+      //                 if (
+      //                   res?.data &&
+      //                   res?.data?.mediaDetails &&
+      //                   res.data.mediaDetails.length > 0
+      //                 ) {
+      //                   rg.mediaName = res.data.mediaDetails[0]?.name;
+      //                 }
+      //               }
+      //             })
+      //             .catch((err) => {
+      //               setIsLoading(false);
+      //             });
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
       const apiResp = res.data;
       setCampaignName(apiResp.campaignName);
 
       let respData = [];
       if (apiResp.regions && apiResp.regions.length > 0) {
+        // console.log("apiResp.regions--->",JSON.stringify(apiResp.regions))
         for (const iterator of apiResp.regions) {
           if (
             iterator.globalRegionContentPlaylistContents &&
             iterator.globalRegionContentPlaylistContents.length > 0
           ) {
+           
             for await (const i of iterator.globalRegionContentPlaylistContents) {
-              let mediaDetailURL = "NA";
-
-              await btnGetMediaById(i.mediaDetailId).then((res) => {
+              let mediaDetailURL = "NA";              
+              let widgetTypeArr=[]
+              if(i.hasOwnProperty("mediaDetailId")){
+                await btnGetMediaById(i.mediaDetailId, 176)
+              .then((res) => {
                 if (res?.status === "OK") {
                   if (
                     res?.data &&
@@ -180,8 +304,24 @@ export default function CampaignStringDetails({ navigation, route }) {
                   ) {
                     mediaDetailURL = res.data.mediaDetails[0]?.mediaUrl;
                   }
+                }else{
+                  setIsLoading(false)
                 }
-              });
+              }).catch(error=>{
+                setIsLoading(false)
+                console.log(error)
+              })
+              }else {
+                console.log("iiii===>\n",JSON.stringify(i))
+                // if (
+                //   respData[index] &&
+                //   respData[index] !== null &&
+                //   respData[index] !== undefined
+                // ) {
+                  
+                  widgetTypeArr.push({...i})
+                // }
+              }
 
               const index = respData.findIndex(
                 (v) => v.campaignRegionId === iterator.campaignRegionId
@@ -194,39 +334,42 @@ export default function CampaignStringDetails({ navigation, route }) {
                   isAudioEnabled: iterator.isAudioEnabled,
                   heightInPercentage: iterator?.heightInPercentage,
                   widthInPercentage: iterator?.widthInPercentage,
-                  topLeftCoordinateYInPercentage:
-                    iterator?.topLeftCoordinateYInPercentage,
-                  topLeftCoordinateXInPercentage:
-                    iterator?.topLeftCoordinateXInPercentage,
+                  topLeftCoordinateYInPercentage:iterator?.topLeftCoordinateYInPercentage,
+                  topLeftCoordinateXInPercentage:iterator?.topLeftCoordinateXInPercentage,
                   contentToDisplay: iterator.contentToDisplay,
-                  transparencyInPercentage:
-                    iterator.regionTransparencyInPercentage,
+                  transparencyInPercentage:iterator.regionTransparencyInPercentage,
                   mediaArr: [
-                    {
+                    {...i,
                       mediaDetailId: i.mediaDetailId,
                       mediaType: i.mediaType,
                       order: i.order,
                       durationInSeconds: i.durationInSeconds,
                       url: mediaDetailURL,
                       displayMode: i.displayMode,
-                      name: i.name,
+                      name: i.name,                      
                     },
                   ],
+                  
                 });
-              } else {
+              } 
+              else {
                 if (
                   respData[index] &&
                   respData[index] !== null &&
                   respData[index] !== undefined
                 ) {
-                  (respData[index]?.mediaArr).push({
+                 
+                  (respData[index]?.mediaArr).push({...i,
                     mediaDetailId: i.mediaDetailId,
                     mediaType: i.mediaType,
                     order: i.order,
                     durationInSeconds: i.durationInSeconds,
                     url: mediaDetailURL,
                     displayMode: i.displayMode,
-                  });
+                    
+                    });
+
+                  
                 }
               }
             }
@@ -234,9 +377,8 @@ export default function CampaignStringDetails({ navigation, route }) {
         }
       }
 
-       
       setTimeout(() => {
-        setIsLoading(false)
+        setIsLoading(false);
         setcampaignData([res.data]);
         setCampaignRegions(respData);
       }, 6000);
@@ -247,18 +389,20 @@ export default function CampaignStringDetails({ navigation, route }) {
       ) {
         let mediaURL = "NA";
         let mediaName = "NA";
-        await btnGetMediaById(apiResp.backgroundImageContentId).then((res) => {
-          if (res?.status === "OK") {
-            if (
-              res?.data &&
-              res?.data?.mediaDetails &&
-              res.data.mediaDetails.length > 0
-            ) {
-              mediaName = res.data.mediaDetails[0]?.name;
-              mediaURL = res.data.mediaDetails[0]?.mediaUrl;
+        await btnGetMediaById(apiResp.backgroundImageContentId, 252).then(
+          (res) => {
+            if (res?.status === "OK") {
+              if (
+                res?.data &&
+                res?.data?.mediaDetails &&
+                res.data.mediaDetails.length > 0
+              ) {
+                mediaName = res.data.mediaDetails[0]?.name;
+                mediaURL = res.data.mediaDetails[0]?.mediaUrl;
+              }
             }
           }
-        });
+        );
         setBackgroundImage({
           url: mediaURL,
           transparencyInPercentage: apiResp.transparencyInPercentage,
@@ -283,35 +427,47 @@ export default function CampaignStringDetails({ navigation, route }) {
         );
       }
 
-      let audiosArr = null;
+      let audiosArr = [];
       if (apiResp.audios && apiResp.audios.length > 0) {
+        console.log("line 327")
         for await (const a of apiResp.audios) {
-          const audioURL = "NA";
-          await btnGetMediaById(a.mediaDetailId).then((res) => {
+          console.log("line 329",JSON.stringify(a))
+          let audioURL = "NA";
+          await btnGetMediaById(a.contentId, 292).then((res) => {
             if (res?.status === "OK") {
               if (
                 res?.data &&
                 res?.data?.mediaDetails &&
                 res.data.mediaDetails.length > 0
               ) {
+                console.log("\naudio respons--->")
                 audioURL = res.data.mediaDetails[0]?.mediaUrl;
               }
             }
+          }).catch(err=>{
+            console.log("errorin audio resp",err)
           });
-          audiosArr = {
+          audiosArr.push({
             audioURL,
             contentId: a.contentId,
             order: a.order,
-          };
+          });
         }
       }
+      console.log("line 348",apiResp.audioStartBasedOnCampaignDurationInSeconds,apiResp.audioEndBasedOnCampaignDurationInSeconds, audiosArr);
+      if(audiosArr.length>0){
+      let playId= setTimeout(()=>{
+        console.log("----play song with interval-----",audiosArr);
+        // playSongWithInterval(apiResp.audios, 0);
+        startAudio(audiosArr[0].audioURL);
+      },apiResp.audioStartBasedOnCampaignDurationInSeconds*1000);
+      settrackIPlayerId(playId)
+    }
+
       setMediaAudios(audiosArr);
       setBGColor(apiResp?.backgroundColor ? apiResp.backgroundColor : "");
-
-      console.log("campaignDetailsData", JSON.stringify(campaignDetailsData));
-      console.log("campaignDetailsData respData", JSON.stringify(respData));
-    }else{
-      setIsLoading(false)
+    } else {
+      setIsLoading(false);
     }
   };
 
@@ -348,7 +504,7 @@ export default function CampaignStringDetails({ navigation, route }) {
   const [selectedCampaignDrop, setSelectedCampaignDrop] = useState("");
 
   const RCampaignChildList = ({ data }) => {
-    console.log("datadatadatadata", data);
+    
     return (
       <>
         {data?.map((mdata) => {
@@ -383,7 +539,7 @@ export default function CampaignStringDetails({ navigation, route }) {
     );
   };
   const RegionrenderCampaignList = ({ item, index }) => {
-    console.log("itemitemitemitem", item);
+   
     const totalDuration = item?.globalRegionContentPlaylistContents?.reduce(
       (acc, a) => acc + parseInt(a.durationInSeconds),
       0
@@ -449,9 +605,9 @@ export default function CampaignStringDetails({ navigation, route }) {
       <View style={{ width: "47%", margin: moderateScale(5) }}>
         <TouchableOpacity
           onPress={() => {
-            if(item.campaignType=="ADVERTISEMENT"){
-              alert("Preview is not available for advertisement")
-            }else{
+            if (item.campaignType == "ADVERTISEMENT") {
+              alert("Preview is not available for advertisement");
+            } else {
               selectedCampaignId != item.campaignId &&
                 setselectedCampaignId(item.campaignId);
             }
@@ -528,9 +684,12 @@ export default function CampaignStringDetails({ navigation, route }) {
     return (
       <View style={Styles.renderContainer}>
         <View style={[Styles.nameView, { width: "25%" }]}>
-        {
-            backgroundImage?.url && <Image source={{uri:backgroundImage?.url}} style={{width:80,height:50}}/>
-          }
+          {backgroundImage?.url && (
+            <Image
+              source={{ uri: backgroundImage?.url }}
+              style={{ width: 80, height: 50 }}
+            />
+          )}
         </View>
         <View style={[Styles.nameView, { width: "25%" }]}>
           <View
@@ -557,206 +716,212 @@ export default function CampaignStringDetails({ navigation, route }) {
     <View style={{ flex: 1, paddingBottom: 20 }}>
       <Loader visible={isLoading} />
       <ClockHeader />
-    <ScrollView
-      style={{ flex: 1, paddingBottom: 20,paddingHorizontal:12 }}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
-      <View style={Styles.fullFlex}>
-        
-        <View style={Styles.headerContainer}>
-          <CreateNewHeader
-            title={"Campaign Stringss"}
-            onClickIcon={() => navigation.goBack()}
-          />
-          <ThemedButton
-            onClick={() => {
-              setCampaignRegions([])
-              setBackgroundImage({
-                transparencyInPercentage: 0,
-                url: "",
-                name: "",
-              })
-              setcampaignData([])
-              getCamapaignDetails(selectedCampaignId);
-              setSliderValue(0)
-              setResetPreviewAgain(prev => prev + 1)
-            }}
-            title={"Preview Again"}
-            containerStyle={{ width: "40%" }}
-          />
-        </View>
-
-        {!viewDetails &&
-          campaignData.length > 0 &&
-          workFlow &&
-          campaignString?.state?.toLowerCase() == "pending for approval" &&
-          workFlow?.approverWorkFlow == "CAMPAIGN_STRING" && (
-            <CampaignStringPrewiewActions
-              campaignString={campaignString}
-              navigation={navigation}
-              campaignItem={campaignData[0]}
-              setIsLoading={setIsLoading}
+      <ScrollView
+        style={{ flex: 1, paddingBottom: 20, paddingHorizontal: 12 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        <View style={Styles.fullFlex}>
+          <View style={Styles.headerContainer}>
+            <CreateNewHeader
+              title={"Campaign String"}
+              onClickIcon={() => navigation.goBack()}
             />
-          )}
-
-        {!viewDetails && campaignData.length > 0 && (
-          <ScrollView
-            horizontal
-            contentContainerStyle={{ marginBottom: 20 }}
-            showsHorizontalScrollIndicator={false}
-            bounces={false}
-            style={{}}
-          >
-            <FlatList
-              data={campaignData}
-              renderItem={renderCampaignList}
-              ListHeaderComponent={renderCampaignHeader}
-            />
-          </ScrollView>
-        )}
-        <View
-          style={{
-            height: 400,
-            width: "97%",
-            borderRadius: 2,
-            borderWidth: 1,
-            margin: moderateScale(5),
-          }}
-        >
-          <ImageBackground
-            imageStyle={{
-              borderRadius: 5,
-              height: "100%",
-              width: "100%",
-              position: "relative",
-              backgroundColor: BGColor ? BGColor : "#0000",
-              opacity: backgroundImage?.url != "" ? 1-parseFloat(backgroundImage?.transparencyInPercentage) : 1,
-            }}
-            source={
-              backgroundImage?.url != "" ? { uri: backgroundImage.url } : null
-            }
-          >
-            {campaignRegions != null &&
-              campaignRegions?.map((item, index) => {
-                console.log("item", item);
-                let tp = 1;
-                if(item?.transparencyInPercentage){
-                  tp=1-item?.transparencyInPercentage;
-                }
-                return (
-                  <TouchableOpacity
-                    activeOpacity={1}
-                    key={"campaign" + index}
-                    style={Styles.regionContainer(item,tp)}
-                  >
-                    <CmpDetailMediaApproval
-                      sliderValue={sliderValue}
-                      audioCampaignDurationInSec={audioCampaignDurationInSec}
-                      transparencyInPercentage={item.transparencyInPercentage}
-                      totalDurationOfCampaignInSeconds={
-                        totalDurationOfCampaignInSeconds
-                      }
-                      startFrom={15}
-                      mediaArray={item.mediaArr}
-                      resetPreviewAgain={resetPreviewAgain}
-                      isAudioEnabled={item.isAudioEnabled}
-                      mediaAudios={mediaAudios}
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-          </ImageBackground>
-        </View>
-
-        {totalDurationOfCampaignInSeconds != 0 && (
-          <>
-            <Slider
-              style={{
-                width: width * 0.98,
-                height: 40,
-                marginLeft: -7,
-                marginTop: 20,
+            <ThemedButton
+              onClick={() => {
+                setCampaignRegions([]);
+                setBackgroundImage({
+                  transparencyInPercentage: 0,
+                  url: "",
+                  name: "",
+                });
+                setcampaignData([]);
+                getCamapaignDetails(selectedCampaignId);
+                setSliderValue(0);
+                setResetPreviewAgain((prev) => prev + 1);
               }}
-              minimumValue={0}
-              maximumValue={totalDurationOfCampaignInSeconds}
-              value={sliderValue}
-              onValueChange={(value) => {
-                setSliderValue(value);
-              }}
-              thumbTintColor="#21B4E4"
-              minimumTrackTintColor="#223577"
-              maximumTrackTintColor="#000000"
+              title={"Preview Again"}
+              containerStyle={{ width: "40%" }}
             />
-            <View
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              <View
-                style={{
-                  width: 45,
-                  height: 45,
-                  backgroundColor: "#0056a8",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 25,
-                }}
-              >
-                <Text style={{ color: "#fff" }}>{parseInt(sliderValue)}</Text>
-              </View>
-              <View
-                style={{
-                  width: 45,
-                  height: 45,
-                  backgroundColor: "#0056a8",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 25,
-                }}
-              >
-                <Text style={{ color: "#fff" }}>
-                  {totalDurationOfCampaignInSeconds}
-                </Text>
-              </View>
-            </View>
-          </>
-        )}
+          </View>
 
-        {!viewDetails &&
-          campaignData.length > 0 &&
-          campaignData[0]?.regions && (
+          {!viewDetails &&
+            campaignData.length > 0 &&
+            workFlow &&
+            campaignString?.state?.toLowerCase() == "pending for approval" &&
+            workFlow?.approverWorkFlow == "CAMPAIGN_STRING" && (
+              <CampaignStringPrewiewActions
+                campaignString={campaignString}
+                navigation={navigation}
+                campaignItem={campaignData[0]}
+                setIsLoading={setIsLoading}
+              />
+            )}
+
+          {!viewDetails && campaignData.length > 0 && (
             <ScrollView
               horizontal
+              contentContainerStyle={{ marginBottom: 20 }}
               showsHorizontalScrollIndicator={false}
               bounces={false}
               style={{}}
             >
               <FlatList
-                data={campaignData[0]?.regions}
-                renderItem={RegionrenderCampaignList}
-                ListHeaderComponent={RegionRenderCampaignHeader}
+                data={campaignData}
+                renderItem={renderCampaignList}
+                ListHeaderComponent={renderCampaignHeader}
               />
             </ScrollView>
           )}
+          <View
+            style={{
+              height: 400,
+              width: "97%",
+              borderRadius: 2,
+              borderWidth: 1,
+              margin: moderateScale(5),
+            }}
+          >
+            <ImageBackground
+              imageStyle={{
+                borderRadius: 5,
+                height: "100%",
+                width: "100%",
+                position: "relative",
+                backgroundColor: BGColor ? BGColor : "#0000",
+                opacity:
+                  backgroundImage?.url != ""
+                    ? 1 - parseFloat(backgroundImage?.transparencyInPercentage)
+                    : 1,
+              }}
+              source={
+                backgroundImage?.url != "" ? { uri: backgroundImage.url } : null
+              }
+            >
+              {campaignRegions != null &&
+                campaignRegions?.map((item, index) => {
 
-        <FlatList
-          numColumns={2}
-          contentContainerStyle={{ marginTop: 20 }}
-          data={camapignsData}
-          renderItem={renderCampaignBoxes}
-        />
-      </View>
-    </ScrollView>
+                  // console.log("campaignRegions--->",JSON.stringify(campaignRegions))
+                  
+                  let tp = 1;
+                  if (item?.transparencyInPercentage) {
+                    tp = 1 - item?.transparencyInPercentage;
+                  }
+                  return (
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      key={"campaign" + index}
+                      style={Styles.regionContainer(item, tp)}
+                    >
+                      <CmpDetailMediaApproval
+                        sliderValue={sliderValue}
+                        audioCampaignDurationInSec={audioCampaignDurationInSec}
+                        transparencyInPercentage={item.transparencyInPercentage}
+                        totalDurationOfCampaignInSeconds={
+                          totalDurationOfCampaignInSeconds
+                        }
+                        startFrom={15}
+                        mediaArray={item.mediaArr}
+                        resetPreviewAgain={resetPreviewAgain}
+                        isAudioEnabled={item.isAudioEnabled}
+                        mediaAudios={mediaAudios}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
+            </ImageBackground>
+          </View>
+
+          {totalDurationOfCampaignInSeconds != 0 && (
+            <>
+              <Slider
+                style={{
+                  width: width * 0.98,
+                  height: 40,
+                  marginLeft: -7,
+                  marginTop: 20,
+                }}
+                minimumValue={0}
+                maximumValue={totalDurationOfCampaignInSeconds}
+                value={sliderValue}
+                onValueChange={(value) => {
+                  TrackPlayer.seekTo(value);
+                  setSliderValue(value);
+                }}
+                thumbTintColor="#21B4E4"
+                minimumTrackTintColor="#223577"
+                maximumTrackTintColor="#000000"
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View
+                  style={{
+                    width: 45,
+                    height: 45,
+                    backgroundColor: "#0056a8",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: 25,
+                  }}
+                >
+                  <Text style={{ color: "#fff" }}>{parseInt(sliderValue)}</Text>
+                </View>
+                <View
+                  style={{
+                    width: 45,
+                    height: 45,
+                    backgroundColor: "#0056a8",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: 25,
+                  }}
+                >
+                  <Text style={{ color: "#fff" }}>
+                    {totalDurationOfCampaignInSeconds}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          {!viewDetails &&
+            campaignData.length > 0 &&
+            campaignData[0]?.regions && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                bounces={false}
+                style={{}}
+              >
+                <FlatList
+                  data={campaignData[0]?.regions}
+                  renderItem={RegionrenderCampaignList}
+                  ListHeaderComponent={RegionRenderCampaignHeader}
+                />
+              </ScrollView>
+            )}
+
+          <FlatList
+            numColumns={2}
+            contentContainerStyle={{ marginTop: 20 }}
+            data={camapignsData}
+            renderItem={renderCampaignBoxes}
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const CampaignStyles = (COLORS) =>
   StyleSheet.create({
-    regionContainer: (item,tp) => ({
+    regionContainer: (item, tp) => ({
       height: `${item.heightInPercentage}%`,
       width: `${item.widthInPercentage}%`,
-      borderWidth: 1,
-      borderStyle: "dashed",
-      opacity:tp,
+      opacity: tp,
       position: "absolute",
       top: `${item.topLeftCoordinateYInPercentage}%`,
       left: `${item.topLeftCoordinateXInPercentage}%`,

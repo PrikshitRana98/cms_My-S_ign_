@@ -13,7 +13,7 @@ export const getUserData = async (
   setIsLoading(true);
   const successCallBack = async (response) => {
     dispatch(updateUserList(response));
-    console.log("updateUserList",JSON.stringify(response))
+    console.log("updateUserList===>",JSON.stringify(response))
     setTimeout(() => {
       setIsLoading(false);
     }, 300);
@@ -81,7 +81,7 @@ export const userManagerService = {
   recentMediaList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/recent-media?currPage=${params?.currentPage}&numPerPage=${params?.limit}`,
+      `service-gateway/cms/${params.slugId}/recent-media?currPage=${params?.currentPage}&numPerPage=${params?.limit}`,
       {},
       {},
       success,
@@ -92,7 +92,7 @@ export const userManagerService = {
   recentCampaignStringList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/v1/campaignString/recent-campaign-strings?currPage=${params?.currentPage}&numPerPage=${params?.limit}&dashboard=true`,
+      `service-gateway/cms/${params.slugId}/v1/campaignString/recent-campaign-strings?currPage=${params?.currentPage}&numPerPage=${params?.limit}&dashboard=true`,
       {},
       {},
       success,
@@ -114,7 +114,7 @@ export const userManagerService = {
   recentPlanogram: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/veer/planogram/recent-planograms?currentPage=${params?.currentPage}&noPerPage=${params?.limit}`,
+      `service-gateway/cms/planogram/recent-planograms?currentPage=${params?.currentPage}&noPerPage=${params?.limit}`,
       {},
       {},
       success,
@@ -125,7 +125,7 @@ export const userManagerService = {
   recentCamapignList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/v1/campaign/recent-campaign-added?currPage=${params?.currentPage}&numPerPage=${params?.limit}`,
+      `service-gateway/cms/${params.slugId}/v1/campaign/recent-campaign-added?currPage=${params?.currentPage}&numPerPage=${params?.limit}`,
       {},
       {},
       success,
@@ -150,6 +150,14 @@ export const userManagerService = {
   fetchUserList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService("GET", `tenant-management/tms/v1/customer/${params.slugId}`, {}, {}, success, failure, "Loading");
   },
+  fetchUserDetails: (params = {}, success = () => {}, failure = () => {}) => {
+    AxiosService("GET", `service-gateway/ums/${params.slugId}/v1/license/customer?apiKey=India@123`, {}, {}, success, failure, "Loading");
+  },
+  
+  // fetchUserDetails:(params = {}, success = () => {}, failure = () => {})=>{
+  //   AxiosService("GET", `service-gateway/ums/${params.slugId}/v1/license/customer?apiKey=India@123`, {}, {}, success, failure, "Loading");
+  //   // https://signedgeuat.in.panasonic.com/service-gateway/ums/planograms/v1/license/customer?apiKey=India@123
+  // },
   
   fetchActiveSiteList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService("GET", `location-management/lcms/${params.slugId}/v1/active-sites`, {}, {}, success, failure, "Loading");
@@ -159,7 +167,7 @@ export const userManagerService = {
   recentInActiveList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/planogram/recent-published-planograms-and-playing-right-now`,
+      `service-gateway/cms/${params.slugId}/planogram/recent-published-planograms-and-playing-right-now`,
       {},
       {},
       success,
@@ -171,7 +179,7 @@ export const userManagerService = {
   recentPublishedList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/planogram/recent-published-planograms-and-playing-right-now`,
+      `service-gateway/cms/${params.slugId}/planogram/recent-published-planograms-and-playing-right-now`,
       {},
       {},
       success,
@@ -182,7 +190,7 @@ export const userManagerService = {
   recentPlanogarmRunningList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/planogram/recent-published-planograms-and-playing-right-now`,
+      `service-gateway/cms/${params.slugId}/planogram/recent-published-planograms-and-playing-right-now`,
       {},
       {},
       success,
@@ -215,7 +223,7 @@ export const userManagerService = {
   recentPlanogramLiveList: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "GET",
-      `content-management/cms/${params.slugId}/planogram/recent-published-planograms-but-not-running`,
+      `service-gateway/cms/${params.slugId}/planogram/recent-published-planograms-but-not-running`,
       {},
       {},
       success,

@@ -151,10 +151,11 @@ const CampaignEditString = ({ navigation, route }) => {
                         isSelected(item.campaignId) && {
                           borderColor: themeColor.activeRed,
                           borderWidth: 2,
-                        },
+                        },{height:50,width:"100%",justifyContent:"center",paddingHorizontal:10}
                       ]}
-                    ></TouchableOpacity>
-                    <Text style={{color:'#000'}}>{item.campaignTitle}</Text>
+                    >
+                      <Text numberOfLines={2} style={{color:'#000000'}}>{item.campaignTitle}</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               />

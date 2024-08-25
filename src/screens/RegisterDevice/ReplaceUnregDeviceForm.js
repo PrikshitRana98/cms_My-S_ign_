@@ -4,7 +4,10 @@ import {
   BackHandler,
   FlatList,
   InputAccessoryView,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -166,11 +169,66 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
 
   },[route])
 
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setIsKeyboardOpen(true);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setIsKeyboardOpen(false);
+      }
+    );
+
+    // Cleanup listeners when the component unmounts
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
   useEffect(() => {
     userDetail();
     getResolutionData()
     getDevicePlanogram();
+    getLicenseDetails()
   }, []);
+
+  const [licenceDetails,setLicenseDetails]=useState({})
+
+  const getLicenseDetails=async()=>{
+    let slugId = await getStorageForKey("slugId");
+
+    const params = {
+      slugId: slugId,
+    };
+    const succussCallBack = async (response) => {
+     console.log("rrereer license--->",JSON.stringify(response))
+     if(response?.data){
+      setLicenseDetails(response.data)
+     }
+    };
+
+    const failureCallBack = (error) => {
+      Alert.alert("Error",error.message)
+      
+    };
+    if (true) {
+      userManagerService.fetchUserDetails(
+        params,
+        succussCallBack,
+        failureCallBack
+      );
+    }
+
+
+  }
 
   const userDetail = async () => {
     let slugId = await getStorageForKey("slugId");
@@ -331,7 +389,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
     let hasError = false;
     if (!mpIdentity) {
       setError((prev) => {
-        return { ...prev, mpIdentity: "Please enter media player identity" };
+        return { ...prev, mpIdentity: "Please Enter Media Player Identifier" };
       });
       hasError = true;
     }
@@ -554,6 +612,14 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
   return (
     <View style={Styles.mainContainer}>
       <Loader visible={isLoading} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "margin"}
+        style={{
+          flex: 1,
+          marginBottom: Platform.OS === "ios" && isKeyboardOpen ? 100 : 5,
+          // backgroundColor:"red"
+        }}
+      >
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         <View style={Styles.subContainer}>
           <View style={Styles.headerContainer}>
@@ -588,8 +654,8 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
               >
                 <AppText style={Styles.numLicenseText}>
                   No. of Licenses :{" "}
-                  {userInfo
-                    ? userInfo?.usedLicense + userInfo?.availableLicense
+                  {userInfo&&licenceDetails?.availableLicense&&licenceDetails?.usedLicense
+                    ? licenceDetails?.usedLicense + licenceDetails?.availableLicense
                     : 0}
                 </AppText>
                 <ThemedText
@@ -600,7 +666,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
                   textStyles={{
                     color: themeColor.draftYellow,
                   }}
-                  title={`Used: ${userInfo ? userInfo?.usedLicense : 0}`}
+                  title={`Used: ${userInfo&&licenceDetails?.usedLicense ? licenceDetails?.usedLicense : 0}`}
                 />
                 <ThemedText
                   containerStyle={{
@@ -611,7 +677,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
                     color: themeColor.pubGreen,
                   }}
                   title={`Available: ${
-                    userInfo ? userInfo?.availableLicense : 0
+                    userInfo&&licenceDetails?.availableLicense ? licenceDetails?.availableLicense : 0
                   }`}
                 />
               </View>
@@ -750,7 +816,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
                 <AppText style={Styles.numLicenseText}>
                   No. of Licenses :{" "}
                   {userInfo
-                    ? userInfo?.usedLicense + userInfo?.availableLicense
+                    ? licenceDetails?.usedLicense + licenceDetails?.availableLicense
                     : 0}
                 </AppText>
                 <ThemedText
@@ -761,7 +827,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
                   textStyles={{
                     color: themeColor.draftYellow,
                   }}
-                  title={`Used: ${userInfo ? userInfo?.usedLicense : 0}`}
+                  title={`Used: ${userInfo ? licenceDetails?.usedLicense : 0}`}
                 />
                 <ThemedText
                   containerStyle={{
@@ -772,7 +838,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
                     color: themeColor.pubGreen,
                   }}
                   title={`Available: ${
-                    userInfo ? userInfo?.availableLicense : 0
+                    userInfo ? licenceDetails?.availableLicense : 0
                   }`}
                 />
               </View>
@@ -909,6 +975,7 @@ const ReplaceFormUnregDevice = ({ navigation,route }) => {
         setState={setState}
         locationData1={locationData1}
       />
+      </KeyboardAvoidingView>
       <ActionContainer
         isContinue
         continueText={currentSection === 0 ? "Save & Next" : "Save & Submit"}

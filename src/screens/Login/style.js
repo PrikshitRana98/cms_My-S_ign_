@@ -1,5 +1,6 @@
 import {StyleSheet} from 'react-native';
 import {moderateScale, verticalScale} from '../../Helper/scaling';
+import { FONT_FAMILY } from '../../Assets/Fonts/fontNames';
 
 const Styles = COLORS =>
   StyleSheet.create({
@@ -83,5 +84,33 @@ const Styles = COLORS =>
     marginHorizontal:5,
     backgroundColor: COLORS.themeColor,
   },
+  term:{
+      color: "black",
+      fontSize: 14,
+      fontFamily: FONT_FAMILY.OPEN_SANS_BOLD,
+      textAlign: "left",
+      // fontWeight: 600,
+  },
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  AccBtn:{
+    borderWidth:2,
+    borderColor:"blue" ,
+    height:40,
+    justifyContent:"center",
+    alignItems:"center",
+     borderRadius:10
+    }
   });
 export default Styles;

@@ -48,6 +48,10 @@ export const mediaGroupManagerService = {
     console.log('deleteAssignToUn')
     AxiosService("DELETE",`device-management/api/assign-devices/${params?.deviceGroupId}`,params,{},success,failure,"Loading");
   },
+  removeDevice: (params = {}, success = () => {}, failure = () => {}) => {
+    console.log('removeDevice',params)
+    AxiosService("DELETE",`device-management/api/assign-devices/${params?.deviceGroupId}`,params.deviceIds,{},success,failure,"Loading");
+  },
   moveUnassignToAssign: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService("PUT",`device-management/api/assign-devices/${params?.deviceGroupId}`,params,{},success,failure,"Loading");
   },

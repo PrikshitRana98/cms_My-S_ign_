@@ -13,8 +13,8 @@ import {
   Pressable,
   BackHandler,
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Switch } from "react-native-paper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Modal, Portal, Switch } from "react-native-paper";
 import ActionContainer from "../../Components/Atoms/ActionContainer";
 import AppTextInput from "../../Components/Atoms/AppTextInputs";
 import ClockHeader from "../../Components/Atoms/ClockHeaders";
@@ -50,21 +50,19 @@ import CrossImage from "../../Assets/Images/PNG/delete-button.png";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { ResolutionManagerService } from "../../Services/AxiosService";
 import SelectLocationModalForCampaign from "../../Components/Organisms/Devices/SelectLocationModalForCampaign";
-import axios from "axios";
+
 import SuccessModal from "../../Components/Molecules/SuccessModal";
 import CampaignRegionLoc from "../../Components/Organisms/CMS/Campaign/CampaignRegionLoc";
 
-
 function convertToobj(data) {
   const finalOutput = {};
-  console.log("convertToobj called",data)
-  data.forEach(entry => {
+  data.forEach((entry) => {
     const regionKey = entry.region.toString();
 
     if (!finalOutput[regionKey]) {
       finalOutput[regionKey] = {
         campaignRegionId: entry.region,
-        locationId: entry.value
+        locationId: entry.value,
       };
     }
   });
@@ -75,11 +73,15 @@ function convertToobj(data) {
 function getAllLocationNames(data) {
   const locationNames = [];
 
-  data.forEach(region => {
+  data.forEach((region) => {
     if (region.locations && Array.isArray(region.locations)) {
-      region.locations.forEach(location => {
+      region.locations.forEach((location) => {
         if (location.locationName) {
-          locationNames.push({"region":region.layoutRegionId,"value":String(location.locationId),"label":String(location.locationName)});
+          locationNames.push({
+            region: region.layoutRegionId,
+            value: String(location.locationId),
+            label: String(location.locationName),
+          });
         }
       });
     }
@@ -91,24 +93,27 @@ function getAllLocationNames(data) {
 const LocCampaign = ({ navigation, route }) => {
   const themeColor = useThemeContext();
   const Styles = CommonStyles(themeColor);
-
-  const [currentSection, setCurrentSection] = useState(0);
-  const [reglocationArr,setRegLocationArr]=useState([])
-  const [LocData,setLocData]=useState([]);
-  const [filteredLoc,setFilterLoc]=useState()
-
- 
-  const [bgColor, setBgColor] = useState("#000000");
-  const [isLoading, setIsLoading] = useState(false);
-  const [templateShowList, setTempleteShowList] = useState([]);
+  const workFlow = useSelector((state) => state.userReducer.workFlow);
   const templateList = useSelector(
     (state) => state.TemplateReducer.templateList
   );
+  const MediaList = useSelector((state) => state.MediaLibReducer.MediaLibList);
+
+  const [saveModal, setSaveModal] = useState(false);
+  const [issave, setissave] = useState(false);
+  const [reglocationArr, setRegLocationArr] = useState([]);
+  const [LocData, setLocData] = useState([]);
+  const [filteredLoc, setFilterLoc] = useState();
+  const [selectedLValue, setselectedLValue] = useState({});
+
+  const [bgColor, setBgColor] = useState("#000000");
+  const [isLoading, setIsLoading] = useState(false);
+  const [templateShowList, setTempleteShowList] = useState([]);
+
   const [imageMediaData, setImageMediaData] = useState([]);
   const [audioData, setAudioData] = useState([]);
   const [seleAudioData, setSelAudioData] = useState([]);
   const [mediaData, setMediaData] = useState([]);
-  const MediaList = useSelector((state) => state.MediaLibReducer.MediaLibList);
 
   const [value, setValue] = useState(null);
   const [campaignName, setCampaignName] = useState("");
@@ -116,205 +121,168 @@ const LocCampaign = ({ navigation, route }) => {
   const [templateTagArr, setTempletTagArr] = useState([]);
   const [transparency, setTransparency] = useState();
   const [locationName, setLocationName] = useState(null);
-  
 
   const [modal, setModal] = useState();
   const [arrangeModal, setArrangeModal] = useState(false);
   const [selectedBgImg, setSelectedBgImg] = useState("");
   const [selectedTemplet, setSelectedTemplet] = useState({});
-  const [orgData,setOrgData]=useState({});
+  const [orgData, setOrgData] = useState({});
   const [mediaModalType, setMediaModalType] = useState(null);
   const [activateRegion, setActiveRegion] = useState(0);
   const [selectRegionForEdit, setSelectetRegionForEdit] = useState(-1);
   const [campaignType, setCampaignType] = useState(null);
   const [cmpArrangeModal, setCmpArrangeModal] = useState(false);
   const [ratioId, setRatioId] = useState(null);
-  const [duration, setDuration] = useState({hh: 0,mm: 0,ss: 0,});
-  const [ratioList, setRatioList] = useState([]);
-
-  const [localContent,setLocalContent]=useState([]);
-  const [chooseloc,setchooseloc]=useState({})
-  const [lrd,setlrd]=useState({});
+  const [duration, setDuration] = useState({ hh: 0, mm: 0, ss: 0 });
+  const [chooseloc, setchooseloc] = useState({});
 
   //For Edit =====================================================
   const { campaignItem } = route.params;
-  const [successModal,setSuccessModal]=useState(false);
-  const [successMsg,setSuccessMsg]=useState("")
+  const [successModal, setSuccessModal] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const onComplete = () => {
     setSuccessModal(false);
   };
 
-  
-  const getfilterDataByLoc=async(id)=>{
-    const storedData = await AsyncStorage.getItem('myObject');
-    const parsedData = storedData ? JSON.parse(storedData) : [];
-   
-   
-    const slugId = await getStorageForKey("slugId");
-    console.log("----->oobbjec",)
-    const ObjOp=convertToobj(reglocationArr)
-    const urlEncodedOutput = encodeURIComponent(JSON.stringify(ObjOp))
-    
-    const endPoint = `service-gateway/cms/${slugId}/content-playlist/${id}?q=${urlEncodedOutput}`;
-    const params={};
-   // const myselectedDate={...orgData};
-    const myselectedDate = { ...orgData, 'regions':parsedData };
-    const onSuccess=(response)=>{
-      console.log("loc data ==>",JSON.stringify(response.result))
-       function updateRegionDataById(ids, dataArray,result) {
-        setIsLoading(true)
-        ids.forEach(id => {
-          dataArray.forEach((ele,index) => {
-            const isEditable=ele.locations.some(location => location.locationId === parseInt(id.value))
-            if (isEditable) {
-                ele.isEdit = true;
-                setIsLoading(false);
-                console.log("Data---->",index)
-              console.log("elle before",ele,);
-              
-              // let regData=response.result[index].localRegionContentPlaylistContents.map((e,i)=>
-              //    e.mediaDetail);
-              // // console.log("Data---->",index)
-              // ele.regionData = [...regData];
+  const getfilterDataByLoc = async (id) => {
+    const storedData = await AsyncStorage.getItem("myObject");
 
-              let regData11=[] ; 
-              response.result.forEach(loc=>{
-                loc.localRegionContentPlaylistContents.forEach((e,i)=>{
-                  regData11.push(e.mediaDetail)
-                  console.log(i,e)
-                })
-              })
+    const parsedData = storedData ? JSON.parse(storedData) : [];
+
+    const slugId = await getStorageForKey("slugId");
+
+    const ObjOp = convertToobj(reglocationArr);
+    console.log("convertToobj ---op-->", ObjOp);
+    const urlEncodedOutput = encodeURIComponent(JSON.stringify(ObjOp));
+    const endPoint = `service-gateway/cms/${slugId}/content-playlist/${id}?q=${urlEncodedOutput}`;
+    const params = {};
+    // const myselectedDate={...orgData};
+    const myselectedDate = { ...orgData, regions: parsedData };
+    const onSuccess = (response) => {
+      console.log("content-playlist success--->", JSON.stringify(response));
+      function updateRegionDataById(ids, dataArray, result) {
+        setIsLoading(true);
+
+        ids.forEach((id) => {
+          dataArray.forEach((ele, index) => {
+            const isEditable = ele.locations.some(
+              (location) => location.locationId === parseInt(id.value)
+            );
+            if (isEditable) {
+              ele.isEdit = true;
+              setIsLoading(false);
+              let regData11 = [];
+              response.result.forEach((loc) => {
+                loc.localRegionContentPlaylistContents.forEach((e, i) => {
+                  regData11.push(e.mediaDetail);
+                });
+              });
               ele.regionData = [...regData11];
-              console.log("elle after",JSON.stringify(regData11.length))
-            }
-            else
-            {ele.isEdit = false
-                // ele.qqqqqq=ele.locationIds+`------`+ele.locationIds[0]+`------------`+parseInt(id.value)
-              
+            } else {
+              ele.isEdit = false;
             }
           });
         });
-        setIsLoading(false);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 2000);
       }
-      // console.log("myselectedDate",myselectedDate.regions.length,JSON.stringify(myselectedDate))
-      updateRegionDataById(reglocationArr, myselectedDate.regions,response.result);
-      // console.log("myselectedDate===>",JSON.stringify(myselectedDate.regions))
-      
+      updateRegionDataById(
+        reglocationArr,
+        myselectedDate.regions,
+        response.result
+      );
       setSelectedTemplet(myselectedDate);
-      
-    }
+    };
 
-    const onfailure=(error)=>{
+    const onfailure = (error) => {
+      setIsLoading(false);
+      console.log("content-playist error", error);
       setSelectedTemplet(myselectedDate);
-     // Alert.alert("Errorsa",error.message)
-    }
-    
+      // Alert.alert("Error", error.message);
+    };
+
     CampaignStringManagerService.getDatabyLoc(
-      {params,endPoint},
+      { params, endPoint },
       onSuccess,
       onfailure
     );
-    
-  }
+  };
 
-  useEffect(()=>{
-    let {campaignId} = campaignItem;
+  // get media data
+  React.useEffect(() => {
+    getWorkFlow(navigation);
+    getMediaDataForCampAdd(setIsLoading);
+    // get template data
+    getTempleteDataForCampAdd(setIsLoading);
+  }, [1]);
+
+  useEffect(() => {
+    let { campaignId } = campaignItem;
+    console.log("campaignId-->", campaignId);
+    btnGetCampaignDetails(campaignId); // it causing rerendering after loction first time
+  }, [1]);
+
+  useEffect(() => {
+    let { campaignId } = campaignItem;
     getfilterDataByLoc(campaignId);
-  },[reglocationArr])
+  }, [reglocationArr]);
 
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', async() => {
-      navigation.goBack();
-     console.log('device back', )
-  })
-  }, [navigation])
-
-  useEffect(() => {
-    let {campaignId} = campaignItem;
-    btnGetCampaignDetails(campaignId);
-    }, [MediaList]);
-
-  const getResolutionData = async (setIsLoading = () => {}) => {
-    const slugId = await getStorageForKey("slugId");
-    setIsLoading(true);
-
-    const successCallBack = async (response) => {
-     
-      if (response?.data && response?.data?.length > 0) {
-        const modifyData = response?.data;
-        let resolutionDropdownData = modifyData.map((resolution) => ({
-          label: `${resolution.aspectRatio} (${resolution.defaultWidthInPixel} x ${resolution.defaultHeightInPixel})`,
-          value: resolution.aspectRatioId,
-        }));
-       
-        setRatioList(resolutionDropdownData);
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      async () => {
+        navigation.goBack();
       }
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
-    };
-
-    const errorCallBack = (response) => {
-      setIsLoading(false);
-    };
-
-    ResolutionManagerService.fetchResolutionList(
-      { slugId },
-      successCallBack,
-      errorCallBack
     );
-  };
-  const btnGetMediaById = async (mediaId) => {
-    const token = await getStorageForKey("authToken");
-    const slugId = await getStorageForKey("slugId");
-    const authHeader = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-    return new Promise((resolve, reject) => {
-      axios
-        .get(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaId}`, {
-          headers: authHeader,
-        })
-        .then((response) => {
-          resolve(response?.data);
-        })
-        .catch((error) => {
-          reject(error);
-        });
+  }, [navigation]);
+
+  React.useEffect(() => {
+    let imageMediaData1 = [];
+    let imageMediaData12 = [];
+    let imageMediaData123 = [];
+
+    MediaList?.data?.mediaDetails?.map((item) => {
+      if (item.type == "IMAGE" && item.isFileReadyForPlay == "PROCESSED") {
+        imageMediaData1.push({ ...item, statusFlag: false });
+      }
+      if (item.isFileReadyForPlay == "PROCESSED" && item.type != "AUDIO") {
+        imageMediaData12.push({ ...item, statusFlag: false });
+      }
+      if (item.isFileReadyForPlay == "PROCESSED" && item.type == "AUDIO") {
+        imageMediaData123.push({ ...item, statusFlag: false });
+      }
     });
-  };
 
+    setImageMediaData([...imageMediaData1]);
+    setMediaData([...imageMediaData12]);
+    setAudioData([...imageMediaData123]);
+  }, [MediaList]);
 
-  const btnSetCamapaignEditValues = async(campaignData) => {
+  const btnSetCamapaignEditValues = async (campaignData) => {
     if (campaignData) {
       // contentId
       let mData = MediaList?.data?.mediaDetails;
-
-      // let regiondata = campaignData?.regions[0]?.globalRegionContentPlaylistContents
-
       let regiondata = campaignData?.regions;
       let finalRegion = [];
       regiondata.map((region) => {
         let fdata = [];
         let contentData = region?.globalRegionContentPlaylistContents;
-        contentData?.map((data,index) => {
+        contentData?.map((data, index) => {
           let findIndex = mData?.findIndex(
             (rdata) => data.contentId == rdata.mediaDetailId
           );
           if (findIndex > -1) {
-           
-            let mediaDta=mData[findIndex];
-            mediaDta.displayMode=data.displayMode
+            let mediaDta = mData[findIndex];
+            mediaDta.displayMode = data.displayMode;
             fdata.push(mediaDta);
           }
         });
-        
+
         region.templateRegionName = region.layoutRegionName;
         region.regionData = fdata;
-        region.isEdit=false;
+        region.isEdit = false;
         let locationIds = [];
         if (region.locations.length > 0) {
           region.locationIds = [region.locations[0]?.locationId];
@@ -323,11 +291,12 @@ const LocCampaign = ({ navigation, route }) => {
           region.locationIds = locationIds;
           region.customizCheck = false;
         }
+
         finalRegion.push(region);
       });
 
       let trans = campaignData?.transparencyInPercentage || 0;
-    
+
       if (trans) {
         setTransparency(trans);
       } else {
@@ -354,15 +323,13 @@ const LocCampaign = ({ navigation, route }) => {
             rdata.mediaDetailId == campaignData?.backgroundImageContentId
         );
         if (findIndex > -1) {
-         
           setSelectedBgImg(mData[findIndex]);
         }
       }
 
-      
       if (campaignData?.campaignType?.toLowerCase() == "advertisement") {
         let du = secondsToHMS(campaignData?.totalDurationOfCampaignInSeconds);
-        
+
         let camDu = {
           hh: du.hours,
           mm: du.minutes,
@@ -393,12 +360,10 @@ const LocCampaign = ({ navigation, route }) => {
         campaignName: campaignData?.campaignName,
         campaignDescription: campaignData?.campaignName,
       };
-       await AsyncStorage.setItem('myObject', JSON.stringify(regiondata)); 
+      await AsyncStorage.setItem("myObject", JSON.stringify(regiondata));
 
       setSelectedTemplet(postObj);
-      setOrgData(postObj)
-     
-      
+      setOrgData(postObj);
     }
   };
   function secondsToHMS(totalSeconds) {
@@ -408,7 +373,6 @@ const LocCampaign = ({ navigation, route }) => {
     return { hours, minutes, seconds };
   }
 
- 
   const btnGetCampaignDetails = async (campaignId) => {
     setIsLoading(true);
     let slugId = await getStorageForKey("slugId");
@@ -417,41 +381,41 @@ const LocCampaign = ({ navigation, route }) => {
       slugId: slugId,
     };
     const succussCallBack = async (response) => {
-      
+      console;
       setIsLoading(false);
       if (response?.data) {
-       
-        let tempArr=[];
-        let locationArr =[{"label": "Global", "region": 0, "value": "0"}]; 
-        locationArr.push(...getAllLocationNames(response.data.regions))
-        setLocData(locationArr)
-        setFilterLoc({"label": "Global", "region": 0, "value": "0"})
-       
-        tempArr=response.data.regions.map((item,)=>{
-          let temObj={};
-        
-          if(item.locations.length>0){
-            temObj[item.campaignRegionId]={"campaignRegionId":item.campaignRegionId,"locations":item.locations}
+        let tempArr = [];
+        let locationArr = [{ label: "Global", region: 0, value: "0" }];
+        locationArr.push(...getAllLocationNames(response.data.regions));
+        setLocData(locationArr);
+        setFilterLoc({ label: "Global", region: 0, value: "0" });
+
+        tempArr = response.data.regions.map((item) => {
+          let temObj = {};
+
+          if (item.locations.length > 0) {
+            temObj[item.campaignRegionId] = {
+              campaignRegionId: item.campaignRegionId,
+              locations: item.locations,
+            };
           }
           return temObj;
         });
 
         btnSetCamapaignEditValues(response.data);
-       
+
         // setSelectedCampaign(response.data);
         // btnSelectedCampaignData(response.data);
       }
     };
 
     const failureCallBack = (error) => {
-      console.log("getting error",error)
       setIsLoading(false);
-      if(error.response.data){
-        Alert.alert("Error",error.response.data.message)
-      }else{
-        Alert.alert("Error","Error in getting of camapign details.")
+      if (error.response.data) {
+        Alert.alert("Error", error.response.data.message);
+      } else {
+        Alert.alert("Error", "Error in getting of camapign details.");
       }
-     
     };
 
     CampaignStringManagerService.fetchCampaignDetails(
@@ -460,45 +424,6 @@ const LocCampaign = ({ navigation, route }) => {
       failureCallBack
     );
   };
-
-  //end for edit
-  const workFlow = useSelector((state) => state.userReducer.workFlow);
-  // get media data
-  React.useEffect(() => {
-    getWorkFlow(navigation);
-    getMediaDataForCampAdd(setIsLoading);
-  }, [1]);
-  // get template data
-  React.useEffect(() => {
-    getTempleteDataForCampAdd(setIsLoading);
-  }, [1]);
-
-  React.useEffect(() => {
-    // makeTemplateDropDownList();
-  }, [templateList]);
-
-  // manage media data====
-  React.useEffect(() => {
-    let imageMediaData1 = [];
-    let imageMediaData12 = [];
-    let imageMediaData123 = [];
-
-    MediaList?.data?.mediaDetails?.map((item) => {
-      if (item.type == "IMAGE" && item.isFileReadyForPlay == "PROCESSED") {
-        imageMediaData1.push({ ...item, statusFlag: false });
-      }
-      if (item.isFileReadyForPlay == "PROCESSED" && item.type != "AUDIO") {
-        imageMediaData12.push({ ...item, statusFlag: false });
-      }
-      if (item.isFileReadyForPlay == "PROCESSED" && item.type == "AUDIO") {
-        imageMediaData123.push({ ...item, statusFlag: false });
-      }
-    });
-
-    setImageMediaData([...imageMediaData1]);
-    setMediaData([...imageMediaData12]);
-    setAudioData([...imageMediaData123]);
-  }, [MediaList]);
 
   const makeTemplateDropDownList = () => {
     if (templateList.length > 0) {
@@ -548,15 +473,12 @@ const LocCampaign = ({ navigation, route }) => {
   };
 
   const fnPlayningMedia = (item) => {
-    console.log("opoopopo",item)
     if (mediaModalType == "image") {
       setSelectedBgImg(item[0]);
     } else if (mediaModalType == "regionMedia") {
       selectedTemplet.regions[activateRegion].contentToDisplay = item[0];
 
-      let locContents=item.map((region,rIndex)=>{
-        console.log(region?.mediaDetailId);
-
+      let locContents = item.map((region, rIndex) => {
         return {
           displayMode: "NORMAL",
           durationInSeconds: region?.defaultDurationInSeconds,
@@ -565,24 +487,20 @@ const LocCampaign = ({ navigation, route }) => {
           mediaDetailId: region?.mediaDetailId,
           order: rIndex + 1,
           transparencyInPercentage: 1,
-          fileExtension:region?.fileExtension,
-          type:region?.type,
-          mediaName:region?.name,
-          image:region.imageUrl?region.imageUrl:"",
-          
+          fileExtension: region?.fileExtension,
+          type: region?.type,
+          mediaName: region?.name,
+          image: region.imageUrl ? region.imageUrl : "",
+
           height: -1,
           zIndex: -1,
           width: -1,
           topLeftCoordinateXInPixel: -1,
           topLeftCoordinateYInPixel: -1,
-        }
-      })
-      
-      setLocalContent(locContents)
-
+        };
+      });
 
       let rData = item.map((region, rIndex) => {
-        
         return {
           displayMode: "NORMAL",
           durationInSeconds: region?.defaultDurationInSeconds,
@@ -592,10 +510,10 @@ const LocCampaign = ({ navigation, route }) => {
           order: rIndex + 1,
           transparencyInPercentage: 1,
 
-          fileExtension:region?.fileExtension,
-          type:region?.type,
-          mediaName:region?.name,
-          image:region.imageUrl?region.imageUrl:"",          
+          fileExtension: region?.fileExtension,
+          type: region?.type,
+          mediaName: region?.name,
+          image: region.imageUrl ? region.imageUrl : "",
 
           height: -1,
           zIndex: -1,
@@ -605,7 +523,7 @@ const LocCampaign = ({ navigation, route }) => {
 
           // contentId: region?.mediaDetailId,
           // contentVersionId: region?.version,
-          
+
           // mediaVersionId: region?.version,
           // mediaType: region?.type,
         };
@@ -615,7 +533,6 @@ const LocCampaign = ({ navigation, route }) => {
       selectedTemplet.regions[
         activateRegion
       ].globalRegionContentPlaylistContents = rData;
-      console.log("xcxzcxcglobalRegionContentPlaylistContents",JSON.stringify(selectedTemplet))
       setSelectedTemplet({ ...selectedTemplet });
     } else {
       setSelAudioData([...item]);
@@ -625,11 +542,9 @@ const LocCampaign = ({ navigation, route }) => {
     setActiveRegion(index);
     setMediaModalType("regionMedia");
     setModal(true);
-    // setArrangeModal(true);
   };
 
   const removeItemFromRegion = (index) => {
-   
     return false;
     if (selectedTemplet.regions[activateRegion].regionData.length == 1) {
       delete selectedTemplet.regions[activateRegion]["contentToDisplay"];
@@ -673,6 +588,137 @@ const LocCampaign = ({ navigation, route }) => {
       : btnAddAdvertiseData(btnType);
   };
 
+  const btnSubmitData1 = async (btnType) => {
+    setissave(false);
+    if (!campaignType) {
+      Alert.alert("Please enter campaign type");
+      return false;
+    }
+    campaignType != "advertisement"
+      ? btnAddCampaignData1(btnType)
+      : btnAddAdvertiseData(btnType);
+  };
+
+  const btnAddCampaignData1 = async (btnType) => {
+    setIsLoading(true);
+    if (campaignName.trim().length <= 0) {
+      alert("Please enter campaign name");
+      return false;
+    }
+    if (selectedTemplet == null) {
+      Alert.alert("Please select a template");
+      return false;
+    }
+
+    let returntype = true;
+    if (!returntype) {
+      return false;
+    }
+
+    let selAudioData1 = [];
+    if (seleAudioData.length > 0) {
+      for (let index = 0; index < seleAudioData.length; index++) {
+        selAudioData1.push({
+          contentVersionId: seleAudioData[index].version,
+          contentId: seleAudioData[index].mediaDetailId,
+          order: index + 1,
+        });
+      }
+    }
+    let campTag = [];
+    if (templateTagArr.length > 0) {
+      campTag = templateTagArr.map((tag) => {
+        return { campaignTag: tag };
+      });
+      selectedTemplet["campaignTags"] = campTag;
+    }
+
+    selectedTemplet["audios"] = selAudioData1;
+    if (selectedBgImg != "") {
+      selectedTemplet["backgroundImageContentId"] = selectedBgImg.mediaDetailId;
+      selectedTemplet["backgroundImageContentVersionId"] =
+        selectedBgImg.version;
+    }
+
+    selectedTemplet["campaignName"] = campaignName;
+    selectedTemplet["campaignDescription"] = campaignName;
+    selectedTemplet["state"] = "DRAFT";
+    if (bgColor != "") {
+      selectedTemplet["backgroundColor"] = bgColor;
+    }
+    if (transparency != "") {
+      selectedTemplet["transparencyInPercentage"] = transparency;
+    }
+    if (selectedBgImg != "") {
+      selectedTemplet["backgroundImageContentId"] =
+        selectedBgImg?.mediaDetailId;
+    }
+
+    const slugId = await getStorageForKey("slugId");
+    const succussCallBack = async (response) => {
+      setIsLoading(false);
+      if (response.code == 200) {
+        if (btnType == "SUBMITTED") {
+        }
+        btnGetCampaignDetails(campaignItem?.campaignId);
+
+        setTimeout(() => {
+          setFilterLoc(selectedLValue.value);
+          setchooseloc({
+            campaignRegionId: parseInt(selectedLValue.region),
+            locationId: parseInt(selectedLValue.value),
+          });
+          function filterByValue(filterValue) {
+            const result = LocData.filter((item) => item.value === filterValue);
+            return result;
+          }
+          const filteredObjects = filterByValue(selectedLValue.value);
+          setRegLocationArr(filteredObjects);
+        }, 2000);
+      } else if (response.code != 200) {
+        if (response?.data?.length > 0) {
+          alert(response?.data[0]?.message);
+        } else if (response?.error) {
+          alert(response?.error);
+        } else {
+          alert(response?.message);
+        }
+      }
+    };
+    const failureCallBack = (error) => {
+      if (error?.response?.data?.message) {
+        Alert.alert("Error", error?.response?.data?.message);
+      } else if (error?.response?.data?.data?.length > 0) {
+        Alert.alert("Error1", error?.response?.data?.data[0].message);
+      } else if (error?.data?.length > 0) {
+        Alert.alert("Error2", error?.data[0]?.message);
+      } else {
+        alert(error?.message);
+      }
+      setIsLoading(false);
+    };
+    const datforSubmit = [];
+    selectedTemplet.regions.forEach((ele, index) => {
+      if (ele.isEdit) {
+        datforSubmit.push({
+          campaignRegionId: ele.campaignRegionId,
+          locationId: String(chooseloc.locationId),
+          localRegionContentPlaylistContents:
+            ele.globalRegionContentPlaylistContents,
+        });
+      }
+    });
+
+    let params = {
+      data: datforSubmit,
+      slugId: slugId,
+      campaignId: campaignItem?.campaignId,
+    };
+
+    setIsLoading(true);
+    CampaignManagerService.editCmpLoc(params, succussCallBack, failureCallBack);
+  };
+
   const btnAddAdvertiseData = async (btnType) => {
     if (campaignName.trim().length <= 0) {
       alert("Please enter campaign name");
@@ -693,7 +739,7 @@ const LocCampaign = ({ navigation, route }) => {
       parseFloat(duration.hh) * 3600 +
       parseFloat(duration.mm) * 60 +
       parseFloat(duration.ss);
-  
+
     let postData = {
       aspectRatioId: ratioId,
       campaignName: campaignName,
@@ -707,11 +753,11 @@ const LocCampaign = ({ navigation, route }) => {
     const succussCallBack = async (response) => {
       setIsLoading(false);
       if (response.code == 200) {
-        setSuccessModal(true)
-        setSuccessMsg("Campaign edit successfully")
-        setTimeout(()=>{
+        setSuccessModal(true);
+        setSuccessMsg("Campaign edit successfully");
+        setTimeout(() => {
           navigation.goBack();
-        },800)
+        }, 800);
         // Alert.alert("Info!", "Campaign edit successfully", [
         //   {
         //     text: "Ok",
@@ -754,6 +800,7 @@ const LocCampaign = ({ navigation, route }) => {
   };
 
   const btnAddCampaignData = async (btnType) => {
+    setIsLoading(true);
     if (campaignName.trim().length <= 0) {
       alert("Please enter campaign name");
       return false;
@@ -764,20 +811,20 @@ const LocCampaign = ({ navigation, route }) => {
     }
 
     let returntype = true;
-    if (selectedTemplet.regions.length > 0) {
-      for (let index = 0; index < selectedTemplet.regions.length; index++) {
-        if (
-          selectedTemplet?.regions[index]?.regionData &&
-          selectedTemplet?.regions[index]?.regionData?.length <= 0
-        ) {
-          Alert.alert(
-            `Please select media for ${selectedTemplet.regions[index].templateRegionName} region`
-          );
-          returntype = false;
-          break;
-        }
-      }
-    }
+    // if (selectedTemplet.regions.length > 0) {
+    //   for (let index = 0; index < selectedTemplet.regions.length; index++) {
+    //     if (
+    //       selectedTemplet?.regions[index]?.regionData &&
+    //       selectedTemplet?.regions[index]?.regionData?.length <= 0
+    //     ) {
+    //       Alert.alert(
+    //         `Please select media for ${selectedTemplet.regions[index].templateRegionName} region`
+    //       );
+    //       returntype = false;
+    //       break;
+    //     }
+    //   }
+    // }
 
     if (!returntype) {
       return false;
@@ -822,15 +869,19 @@ const LocCampaign = ({ navigation, route }) => {
         selectedBgImg?.mediaDetailId;
     }
 
-   
     const slugId = await getStorageForKey("slugId");
     const succussCallBack = async (response) => {
-     console.log("sds",JSON.stringify(response))
       setIsLoading(false);
       if (response.code == 200) {
         // btnSubmittedStatus(campaignItem?.campaignId, btnType);
-        Alert.alert("Success","Data is saved successfully")
-        btnGetCampaignDetails(campaignItem?.campaignId)
+        if (btnType == "SUBMITTED") {
+          Alert.alert("Success", "Data is saved successfully", [
+            { text: "OK", onPress: () => navigation.goBack() },
+          ]);
+          // navigation.goBack();
+        }
+
+        btnGetCampaignDetails(campaignItem?.campaignId);
       } else if (response.code != 200) {
         if (response?.data?.length > 0) {
           alert(response?.data[0]?.message);
@@ -842,48 +893,42 @@ const LocCampaign = ({ navigation, route }) => {
       }
     };
     const failureCallBack = (error) => {
-     console.log("errrrr",JSON.stringify(error.response));
-     console.log("errrrr",JSON.stringify(error.request))
       if (error?.response?.data?.message) {
-        Alert.alert("Error",error?.response?.data?.message);
+        Alert.alert("Error", error?.response?.data?.message);
       } else if (error?.response?.data?.data?.length > 0) {
-        Alert.alert("Error1",error?.response?.data?.data[0].message);
+        Alert.alert("Error1", error?.response?.data?.data[0].message);
       } else if (error?.data?.length > 0) {
-        Alert.alert("Error2",error?.data[0]?.message);
+        Alert.alert("Error2", error?.data[0]?.message);
       } else {
         alert(error?.message);
       }
       setIsLoading(false);
     };
-    const datforSubmit=[]
-    selectedTemplet.regions.forEach((ele,index)=>{
-      if(ele.isEdit){
-         datforSubmit.push({
+    const datforSubmit = [];
+    selectedTemplet.regions.forEach((ele, index) => {
+      if (ele.isEdit) {
+        datforSubmit.push({
           campaignRegionId: ele.campaignRegionId,
           locationId: String(chooseloc.locationId),
-          localRegionContentPlaylistContents:ele.globalRegionContentPlaylistContents
-        })
+          localRegionContentPlaylistContents:
+            ele.globalRegionContentPlaylistContents,
+        });
       }
-    })
+    });
     let params = {
-      data:datforSubmit,
-      slugId:slugId,
+      data: datforSubmit,
+      slugId: slugId,
       campaignId: campaignItem?.campaignId,
     };
-    console.log("edoit camploc",datforSubmit.length,JSON.stringify(datforSubmit));
-    
+
     setIsLoading(true);
-    CampaignManagerService.editCmpLoc(
-      params,
-      succussCallBack,
-      failureCallBack
-    );
+    CampaignManagerService.editCmpLoc(params, succussCallBack, failureCallBack);
   };
 
   const btnSubmittedStatus = async (campaignId, btnType) => {
     if (btnType == "DRAFT") {
-      setSuccessModal(true)
-      setSuccessMsg("Campaign updated successfully")
+      setSuccessModal(true);
+      setSuccessMsg("Campaign updated successfully");
       // Alert.alert("Info!", "Campaign updated successfully", [
       //   {
       //     text: "Ok",
@@ -901,14 +946,13 @@ const LocCampaign = ({ navigation, route }) => {
       campaignId: campaignId,
     };
     const succussCallBack = async (response) => {
-     
       setIsLoading(false);
       if (response.code == 20) {
         setSuccessModal(true);
         setSuccessMsg("Campaign edited successfully");
-        setTimeout(()=>{
+        setTimeout(() => {
           navigation.goBack();
-        },800)
+        }, 800);
         // Alert.alert("Info!", "Campaign saved successfully", [
         //   {
         //     text: "Ok",
@@ -937,7 +981,6 @@ const LocCampaign = ({ navigation, route }) => {
       }
     };
     const failureCallBack = (error) => {
-    
       if (error?.response?.data?.data?.length > 0) {
         alert(error?.response?.data?.data[0].message);
       } else if (error?.data?.length > 0) {
@@ -957,7 +1000,9 @@ const LocCampaign = ({ navigation, route }) => {
   };
 
   const removeRegionData = (index) => {
+    setissave(true);
     selectedTemplet.regions[index].regionData = [];
+    selectedTemplet.regions[index].globalRegionContentPlaylistContents = [];
     setSelectedTemplet({ ...selectedTemplet });
   };
 
@@ -967,7 +1012,6 @@ const LocCampaign = ({ navigation, route }) => {
       activateRegion
     ].globalRegionContentPlaylistContents = gData;
     setSelectedTemplet({ ...selectedTemplet });
-    
   };
 
   const onChangeDuration = (value, type) => {
@@ -985,38 +1029,32 @@ const LocCampaign = ({ navigation, route }) => {
     }
   };
 
-  const locationData1 = useSelector(
-    (state) => state.CommonReducer.locationData
-  );
-  useEffect(() => {
-    setLocationSelected(locationData1);
-  }, [locationData1]);
-
-  const [locationModal, setLocationModal] = useState(false);
   const [locationSelected, setLocationSelected] = useState([]);
-  const [selectedLocations, setSelectedLocations] = useState([]);
 
-  // const onChangeLocatioValue = (lData) => {
-  //   selectedTemplet.regions[selectRegionForEdit]["locationIds"] = lData;
-  //   setSelectedTemplet({ ...selectedTemplet });
-  // };
-  const onChangeLocatioValue = (lData, ljsonData) => {
-    selectedTemplet.regions[selectRegionForEdit]["locationIds"] = lData;
-    setSelectedTemplet({ ...selectedTemplet });
-    setLocationName(ljsonData?.locationName);
-    
-  };
-
-  const customization = function () {
-    if (!selectedTemplet.regions[selectRegionForEdit]["customizCheck"]) {
-      setSelectedLocations([]);
-      setLocationModal(true);
-      selectedTemplet.regions[selectRegionForEdit]["customizCheck"] = true;
-      setSelectedTemplet({ ...selectedTemplet });
+  const noclick = (e) => {
+    if (e.label == "Global") {
+      setFilterLoc({ label: "Global", region: 0, value: "0" });
+      setchooseloc({
+        campaignRegionId: parseInt(e.region),
+        locationId: parseInt(e.value),
+      });
+      setRegLocationArr([]);
     } else {
-      selectedTemplet.regions[selectRegionForEdit]["locationIds"] = [];
-      selectedTemplet.regions[selectRegionForEdit]["customizCheck"] = false;
-      setSelectedTemplet({ ...selectedTemplet });
+      setFilterLoc(e.value);
+      setchooseloc({
+        campaignRegionId: parseInt(e.region),
+        locationId: parseInt(e.value),
+      });
+      function filterByValue(filterValue) {
+        const result = LocData.filter((item) => item.value === filterValue);
+        return result;
+      }
+      const filteredObjects = filterByValue(e.value);
+      setRegLocationArr(filteredObjects);
+      console.log("ch--->");
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
     }
   };
 
@@ -1024,7 +1062,87 @@ const LocCampaign = ({ navigation, route }) => {
     <View style={Styles.mainContainer}>
       <ClockHeader />
       <Loader visible={isLoading} />
-      {successModal && <SuccessModal Msg={successMsg} onComplete={onComplete} />}
+      <Portal>
+        <Modal
+          visible={saveModal}
+          onDismiss={() => onComplete()}
+          style={{
+            flex: 1,
+            paddingHorizontal: 16,
+          }}
+        >
+          <View
+            style={{
+              height: 180,
+              borderRadius: 20,
+              backgroundColor: "white",
+              padding: moderateScale(20),
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "white",
+                borderRadius: 25,
+                height: 80,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <AppText style={{ color: "black", fontSize: moderateScale(18) }}>
+                Are you sure you want to save media?
+              </AppText>
+            </View>
+            <View
+              style={{
+                justifyContent: "flex-end",
+                flexDirection: "row",
+                columnGap: 16,
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                style={{
+                  borderColor: "red",
+                  borderWidth: 1,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                }}
+                onPress={() => {
+                  noclick(selectedLValue);
+                  setSaveModal(false);
+                }}
+              >
+                <AppText style={{ color: "red", fontSize: moderateScale(14) }}>
+                  Cancel
+                </AppText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: themeColor.themeColor,
+                  borderWidth: 1,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                }}
+                onPress={() => {
+                  setSaveModal(false);
+                  btnSubmitData1("SUBMITTED");
+                }}
+              >
+                <AppText
+                  style={{ color: "white", fontSize: moderateScale(14) }}
+                >
+                  Save
+                </AppText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </Portal>
+      {successModal && (
+        <SuccessModal Msg={successMsg} onComplete={onComplete} />
+      )}
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         {modal && (
           <SelectMediaModal
@@ -1070,12 +1188,12 @@ const LocCampaign = ({ navigation, route }) => {
           <Separator />
           <View style={Styles.bodyContainer}>
             <AppText style={Styles.bodyHeaderText}>
-              Campaign Details
+              Campaign Details {"("}
+              {campaignName}
+              {")"}
             </AppText>
             <Separator />
             <View style={Styles.bodyRowsContainer}>
-              
-
               {campaignType?.toLowerCase() != "advertisement" && (
                 <>
                   <AppText style={Styles.labeltext}>Location</AppText>
@@ -1083,21 +1201,19 @@ const LocCampaign = ({ navigation, route }) => {
                     dataList={LocData}
                     placeHolderText="Select Location"
                     onChange={(e) => {
-                      setFilterLoc(e.value);
-                      setchooseloc({campaignRegionId:parseInt(e.region),locationId:parseInt(e.value)})
-                      console.log("change location",e)                    
-                      function filterByValue( filterValue) {
-                        const result= LocData.filter(item => item.value === filterValue);
-                        return result;
+                      // setIsLoading(true);
+                      if (typeof filteredLoc == "object") {
+                        if (filteredLoc.label == "Global") {
+                          noclick(e);
+                        }
+                      } else {
+                        if (issave == true) {
+                          setselectedLValue(e);
+                          setSaveModal(true);
+                        } else {
+                          noclick(e);
+                        }
                       }
-                      const filteredObjects = filterByValue(e.value);
-                      const queryArr=filteredObjects.map((item)=>{
-
-                      })
-                      
-                      setRegLocationArr(filteredObjects);
-                      console.log(filteredObjects)
-                    
                     }}
                     value={filteredLoc}
                   />
@@ -1126,7 +1242,7 @@ const LocCampaign = ({ navigation, route }) => {
                         position: "relative",
                         backgroundColor: bgColor,
                         // opacity: transparency,
-                        opacity: !selectedBgImg ? 1 :  1-transparency ,
+                        opacity: !selectedBgImg ? 1 : 1 - transparency,
                       }}
                       source={
                         selectedBgImg ? { uri: selectedBgImg.imageUrl } : null
@@ -1141,6 +1257,7 @@ const LocCampaign = ({ navigation, route }) => {
                         setSelectetRegionForEdit={setSelectetRegionForEdit}
                         setCmpArrangeModal={setCmpArrangeModal}
                         selectMediaForRegion={(index) => {
+                          setissave(true);
                           openArrangeModal(index);
                         }}
                       />
@@ -1157,54 +1274,7 @@ const LocCampaign = ({ navigation, route }) => {
                         ]
                       }
                     </AppText>
-                    <View style={{ marginTop: 8 }}>
-                      <AppText style={[Styles.titleStyle]}>
-                        {"Set Media Transparency"}
-                      </AppText>
-                      <Slider
-                        style={{
-                          width: width*0.9,
-                          height: 40,
-                          marginLeft: -7,
-                        }}
-                        minimumValue={0}
-                        value={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "regionTransparencyInPercentage"
-                          ] || 0.5
-                        }
-                        maximumValue={1}
-                        onValueChange={(value) => {
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "regionTransparencyInPercentage"
-                          ] = value ;
-                          setSelectedTemplet({ ...selectedTemplet });
-                        }}
-                        minimumTrackTintColor="#223577"
-                        maximumTrackTintColor="#000000"
-                      />
-                    </View>
-                    <View style={Styles.audioBox}>
-                      <AppText style={[Styles.titleStyle]}>
-                        {"Audio (ON/Off)"}
-                      </AppText>
-                      <Switch
-                        color={"#253D91"}
-                        value={
-                          selectedTemplet?.regions[selectRegionForEdit]
-                            ?.isAudioEnabled || false
-                        }
-                        onValueChange={(txt) => {
-                          
-                          if(seleAudioData.length==0){
-                            selectedTemplet.regions[selectRegionForEdit][
-                              "isAudioEnabled"
-                            ] = txt;
-                            setSelectedTemplet({ ...selectedTemplet });
-                        }
-                        }}
-                      />
-                    </View>
+
                     <Text
                       style={{ color: "#000000", fontSize: 14, marginTop: 15 }}
                     >
@@ -1254,14 +1324,12 @@ const LocCampaign = ({ navigation, route }) => {
                       />
                     </View>
                     <CommonTitleAndText
-                        title="Zindex"
-                        text={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "zIndex"
-                          ]
-                        }
-                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
-                      />
+                      title="Zindex"
+                      text={
+                        selectedTemplet.regions[selectRegionForEdit]["zIndex"]
+                      }
+                      containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
+                    />
                   </View>
                 )}
               </>
@@ -1291,17 +1359,6 @@ const LocCampaign = ({ navigation, route }) => {
           btnSubmitData("DRAFT");
         }}
       />
-      {/* <SelectLocationModalForCampaign
-        visible={locationModal}
-        setModal={setLocationModal}
-        setIsLoading={setIsLoading}
-        locationSelected={locationSelected}
-        setLocationSelected={setLocationSelected}
-        selectedLocations={selectedLocations}
-        setSelectedLocations={setSelectedLocations}
-        locationData1={locationData1}
-        onChangeLocatioValue={onChangeLocatioValue}
-      /> */}
     </View>
   );
 };

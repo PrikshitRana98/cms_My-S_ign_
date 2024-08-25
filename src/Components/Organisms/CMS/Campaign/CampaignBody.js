@@ -64,6 +64,7 @@ const CampaignList = [
 
 const CampaignBody = ({
   campaignList,
+  isListDataLoading,
   campaignForm,
   setIsLoading,
   searchData,
@@ -218,7 +219,7 @@ const CampaignBody = ({
   const renderTypeView = (value, index) => {
     return (
       <View style={[Styles.commonView, Styles.typeView]}>
-        <AppText style={Styles.commonText}>{value || "-"}</AppText>
+        <AppText style={Styles.commonText}>{value?value.toUpperCase()=="ADVERTISEMENT"?"LEMMA":value : "-"}</AppText>
       </View>
     );
   };
@@ -352,7 +353,7 @@ const CampaignBody = ({
         style={[
           Styles.commonView,
           Styles.stateView,
-          { flexDirection: "row", alignItems: "center" },
+          { flexDirection: "row", alignItems: "center",paddingHorizontal:1, },
         ]}
       >
         <ThemedText
@@ -362,7 +363,7 @@ const CampaignBody = ({
         />
 
         {value.state.toLowerCase() != "draft" &&
-          value.campaign_type != "ADVERTISEMENT" && (
+          value.campaign_type.toUpperCase() == "NORMAL" && (
             <TouchableOpacity
               style={{ paddingLeft: 10 }}
               onPress={() => {
@@ -432,9 +433,9 @@ const CampaignBody = ({
         {renderTypeView(item?.campaign_type, index)}
         {renderStateView(item, index)}
         {
-          <View style={[Styles.actionViewAction,{width:'25%',}]}>
+          <View style={[Styles.actionViewAction,{width:'25%'}]}>
             
-              {item?.campaign_type != "ADVERTISEMENT" &&
+              {item?.campaign_type.toUpperCase() == "NORMAL" &&
               authorization.includes(PREVILAGES.CAMPAIGN.VIEW_CAMPAIGN) && (
                 <TouchableOpacity
                   onPress={() => {
@@ -487,7 +488,7 @@ const CampaignBody = ({
                 </TouchableOpacity>
               )}
             {/* clone======= */}
-            {(!item.archived && item?.campaign_type != "ADVERTISEMENT") &&isLocRestricted==false
+            {(!item.archived && item?.campaign_type.toUpperCase() == "NORMAL") &&isLocRestricted==false
             && authorization.includes(PREVILAGES.CAMPAIGN.ADD_CAMPAIGN) && (
               <TouchableOpacity
                 onPress={() => {
@@ -495,7 +496,13 @@ const CampaignBody = ({
                 }}
               >
                 <View style={Styles.iconBackView}>
-                  <Image source={copy} style={Styles.actionIcons} />
+                  {/* <Image source={copy} style={Styles.actionIcons} />
+                   */}
+                   <Ionicons
+                      name="copy-outline"
+                      size={18}
+                      color={themeColor.themeColor}
+                    />
                 </View>
               </TouchableOpacity>
             )}
@@ -533,12 +540,13 @@ const CampaignBody = ({
                 workFlow.approverWorkFlow === "PLANOGRAM_AND_CAMPAIGN") &&isLocRestricted==false
                 && (
                 <TouchableOpacity
-                  onPress={() => {
+                  onPress={() => {                    
                     navigation.navigate("CmpPreviwe", {
                       campaigns: [
                         {
                           campaignId: item?.campaignId,
                           campaigName: item?.campaignTitle,
+                          approveState:item.state?item.state:""
                         },
                       ],
                       viewDetails: false,
@@ -582,7 +590,7 @@ const CampaignBody = ({
           color: "black",
         }}
       >
-        No Data Found
+        {!isListDataLoading?"No Data Found":"Loading..."}
       </Text>
      </View>
     );
@@ -607,6 +615,9 @@ const CampaignBody = ({
       />
       {/* {infoModal&&<SchedulerInfoModal setModal={closeModal} details={info}/>} */}
       <FlatList
+        keyExtractor={(item, index) => {
+          return `index${index}`
+        }}
         scrollEnabled={false}
         data={campaignList}
         renderItem={renderSchedulerItems}
@@ -715,5 +726,5 @@ const scheduleStyles = (COLORS) =>
     textView: { width: "10%" },
     duration: { width: "9%" },
     typeView: { width: "10%" },
-    stateView: { alignItems: "center", width: "10%" },
+    stateView: { alignItems: "center", width: "10.5%" },
   });

@@ -33,7 +33,9 @@ const ResolutionListView = ({checkAll, setCheckAll,handleEditPress, handleDelete
  
   const headerComp = () => {
     const selectAllItems = (selected) =>{
+      console.log("selected---->",selected)
       const data = [...resolutionList];
+      console.log("----before--->",data)
       // data.map((_, i) =>{
       //     data[i]= {...data[i], selected:selected};
       // })
@@ -43,23 +45,25 @@ const ResolutionListView = ({checkAll, setCheckAll,handleEditPress, handleDelete
           data[i]= {...data[i], checkStatus:selected};
       })
       // checkStatus
-      // console.log("------->",data)
+      console.log("----after--->",data)
+
       let selectedPlanogramStr = data.filter(
-        (item) => (item.checkStatus == true&&item.isEditable)
+        (item) => (item.isEditable=="true"||item.isEditable==true)
       );
       let ids = selectedPlanogramStr.map((item) => {
         return item.aspectRatioId;
       });
-      console.log("345678654567865",ids)
+      console.log("leghtn checking-->",ids,JSON.stringify(selectedPlanogramStr.length))
+      
+      setResolutionData(data)
       if(ids.length>0){
-        setResolutionData(data)
-      setCheckAll(selected);
+        setCheckAll(selected);
       }
     }
     
     return (
       <View style={Styles.headerView}>
-        {userData.customerType=="ADVANCED"&& <TouchableOpacity
+        {userData?.customerType=="ADVANCED"&& <TouchableOpacity
           style={Styles.iconCenterView}
           onPress={()=>{
             selectAllItems(!checkAll)
@@ -127,7 +131,7 @@ const ResolutionListView = ({checkAll, setCheckAll,handleEditPress, handleDelete
   const RenderResolution = (item, index) => {
     // console.log("index",index,item)
     return (
-      <View style={Styles.renderContainer}>
+      <View style={Styles.renderContainer} key={index}>
         {item?.isEditable ? 
           <TouchableOpacity
             style={Styles.iconView}
@@ -145,7 +149,7 @@ const ResolutionListView = ({checkAll, setCheckAll,handleEditPress, handleDelete
           <AppText style={Styles.nameText}>
             {/* {item.resolutions} */}
             {item.aspectRatio}
-          {" ("}{item.defaultWidthInPixel} x {item.defaultHeightInPixel}{")"}
+          {/* {" ("}{item.defaultWidthInPixel} x {item.defaultHeightInPixel}{")"} */}
           </AppText>
         </View>
          <View style={Styles.nameView}>

@@ -21,7 +21,7 @@ const LocationsListForPlanogram = ({ data = null,selectedLocations,setSelectedLo
   const getIsCheckedRoot=(id)=>{
    return  selectedLocations.includes(id) ? true : false;
   }
-
+  
   const getIsCheckedCountry = (rootId,id) => {
     if(selectedLocations?.includes(id) || selectedLocations?.includes(rootId)){
       return true;
@@ -196,7 +196,7 @@ const LocationsListForPlanogram = ({ data = null,selectedLocations,setSelectedLo
 
         />
         {data &&
-          viewing.rootId === data?.locationId && data.childNode.map((country, countryIndex) => {
+          viewing.rootId === data?.locationId &&data?.childNode!=undefined&& data?.childNode.map((country, countryIndex) => {
             return (
               <React.Fragment
                 key={country?.locationName + "country" + countryIndex}
@@ -263,7 +263,7 @@ const LocationsListForPlanogram = ({ data = null,selectedLocations,setSelectedLo
                                     )
                                   }
                                 />
-                                {city?.childNode&&city.childNode.map((child,childIndex)=>{
+                                {city?.childNode&&city.childNode!=undefined&&city.childNode.map((child,childIndex)=>{
                                   return(<>{renderChild(child,childIndex,data,country,state)}</>)
                                 })}
                               </React.Fragment>

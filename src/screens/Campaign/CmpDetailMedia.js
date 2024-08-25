@@ -8,9 +8,11 @@ import Video from "react-native-video";
 import Pdf from "react-native-pdf";
 import WebView from "react-native-webview";
 import FastImage from "react-native-fast-image";
+import SvgIcons from "../../Assets/Images/SvgIcons";
 
 const CmpDetailMedia = ({ mediaArr, sliderValue,isMute=false }) => {
   const [page, setPage] = useState(1);
+
 
   const handlePageChanged = (pageNumber) => {
     setPage(pageNumber);
@@ -28,8 +30,10 @@ const CmpDetailMedia = ({ mediaArr, sliderValue,isMute=false }) => {
   let intervalId;
   useEffect(() => {
     let interValTime = 0;
-    if (mediaArr[currentIndex]?.nodata || !mediaArr[currentIndex]?.defaultDurationInSeconds) {
-      interValTime = 0;
+    if (mediaArr[currentIndex].hasOwnProperty("widgetType") || !mediaArr[currentIndex]?.defaultDurationInSeconds) {
+      interValTime = 4000;
+    }else if(mediaArr[currentIndex]?.nodata){
+      interValTime=0;
     } 
     else {
       interValTime = parseInt(mediaArr[currentIndex]?.defaultDurationInSeconds) * 1000;
@@ -105,9 +109,29 @@ const CmpDetailMedia = ({ mediaArr, sliderValue,isMute=false }) => {
 
   const returnMediaView = () => {
     let item = mediaArr[currentIndex];
+    
     if (!item) {
       return (
         <Text style={{ width: "100%", height: "100%", color:'black' }}>Content not found</Text>
+      );
+    }
+    if (item.hasOwnProperty("widgetType")) {
+      console.log(item.widgetType)
+      return (
+        <View
+        style={{ backgroundColor: "#00000",justifyContent:"center",alignItems:"center" }}
+      >
+        <Image
+          source={SvgIcons[item.widgetType.toLowerCase()]}
+          style={{marginTop:10,width: "50%", height: "50%",tintColor:themeColor.themeColor,resizeMode:"contain"}}
+          // resizeMethod={"contain"}
+        />
+        {/* <FastImage 
+            source={SvgIcons[item.widgetType]}
+            resizeMode={true?FastImage.resizeMode.stretch:FastImage.resizeMode.contain}
+            style={{ width: "100%", height: "100%" }}
+          /> */}
+      </View>
       );
     }
     if (item?.type == "VIDEO") {
@@ -129,12 +153,12 @@ const CmpDetailMedia = ({ mediaArr, sliderValue,isMute=false }) => {
               uri: `${item?.videoUrl}`,
             }}
             resizeMode="contain"
-            paused={isPlaying}
+            paused={false}
             style={{
               flex: 1,
               backgroundColor: "#00000"
             }}
-            controls={true}
+            controls={false}
             onProgress={onprogressss}
             muted={!isMuted}
           />
@@ -226,9 +250,9 @@ const CmpDetailMedia = ({ mediaArr, sliderValue,isMute=false }) => {
         >
           <Image
             source={require("../../Assets/Images/PNG/document.png")}
-            style={{ height: 50, width: 50, }}
+            style={{ height: 40, width: 40, resizeMode:"contain",tintColor:"white"}}
           />
-          <Text style={{ color: themeColor.themeColor, fontSize: 20 }}>
+          <Text style={{ color: themeColor.white, fontSize: 15 }} numberOfLines={1} >
             {item?.name ? item?.name : "Content not found"}{"\n"}{item.type }
             
           </Text>
@@ -262,6 +286,7 @@ const CampaignStyles = (COLORS) =>
     },
     fullFlex: {
       flex: 1,
+      
     },
     mainContainer: {
       flex: 1,

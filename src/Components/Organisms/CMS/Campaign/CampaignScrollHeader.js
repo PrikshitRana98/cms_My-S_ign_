@@ -148,8 +148,10 @@ const CampaignScrollHeader = ({
               <CampaignDropDown
                 dataList={[
                   { label: "All", value: "" },
-                  { label: "ADVERTISMENT", value: "ADVERTISMENT" },
                   { label: "NORMAL", value: "NORMAL" },
+                  { label: "LEMMA", value: "ADVERTISEMENT" },
+                  { label: "MOVING WALL", value: "MOVING_WALL" },
+                  
                 ]}
                 placeHolderText="Type"
                 containerStyle={Styles.textcontainer("dropdown")}
@@ -177,7 +179,7 @@ const CampaignScrollHeader = ({
               <View style={[Styles.textcontainer("input")]}>
                 <TextInput
                   style={[Styles.textInputStyle]}
-                  placeholder={`Search by`}
+                  placeholder={`Search by `+item}
                   placeholderTextColor={"#00000026"}
                   value={returnValue(item)}
                   onSubmitEditing={(e) => {
@@ -203,7 +205,7 @@ const scheduleStyles = (COLORS) =>
       paddingHorizontal: moderateScale(5),
       justifyContent: "center",
       marginHorizontal: moderateScale(2),
-      width: index === 0 ? "15%" : "10%",
+      width: index === 0 ? "15%" :index === 4 ?"8.5%":index === 7 ?"10.5%": "10%",
     }),
     headerContainer: {
       backgroundColor: COLORS.themeLight,
@@ -261,12 +263,13 @@ const scheduleStyles = (COLORS) =>
       color:COLORS.textColor,
     },
     textcontainer: (type) => ({
-      width: "80%",
+      width: "85%",
       backgroundColor: COLORS.white,
+      alignSelf:"flex-start",
       borderRadius: moderateScale(5),
       borderColor: COLORS.searchBorder,
       borderWidth: moderateScale(1),
-      paddingHorizontal: moderateScale(10),
+      paddingHorizontal: moderateScale(5),
       paddingVertical: type == "dropdown" ? moderateScale(5) : 0,
     }),
   });

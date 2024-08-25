@@ -102,7 +102,7 @@ function validatePassword(p) {
       errors.push("8 characters,"); 
   }
   if (p.search(/[a-z]/) < 0) {
-      errors.push("1 letter,");
+      errors.push("1 small letter,");
   }
   if (p.search(/[A-Z]/) < 0) {
     errors.push("1 uppercase letter,");
@@ -117,15 +117,16 @@ function validatePassword(p) {
   if (errors.length > 1) {
     
       Alert.alert("Warning",errors.join(" "));
-      console.log("errors.join--->",errors.join("& "))
+      // console.log("errors.join--->",errors.join("& "))
       // return errors.join("&");
   }
 
-  return (errors.length>1?errors.join("&"):"");
+  return (errors.length>1?errors.join(" "):"");
 }
 
   const handleChangePassword = async() => {
     const slugId = await getStorageForKey("slugId");
+    setMsg("");
     // setisOpenChangePwd(false);
     // console.log(IsErrCurr,currentPassword.length,IsErrNew,IsErrConfirm)
     if(currentPassword.length<=0){
@@ -148,9 +149,23 @@ function validatePassword(p) {
     if (newPassword !== confirmPassword&&newPassword.length>0&&confirmPassword.length>0) {
       Alert.alert("Error", "New password and confirm password do not match.");
       return true;
-    }else if(currentPassword==newPassword){
+    }else if(currentPassword==newPassword&&currentPassword!==""&&newPassword!==""){
       Alert.alert("Error", "New password should be different from current password.");
       return true;
+    }else if(currentPassword==""&&newPassword==""&&confirmPassword==""){
+      Alert.alert("Error","Please enter current password, new password and confirm password");
+      return;
+    }
+    else if(currentPassword==""){
+      Alert.alert("Please enter current password")
+      return;
+    }
+    else if(newPassword==""){
+      Alert.alert("Please enter new password")
+      return;
+    }else if(confirmPassword==""){
+      Alert.alert("Please enter confirm password")
+      return;
     }
 
     // if(newPassword.trim().length>0){
@@ -411,16 +426,17 @@ const clockHeaderStyles = (COLORS) =>
     },
     InputCont: {
       flexDirection: "row",
-      borderWidth: 1,
+      borderWidth: 1,height:45,
       borderRadius: 10,
       borderColor: COLORS.themeColor,
       paddingHorizontal: 5,
-      marginVertical:2,
+      marginVertical:5,
       alignItems:"center",
       paddingHorizontal:10,
     },
     Input: {
-      color: "black",
+      fontSize:moderateScale(14),
+      color: "black",height:40,
       marginVertical:2,
       backgroundColor:'white',
       // borderWidth:1,

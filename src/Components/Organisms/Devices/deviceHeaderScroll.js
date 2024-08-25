@@ -24,7 +24,7 @@ const DeviceHeaderScroll = ({searchData,setSearchData,onChangeSearchBar,deviceGr
   ];
 
   const getWidth = index => ({
-    width: index === 0 ? '13%' :index === 2? "14%":index === 3 || index === 4 ? '7%' : '9%',
+    width: index === 0 ? '13.5%' :index === 2? "12.5%":index === 3 ?'7%':index === 4 ? '7%' : index === 7 ? '7%':index === 9? "90%": '9%',
   });
 
   const returnValue = (value) => {
@@ -80,7 +80,7 @@ const DeviceHeaderScroll = ({searchData,setSearchData,onChangeSearchBar,deviceGr
             key={item + index}
             style={[Styles.mainContainer, getWidth(index)]}>
             <View style={Styles.headerContainer}>
-              <Text style={Styles.boldText}>{item}</Text>
+              <Text style={[Styles.boldText]}>{item}</Text>
               {/* {index <= 2 && (
                 <View style={Styles.alignIcon}>
                   <Ionicons
@@ -99,7 +99,7 @@ const DeviceHeaderScroll = ({searchData,setSearchData,onChangeSearchBar,deviceGr
             {
             //  selectedMP != headers[2].title &&
               <>
-              {(item=="Media Player Name" ||  item=="Location") && (
+              {(item=="Media Player Name" ||  item=="Location") ? (
                 <SearchBox
                   changeText={(txt)=>{
                     onChangeSearchBar(item,txt)
@@ -109,12 +109,36 @@ const DeviceHeaderScroll = ({searchData,setSearchData,onChangeSearchBar,deviceGr
                     makeRegisterMediaDataUrl();
                   }}
                   placeholder={`Search ${item.split(' ')[0]}`}
-                  containerStyle={Styles.searchView}
+                  containerStyle={[Styles.searchView,{width:item=="Location"?"88%":"93%"}]}
                   inputStyle={{
                     fontSize: moderateScale(13),
+                    paddingHorizontal:0,
                   }}
                 />
-              )}
+              ):(item=="OS") ?
+              <CampaignDropDown
+                dataList={[
+                  { label: "Select OS", value: null },
+                  { label: "ANDROID", value: "ANDROID" },
+                  { label: "WINDOWS", value: "WINDOWS" },
+                  { label: "ANDROID_TV", value: "ANDROID_TV" },
+                ]}
+                placeHolderText="Select OS"
+                containerStyle={Styles.textcontainer("dropdown")}
+                onChange={(e) => {
+                  onChangeSearchBar(item,e.value)
+                }}
+                value={returnValue(item)}
+              />:(item=="Group") ?
+              <CampaignDropDown
+                dataList={deviceGroupArr}
+                placeHolderText="Select Group"
+                containerStyle={Styles.textcontainer("dropdown")}
+                onChange={(e) => {
+                  onChangeSearchBar(item,e.value)
+                }}
+                value={returnValue(item)}
+              />:<View style={{height:40}}></View>}
               {
                 // (item=="MP Connectivity") &&
                 // <CampaignDropDown
@@ -131,35 +155,7 @@ const DeviceHeaderScroll = ({searchData,setSearchData,onChangeSearchBar,deviceGr
                 //   value={returnValue(item)}
                 // />
               }
-              {
-                (item=="OS") &&
-                <CampaignDropDown
-                  dataList={[
-                    { label: "Select OS", value: null },
-                    { label: "ANDROID", value: "ANDROID" },
-                    { label: "WINDOWS", value: "WINDOWS" },
-                    { label: "ANDROID_TV", value: "ANDROID_TV" },
-                  ]}
-                  placeHolderText="Select OS"
-                  containerStyle={Styles.textcontainer("dropdown")}
-                  onChange={(e) => {
-                    onChangeSearchBar(item,e.value)
-                  }}
-                  value={returnValue(item)}
-                />
-              }
-              {
-                (item=="Group") &&
-                <CampaignDropDown
-                  dataList={deviceGroupArr}
-                  placeHolderText="Select group"
-                  containerStyle={Styles.textcontainer("dropdown")}
-                  onChange={(e) => {
-                    onChangeSearchBar(item,e.value)
-                  }}
-                  value={returnValue(item)}
-                />
-              }
+              
               </>
             }
           </View>
@@ -174,9 +170,9 @@ export default DeviceHeaderScroll;
 const scheduleStyles = COLORS =>
   StyleSheet.create({
     mainContainer: {
-      paddingHorizontal: moderateScale(5),
+      // paddingHorizontal: moderateScale(5),
       justifyContent: 'center',
-      marginHorizontal: moderateScale(2),
+      marginHorizontal: moderateScale(3),
     },
     headerContainer: {
       backgroundColor: COLORS.themeLight,
@@ -200,7 +196,7 @@ const scheduleStyles = COLORS =>
       marginHorizontal: moderateScale(15),
     },
     searchView: {
-      marginHorizontal: moderateScale(10),
+      // marginHorizontal: moderateScale(10),
       width: '95%',
       height: moderateScale(45),
     },
@@ -228,7 +224,7 @@ const scheduleStyles = COLORS =>
       marginVertical: moderateScale(1),
     },
     textcontainer: (type) => ({
-      width: "110%",
+      width: "100%",
       backgroundColor: COLORS.white,
       borderRadius: moderateScale(5),
       borderColor: COLORS.searchBorder,

@@ -1,5 +1,5 @@
 import React, {useContext} from 'react';
-import {Image, StyleSheet, TouchableOpacity, View,StatusBar} from 'react-native';
+import {Image, StyleSheet, TouchableOpacity, View,StatusBar, Keyboard} from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import PanasonicLogo from '../../Assets/Images/PNG/panasonic.png';
 import SignEdgeLogon from '../../Assets/Images/PNG/signedge-logo.png';
@@ -16,6 +16,7 @@ export const CommonHeader = ({navigation}) => {
       <TouchableOpacity
         onPress={() => {
           console.log("drawer toggled")
+          Keyboard.dismiss()
           navigation.dispatch(DrawerActions.toggleDrawer())
         }}>
         <FontAwesome name={'navicon'} size={30} color={themeColor.themeColor} />

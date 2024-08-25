@@ -4,7 +4,8 @@ import {
   UPDATE_USER,
   GET_LOCATION_LIST,
   GET_DEVICE_GROUP,
-  GET_DEVICE
+  GET_DEVICE,
+  RESET
 } from '../ActionTypes/commonActionTypes';
 
 const initialState = {
@@ -19,6 +20,7 @@ const CommonReducer = (state = initialState, action) => {
 
 
   switch (action.type) {
+    case RESET:()=>initialState;
     case UPDATE_USER:
       return {
         ...state,

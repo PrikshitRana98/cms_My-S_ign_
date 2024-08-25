@@ -2,6 +2,7 @@ import {
     GET_MEDIALIB_DATA,
     REMOVE_MEDIALIB_DATA,
     GET_MEDIA_ARCHIVED_DATA,
+    RESET,
     } from '../ActionTypes/commonActionTypes';
     
     const initialState = {
@@ -9,7 +10,7 @@ import {
     };
     const MediaLibReducer = (state = initialState, action) => {
       switch (action.type) {
-  
+        case RESET:()=>initialState;
         case GET_MEDIALIB_DATA:
           return {
             ...state,

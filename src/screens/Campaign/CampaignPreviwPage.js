@@ -192,7 +192,7 @@ export default function CampaignPreviwPage({ navigation, route }) {
     };
     return new Promise((resolve, reject) => {
       axios
-        .get(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaId}`, {
+        .get(`${baseUrl}service-gateway/cms/${slugId}/v1/media/${mediaId}`, {
           headers: authHeader,
         })
         .then((response) => {
@@ -725,7 +725,7 @@ export default function CampaignPreviwPage({ navigation, route }) {
                 if(item?.transparencyInPercentage){
                   tp=1-item?.transparencyInPercentage;
                 }
-                console.log("tptptptptptp", backgroundImage);
+                console.log("tptptptptptp--->", backgroundImage);
                 // {console.log("mediaArra11122233333----", item.mediaArra)}
                 backgroundImage?.url != "" ? console.log('bgbgbgbgbg',1-parseFloat(backgroundImage?.transparencyInPercentage)) : 1
                 return (

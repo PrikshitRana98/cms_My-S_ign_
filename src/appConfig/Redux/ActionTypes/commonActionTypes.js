@@ -1,6 +1,9 @@
+export const RESET="reset"
+
 export const UPDATE_USER = "UPDATE_USER";
 export const ENABLE_LOADER = "ENABLE_LOADER";
 export const DISABLE_LOADER = "DISABLE_LOADER";
+
 
 export const GET_RESOLUTION_DATA = "GET_RESOLUTION_DATA";
 export const REMOVE_RESOLUTION_DATA = "REMOVE_RESOLUTION_DATA";

@@ -1,6 +1,6 @@
 
 import React,{useEffect, useState} from 'react';
-import {Image, StyleSheet, Text, View,TextInput,Pressable} from 'react-native';
+import {Image, StyleSheet, Text, View,TextInput,Pressable, Platform} from 'react-native';
 import UpDownArr from '../../../../Assets/Images/PNG/updown.png';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, width} from '../../../../Helper/scaling';
@@ -53,7 +53,7 @@ const TemplateHeader = ({onchange,checkboxAll,setCheckboxAll, filterData,btnSche
   return (
     <View style={Styles.headerView}>
         <View style={Styles.iconCenterView}>
-      {userData.customerType=="ADVANCED"&&<Pressable
+      {userData?.customerType=="ADVANCED"&&<Pressable
         onPress={() => {
           btnAllCheckUnchecked(!checkboxAll);
           // setCheckboxAll(!checkboxAll);
@@ -90,15 +90,14 @@ const TemplateHeader = ({onchange,checkboxAll,setCheckboxAll, filterData,btnSche
             <TextInput
               numberOfLines={1}
               style={[Styles.textInputStyle]}
-              placeholder={`Search by ${item}`}
+              placeholder={`Search by ${index==1?"No.":item}`}
               placeholderTextColor={"#00000026"}
               value={returnValue(item)}
+              keyboardType={index==1?"numeric":"default"}
               onSubmitEditing={(e) => {
-                btnSchedularData();
+                // btnSchedularData();
               }}
               onChangeText={(value) => {
-                // console.log(value)
-                btnSchedularData();
                 onchange(item, value);
               }}
             />
@@ -120,7 +119,7 @@ const scheduleStyles = COLORS =>
       justifyContent: 'center',
       marginHorizontal: moderateScale(2),
       maxWidth:"60%",
-      width: index === 0 ? '19%' : index === 1 ? '12%' : index === 2 ? '25%' : index === 3 ? '14%' : index === 4 ? '14%' :index === 5 ? '10%' : '0%',
+      width: index === 0 ? '19%' : index === 1 ? '11%' : index === 2 ? '25%' : index === 3 ? '14%' : index === 4 ? '14%' :index === 5 ? '10%' : '0%',
     }),
     headerContainer: {
       backgroundColor: COLORS.themeLight,

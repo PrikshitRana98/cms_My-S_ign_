@@ -490,10 +490,11 @@ const renderCampaignHeader = () => {
     return (
         <View
             style={{
-                width: width,
+                width: "100%",
                 height: 100,
                 flexDirection: "row",
                 alignItems: "center",
+                
             }}
         >
             {ListHeaders.map((item, index) => (
@@ -523,6 +524,7 @@ const renderCampaignHeaderCamp = () => {
                 height: 100,
                 flexDirection: "row",
                 alignItems: "center",
+                
             }}
         >
             {ListHeaders.map((item, index) => (
@@ -650,6 +652,7 @@ const renderListForCampagin = ({ item }) => {
                                   {
                                     campaignId: item?.campaignId,
                                     campaigName: item?.campaignTitle,
+                                    approveState:item?.state?item.state:""
                                   },
                                 ],
                                 viewDetails: false,

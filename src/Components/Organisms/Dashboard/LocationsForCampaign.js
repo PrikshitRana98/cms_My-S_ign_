@@ -344,7 +344,7 @@ const LocationsForCampaign = ({
                 )
               }
             />
-            {ele?.childNode&&viewing.cityChild==ele.locationName&&renderChild(ele.childNode,
+            {ele?.childNode&&renderChild(ele.childNode,
               data,
               country,
               state,

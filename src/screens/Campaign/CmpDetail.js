@@ -148,7 +148,7 @@ const CmpDetail = ({ navigation, route }) => {
     };
     return new Promise((resolve, reject) => {
       axios
-        .get(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaId}`, {
+        .get(`${baseUrl}service-gateway/cms/${slugId}/v1/media/${mediaId}`, {
           headers: authHeader,
         })
         .then((response) => {
@@ -181,11 +181,11 @@ const CmpDetail = ({ navigation, route }) => {
               if (res.status === "OK") {
                 mediaArr1.push(res.data.mediaDetails[0]);
               } else {
-                mediaArr1.push({ nodata: "no" });
+                // mediaArr1.push({ nodata: "no" });
               }
             })
             .catch(() => {
-              mediaArr1.push({ nodata: "no" });
+              // mediaArr1.push({ nodata: "no" });
             });
         });
       }

@@ -41,6 +41,9 @@ import CmpPreviwe from "../../screens/Campaign/cmpPreview2";
 import CmpDetail from "../../screens/Campaign/CmpDetail";
 import AboutPage from "../../screens/About/AboutPage";
 import Dashboard from '../../screens/Dashboard';
+import TermCond from "../../screens/Settings/TermCond";
+import Policy from "../../screens/Settings/Policy";
+import ThirdParty from "../../screens/Settings/ThirdParty";
 
 const CMSStack = (props) => {
   const initialScreen = props?.route?.params?.screen;
@@ -214,6 +217,7 @@ const CMSStack = (props) => {
         name={NAVIGATION_CONSTANTS.ABOUT_PAGE}
         component={AboutPage}
       />
+      
     </Stack.Navigator>
   );
 };

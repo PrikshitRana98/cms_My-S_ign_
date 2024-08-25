@@ -24,6 +24,7 @@ import { PREVILAGES } from "../../Constants/privilages";
 import CreateNewHeader from "../../Components/Atoms/CreateNewHeader";
 import ConfirmBox from "../../Components/Organisms/CMS/ConfirmBox";
 import { useFocusEffect } from "@react-navigation/native";
+import { err } from "react-native-svg/lib/typescript/xml";
 // import CommonHeaderUpdated from '../../Components/Atoms/CommanHeaderUpdated';
 
 const { dispatch } = Store;
@@ -61,10 +62,10 @@ const ResolutionManagement = ({ navigation, route }) => {
   };
 
   const markAll = (e) => {
-    if (userData.customerType == "ADVANCED") {
+    if (userData?.customerType == "ADVANCED") {
       setCheckAll(e);
     }
-    console.log(e);
+    console.log("markAll resolution---->",e);
   };
 
   const changeCheckbox = () => {
@@ -101,8 +102,9 @@ const ResolutionManagement = ({ navigation, route }) => {
       }, 1000);
     };
   
-    const errorCallBack = (response) => {
+    const errorCallBack = (err) => {
       setIsLoading(false);
+      console.log("error  106 resomang",err.data.response.message)
     };
   
     ResolutionManagerService.fetchResolutionList(
@@ -315,7 +317,7 @@ const ResolutionManagement = ({ navigation, route }) => {
       <ClockHeader />
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         <View style={Styles.mainContainer}>
-          {userData.customerType == "BASIC" ? (
+          {userData?.customerType == "BASIC" ? (
             <View style={{ marginVertical: 15, paddingHorizontal: 10 }}>
               <AppText style={Styles.titleStyle}>
                 {" "}
@@ -335,19 +337,19 @@ const ResolutionManagement = ({ navigation, route }) => {
             />
           )}
 
-          {userData.customerType != "BASIC" &&
+          {userData?.customerType != "BASIC" &&
             authorization?.includes(
               PREVILAGES.ASPECT_RATIO.ADD_ASPECT_RATIO
             ) && (
               <View style={Styles.addResolutionView}>
                 <ThemedButton
-                  disabled={userData.customerType == "BASIC" ? true : false}
+                  disabled={userData?.customerType == "BASIC" ? true : false}
                   onClick={() =>
                     navigation.navigate(NAVIGATION_CONSTANTS.ADD_RESOLUTION)
                   }
                   containerStyle={[
                     Styles.themeContainer,
-                    { opacity: userData.customerType == "BASIC" ? 0.5 : 1 },
+                    { opacity: userData?.customerType == "BASIC" ? 0.5 : 1 },
                   ]}
                   title="+ Add Resolution"
                 />

@@ -11,7 +11,7 @@ import {
   Image,
   Platform,
   Pressable,
-  ScrollView,
+  ScrollView,AppState,
   Text,
   TouchableOpacity,
   View,
@@ -34,7 +34,7 @@ import {
   getActiveSiteData,
   getRecentMediaData,
   getUserData,
-  userManagerService,
+  userManagerService,getDeviceGroupByLocation,getDeviceByLocation,
 } from "./DashboardApi";
 import Fontisto from "react-native-vector-icons/Fontisto";
 
@@ -50,16 +50,24 @@ import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
 import { checkIsApprove, getCustomerRole, getWorkFlow } from "../../Services/AxiosService/ApiService";
 import { width } from "../../Helper/scaling";
 import { updateDrawerIndex } from "../../appConfig/Redux/Action/userAction";
+import { PREVILAGES } from "../../Constants/privilages";
+import { json } from "stream/consumers";
+import { fcmService } from "../../NotificationService/FCMService";
+import { localNotificationService } from "../../NotificationService/LocalNotificationService";
+import messaging from '@react-native-firebase/messaging';
 
 const Dashboard = ({ navigation }) => {
   const themeColor = useContext(ThemeContext);
   const Styles = dashboardStyles(themeColor);
+  const [licenseDetails,setLicenseDetails]=useState({});
   const userList = useSelector((state) => state.userReducer.userDetails);
   const userInfo = useSelector((state) => state.userReducer.userRole);
   const userActive = useSelector((state) => state.userReducer.activeSite);
 
   const [userRole,setUseRole]=useState("")
-
+  const { authorization } = useSelector(
+    (state) => state.userReducer
+  );
   const activeSideCount = useSelector((state) => state.userReducer.activeSideCount);
   const [isLoading, setIsLoading] = useState(false);
   const [backPressCount, setBackPressCount] = useState(0);
@@ -76,7 +84,7 @@ const Dashboard = ({ navigation }) => {
   const [locationSelected, setLocationSelected] = useState(null);
   const [recentPlanoSche, setrecentPlanoSche] = useState(null);
   const [mpData, setMPData] = useState(null);
-
+  const [appState, setAppState] = useState(AppState.currentState);
   
   const locationData1 = useSelector(
     (state) => state.CommonReducer.locationData
@@ -84,19 +92,63 @@ const Dashboard = ({ navigation }) => {
   const userData = useSelector(
     (state) => state?.userReducer?.userDetails?.data
   );
+  useEffect(() => {
+    let params = {
+      ids: [],
+    };
+    getDeviceGroupByLocation(params, setIsLoading);
+    getDeviceByLocation(params, setIsLoading);
+  }, []);
+
+
+  const CallingFunction=()=>{
+    setTimeout(() => {
+      getLocationList();
+      getWorkFlow(navigation);
+      checkIsApprove();
+      getCustomerRole();
+      getLicenseDetails()
+    }, 500);
+    userDetail();
+    getSiteData();
+  }
+
+  const handleAppStateChange = async(nextAppState) => {
+    console.log("22222222222222222\n\n ==>",nextAppState)
+    if (nextAppState === 'active') {
+      CallingFunction()
+      if(authorization.length>0){
+        getDashboardDetails();
+      }
+    }
+  };
+
+  useEffect(() => {
+   // navigation.navigate(NAVIGATION_CONSTANTS.TEMPLATE)
+    const subscription=AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      subscription.remove()
+    };
+  }, []);
+
 
   const workFlow = useSelector((state) => state.userReducer.workFlow);
   const isApprover = useSelector((state) => state.userReducer.isApprover);
   const dispatch = useDispatch();
 
-useEffect(()=>{
-if(userInfo){
-  setUseRole(userInfo.userRole[0].roleName)
-}
-},[userInfo])
+  useEffect(()=>{
+    CallingFunction()
+  },[1])
+
+  useEffect(()=>{
+  if(userInfo){
+    setUseRole(userInfo.userRole[0].roleName)
+  }
+  },[userInfo])
 
   useFocusEffect(
     useCallback(() => {
+      console.log("Dash board focuse---->")
       const handleBackPress = () => {
         if (backPressCount === 0) {
           setBackPressCount(1 + backPressCount);
@@ -140,8 +192,9 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
+      console.log("fetchConnectedDisconnectedDevices",error)
       setIsLoading(false)
-      Alert.alert("Error",error.message);
+      // Alert.alert("Error",error.message);
     };
 
     userManagerService.fetchConnectedDisconnectedDevices(
@@ -151,14 +204,21 @@ if(userInfo){
     );
   };
 
-  useEffect(() => {
+ 
+
+  useEffect(() => {    
     const unsubscribe = navigation.addListener("focus", () => {
+      console.log("navigation addListener--->")
+      if(authorization){
+        getDashboardDetails();
+      }
       dispatch(updateDrawerIndex({ index: 0, subIndex: 0 }));
-      getDashboardDetails();
     });
     return unsubscribe;
-  }, []);
+  }, [authorization]);
+
   const [isSchedulerEnabled, setisSchedulerEnabled] = useState(null);
+
   const getDashboardDetails = () => {
     getStorageForKey("is_scheduler_enabled").then((is_scheduler_enabled) => {
       let is_scheduler_enabled1 = "";
@@ -171,30 +231,47 @@ if(userInfo){
       }
 
       setTimeout(() => {
-        getLocationList();
-        getWorkFlow(navigation);
-        checkIsApprove();
-        getCustomerRole();
+        const me=authorization.includes("VIEW_SCHEDULER");
+        console.log("authorization.MEDIA.VIEW_MEDIA)--->sss", me,)
+        if(authorization.includes(PREVILAGES.MEDIA.VIEW_MEDIA)){
+          getRecentMediaData();
+        }
+        if(authorization.includes(PREVILAGES.SCHEDULER.VIEW_SCHEDULER)){
+          console.log("calling the ruuning sch/plano===> sche true------>")
+          getRecentSchedulerPlanogram(1,5,is_scheduler_enabled1);
+        }else if(authorization.includes(PREVILAGES.PLANOGRAM.VIEW_PLANOGRAM)||authorization.includes(PREVILAGES.SCHEDULER.VIEW_SCHEDULER)){
+          console.log("calling the ruuning sch/plano===>")
+          getplanogramLiveData(is_scheduler_enabled1);
+          getplanogramRunningData(is_scheduler_enabled1);
+        }
       }, 500);
-      userDetail();
-      getSiteData();
+      
       setTimeout(() => {
-        getRecentMediaData();
-      }, 100);
-      setTimeout(() => {
-        getRecentCampaignData();
-        getRecentCampaignStringData();
-        getRecentSchedulerPlanogram(1,5,is_scheduler_enabled1);
+        if(authorization.includes(PREVILAGES.CAMPAIGN.VIEW_CAMPAIGN)){
+          getRecentCampaignData();
+        }
+        if(authorization.includes(PREVILAGES.CAMPAIGN_STRING.VIEW_CAMPAIGN_STRING)){
+          getRecentCampaignStringData();
+        }
+        if(authorization.includes(PREVILAGES.SCHEDULER.VIEW_SCHEDULER)){
+          console.log("calling the ruuning sch/plano===> sche true------>")
+          getRecentSchedulerPlanogram(1,5,is_scheduler_enabled1);
+        } 
+        if(authorization.includes(PREVILAGES.PLANOGRAM.VIEW_PLANOGRAM)||authorization.includes(PREVILAGES.SCHEDULER.VIEW_SCHEDULER)){
+          console.log("calling the ruuning sch/plano===>")
+          getplanogramLiveData(is_scheduler_enabled1);
+          getplanogramRunningData(is_scheduler_enabled1);
+        }
       }, 600);
+      
       setTimeout(() => {
-        getRecentInActiveData();
-        getRecentPublishedData();
-        getplanogramLiveData(is_scheduler_enabled1);
-      }, 1500);
-      setTimeout(() => {
-        getplanogramRunningData(is_scheduler_enabled1);
-        getRecentDevices();
-        getRecentInactiveDevices();
+        if(authorization.includes(PREVILAGES.DEVICE.VIEW_DEVICE)){
+          getRecentDevices();
+          getRecentInactiveDevices();
+          getRecentInActiveData();
+          getRecentPublishedData();
+        }
+        
       }, 100);
       setTimeout(() => {
         // fetchApprovedRejectedPlano(is_scheduler_enabled1);
@@ -213,7 +290,7 @@ if(userInfo){
     setIsLoading(true)
     const succussCallBack = async (response) => {
     setIsLoading(false)
-
+      console.log("getRecentMediaData sucess")
       
       if (response) {
         setRecentMedia(response);
@@ -221,7 +298,8 @@ if(userInfo){
     };
     const failureCallBack = (error) => {
       setIsLoading(false)
-      Alert.alert("Error",error.message);
+      console.log("getRecentMediaData error",error)
+      // Alert.alert("Error ",error.message);
     };
     userManagerService.recentMediaList(
       params,
@@ -248,9 +326,10 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
+      console.log("line 329 dashboard")
       setIsLoading(false)
       setIsLoading(false)
-      Alert.alert("Error",error.message);
+      // Alert.alert("Error",error.message);
     };
 
     if (is_scheduler_enabled) {
@@ -302,10 +381,9 @@ if(userInfo){
       currentPage,
       limit,
     };
-    // setIsLoading(true)
     const succussCallBack = async (response) => {
       setIsLoading(false)
-      
+      console.log("get Camapaign Data diaData sucess",)
       if (response && response?.data) {
         setRecentCampaign(response);
       }
@@ -313,7 +391,8 @@ if(userInfo){
 
     const failureCallBack = (error) => {
       setIsLoading(false)
-      Alert.alert("Error",error.message);
+      console.log("getRecent Camapign Data error-->",error)
+      // Alert.alert("Error",error.message);
     };
 
     userManagerService.recentCamapignList(
@@ -331,15 +410,15 @@ if(userInfo){
       currentPage,
       limit,
     };
-    // setIsLoading(true)
     const succussCallBack = async (response) => {
       setIsLoading(false)
       setResentDevices(response);
     };
 
     const failureCallBack = (error) => {
+      console.log("line 419 dashboard")
       setIsLoading(false)
-      Alert.alert("Error",error.message);
+      // Alert.alert("Error",error.message);
     };
 
     userManagerService.recentDevices(params, succussCallBack, failureCallBack);
@@ -353,15 +432,15 @@ if(userInfo){
       currentPage,
       limit,
     };
-    // setIsLoading(true)
     const succussCallBack = async (response) => {
       setIsLoading(false)
       setRecentInactiveDevices(response);
     };
 
     const failureCallBack = (error) => {
+      console.log("line 441 dashboard")
       setIsLoading(false)
-      Alert.alert("Error",error.message);
+      // Alert.alert("Error",error.message);
     };
 
     userManagerService.recentInactiveDevices(
@@ -384,7 +463,8 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
-      Alert.alert("Error",error.message);
+      console.log("line 466 dashboard")
+      // Alert.alert("Error",error.message);
       
     };
 
@@ -415,7 +495,8 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
-      Alert.alert("Error",error.message);
+      console.log("line 498 dashboard")
+      // Alert.alert("Error",error.message);
     };
     if (is_scheduler_enabled == true || is_scheduler_enabled == "true") {
       userManagerService.fetchApprovedRejectedPlanoSch(
@@ -431,6 +512,101 @@ if(userInfo){
       );
     }
   };
+
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log('Received FCM message:', remoteMessage);
+      onNotification(remoteMessage)
+    });
+
+    messaging()
+    .getInitialNotification()
+    .then(remoteMessage => {
+      if (remoteMessage) {
+        openModule(remoteMessage?.notification?.title) 
+      }
+    });
+
+  messaging().onNotificationOpenedApp(remoteMessage => {
+    if (remoteMessage?.notification) {
+      openModule(remoteMessage?.notification?.title)
+    }
+  });
+
+
+    return unsubscribe;
+  }, []);
+
+
+  let notificationMessageId;
+
+  const onNotification = async notify => {
+    let uniquedNotifId = Math.floor(Math.random() * 1000 + 1);
+    const options = {
+      soundName: 'notification_sound.mp3',
+      playSound: true,
+    };
+  
+    if (notify?.notification?.title) {
+     // openModule(notify?.notification?.title)
+      if (notificationMessageId != notify.messageId) {
+        localNotificationService.showNotification(
+          uniquedNotifId,
+          notify?.notification?.title,
+          notify?.notification?.body,
+          notify?.notification,
+          options,
+        );
+        notificationMessageId = notify.messageId;
+      }
+    }
+  };
+
+  const openModule = (title) =>
+    {
+      setTimeout(()=>{
+        localNotificationService.cancelAllLocalNotifications();
+      },8000)
+     
+      if (title == 'Added Template' || title == 'Updated Template' || title == 'Edit Template' || title == 'Deleted Template') {
+        navigation.navigate(NAVIGATION_CONSTANTS.TEMPLATE)
+      }
+      if (title == 'Aspect Ratio Added' ||  title == 'Aspect Ratio Updated' || title == 'Aspect Ratio Deleted') {
+        navigation.navigate(NAVIGATION_CONSTANTS.RESOLUTION_MANAGEMENT)
+      }
+      if (title == 'DEVICE ADDED' || title == 'DEVICE EDITED' || title == 'Delete Device' || title == 'Replace Device') {
+        navigation.navigate(NAVIGATION_CONSTANTS.VIEW_ALL_DEVICES)
+      }
+      if (title == 'Added Campaign String' || title == 'Updated Campaign String'  || title == 'Delete Campaign String' || title == 'Campaign String Approved' || title == 'Campaign String Rejected')  {
+        navigation.navigate(NAVIGATION_CONSTANTS.CAMPAIGN_STRING)
+      }
+      if (title == 'Campaign Added' || title == 'Campaign Updated' || title == 'Campaign Deleted' || title == 'Campaign Approved' || title == 'Campaign Rejected')  {
+        navigation.navigate(NAVIGATION_CONSTANTS.CAMPAIGN)
+      }
+     
+      if (title == 'Media Added' || title == 'Updated Media' || title == 'Delete Media') {
+        navigation.navigate(NAVIGATION_CONSTANTS.MEDIA_LIBRARY)
+      }
+      if (title == 'Add Device Group'  ||  title == 'Updated Device Group'  || title == 'Edit Device Group' || title == 'Delete Device Group') {
+        navigation.navigate(NAVIGATION_CONSTANTS.MEDIA_PLAYER_GROUPS)
+      }
+     
+      if (title == 'Add Scheduler' || title == 'Edit Scheduler' ||  title == 'Updated Scheduler' || title == 'Delete Scheduler' || title == 'Scheduler Approved' || title == 'Scheduler Rejected') {
+        navigation.navigate(NAVIGATION_CONSTANTS.SCHEDULER)
+      }
+      if (title == 'Add Planogram' || title == 'Edit Planogram' || title == 'Updated Planogram'  || title == 'Delete Planogram' || title == 'Planogram Approved' || title == 'Planogram Rejected')  {
+        navigation.navigate(NAVIGATION_CONSTANTS.PLANOGRAM)
+      }
+    }
+
+  const onOpenNotification = async notify => {
+    if (notify?.notification) {
+      openModule(notify?.notification?.title)
+    }
+  };
+
+
 
   const userDetail = async () => {
     let slugId = await getStorageForKey("slugId");
@@ -461,7 +637,8 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
-      Alert.alert("Error",error.message);
+      console.log("line 640 dashboard",error.message)
+      // Alert.alert("Error",error.message);
     };
 
     userManagerService.recentInActiveList(
@@ -484,7 +661,8 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
-      Alert.alert("Error",error.message);
+      console.log("line 664 dashboard",error)
+      // Alert.alert("Error",error.message);
     };
 
     userManagerService.recentPublishedList(
@@ -509,7 +687,8 @@ if(userInfo){
     };
 
     const failureCallBack = (error) => {
-      Alert.alert("Error",error.message);
+      // Alert.alert("Error",error.message);
+      console.log("line 691 dashboard",error)
     };
 
     if (is_scheduler_enabled) {
@@ -534,13 +713,16 @@ if(userInfo){
       slugId: slugId,
     };
     const succussCallBack = async (response) => {
+      console.log("----->setPlanogramLive123",JSON.stringify(response))
       if (response && response?.data) {
+        // console.log("----->setPlanogramLive",JSON.stringify(response.data))
         setPlanogramLive(response.data);
       }
     };
 
     const failureCallBack = (error) => {
-      Alert.alert("Error",error.message)
+      // Alert.alert("Error",error.message)
+      console.log("line 725 dashboard",error)
       
     };
     if (is_scheduler_enabled) {
@@ -557,6 +739,35 @@ if(userInfo){
       );
     }
   };
+
+  const getLicenseDetails=async()=>{
+    let slugId = await getStorageForKey("slugId");
+
+    const params = {
+      slugId: slugId,
+    };
+    const succussCallBack = async (response) => {
+     console.log("rrereer license--->",JSON.stringify(response))
+     if(response?.data){
+      setLicenseDetails(response.data)
+     }
+    };
+
+    const failureCallBack = (error) => {
+      // Alert.alert("Error",error.message)
+      console.log("line 758 dashboard",error,)
+      
+    };
+    if (true) {
+      userManagerService.fetchUserDetails(
+        params,
+        succussCallBack,
+        failureCallBack
+      );
+    }
+
+
+  }
 
   
  
@@ -576,6 +787,7 @@ if(userInfo){
           />
 
           {userRole=="CUSTOMER_ADMIN"&&<LicenseDetails
+            licenseDetails={licenseDetails}
             userList={userList?.data}
             userActive={userActive}
             activeSideCount={activeSideCount}

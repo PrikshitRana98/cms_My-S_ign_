@@ -35,6 +35,11 @@ const CampaignArrangeMedia = ({
   let [regionData1, setRegionData1] = useState([]);
   let [selectedItem, setSelectedItem] = useState(-1);
 
+  const scrollViewRef = React.useRef(null);
+  const scrollToLastItem = () => {
+    scrollViewRef.current.scrollToEnd({ animated: true });
+  };
+
   const units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
   function niceBytes(x) {
     let l = 0,
@@ -55,128 +60,134 @@ const CampaignArrangeMedia = ({
         }}
       >
         <TouchableOpacity
-          style={[Styles.infoStyleImgContainer,{ marginRight: 6 }]}
+          style={[Styles.infoStyleImgContainer, { marginRight: 6 }]}
           onPress={() => {
             setSelectedItem(index);
+            scrollToLastItem()
           }}
         >
           <Image source={edit} style={Styles.infoStyle} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[Styles.infoStyleImgContainer, ]}
+          style={[Styles.infoStyleImgContainer]}
           onPress={() => {
             removeItemFromRegion(index);
+            setSelectedItem(-1)
           }}
         >
           <Image source={InfoImage} style={Styles.infoStyle} />
         </TouchableOpacity>
-        
       </View>
     );
   };
-  
-  const renderCampaign = (item) => {
-    
-    let { key } = item;
-    return (
-      <View key={item.name + key} style={Styles.campaignContainer}>
-        {item?.type === "IMAGE" ? (
-          <>
-            <Image source={{ uri: item.imageUrl }} style={Styles.imageStyle} />
-            {actionButton(key)}
-          </>
-        ) : item?.type === "VIDEO" ? (
-          <>
-            <Image
-              source={{ uri: item.thumbnailUrl }}
-              style={Styles.imageStyle}
-            />
-            {actionButton(key)}
-          </>
-        ) : item?.type === "FACEBOOK" ? (
-          <View
-            style={[
-              Styles.imageStyle,
-              {
-                backgroundColor: "#F2F4FC",
-                justifyContent: "center",
-                alignItems: "center",
-              },
-            ]}
-          >
-            <Image
-              source={{ uri: item.thumbnailUrl }}
-              style={Styles.imageStyleIcon}
-            />
-            {actionButton(key)}
-          </View>
-        ) : item?.type === "DOC" ? (
-          <View
-            style={[
-              Styles.imageStyle,
-              {
-                backgroundColor: "#F2F4FC",
-                justifyContent: "center",
-                alignItems: "center",
-              },
-            ]}
-          >
-            <Image
-              source={require("../../../../Assets/Images/PNG/document.png")}
-              style={Styles.imageStyleIcon}
-            />
-            {actionButton(key)}
-          </View>
-        ) : item?.type === "PDF" ? (
-          <View
-            style={[
-              Styles.imageStyle,
-              {
-                backgroundColor: "#F2F4FC",
-                justifyContent: "center",
-                alignItems: "center",
-              },
-            ]}
-          >
-            <Image
-              source={require("../../../../Assets/Images/PNG/document.png")}
-              style={Styles.imageStyleIcon}
-            />
-            {actionButton(key)}
-          </View>
-        ) : item.type == "AUDIO" ? (
-          <View style={[Styles.imageStyle, Styles.mediaContainerView]}>
-            <Image
-              source={require("../../../../Assets/Images/PNG/music-file.png")}
-              style={Styles.imageStyleIcon}
-            />
-            {actionButton(key)}
-          </View>
-        ) : item.type == "URL" ? (
-          <View style={[Styles.imageStyle, Styles.mediaContainerView]}>
-            <Image
-              source={require("../../../../Assets/Images/PNG/flash.png")}
-              style={Styles.imageStyleIcon}
-            />
-            {actionButton(key)}
-          </View>
-        ) : (
-          item.type === "TEXT" && (
-            <View style={[Styles.imageStyle, Styles.mediaContainerView]}>
-              <Text
-                source={{ uri: item.contentToDisplay?.imageUrl }}
-                style={{ width: "100%" }}
-              >
-                {" "}
-                {item.contentToDisplay?.htmlForMobile}{" "}
-              </Text>
-              {actionButton(key)}
-            </View>
-          )
-        )}
 
-        <AppText style={Styles.videoName}>{item.name}</AppText>
+  const renderCampaign = (item, index) => {
+    let { key } = item;
+
+    return (
+      <View >
+        <View key={item.name + index} style={[Styles.campaignContainer,{borderColor:"red",borderWidth:selectedItem==index?1:0,height: moderateScale(150),}]}>
+          {item?.type === "IMAGE" ? (
+            <>
+              <Image
+                source={{ uri: item.imageUrl }}
+                style={Styles.imageStyle}
+              />
+              {actionButton(index)}
+            </>
+          ) : item?.type === "VIDEO" ? (
+            <>
+              <Image
+                source={{ uri: item.thumbnailUrl }}
+                style={Styles.imageStyle}
+              />
+              {actionButton(index)}
+            </>
+          ) : item?.type === "FACEBOOK" ? (
+            <View
+              style={[
+                Styles.imageStyle,
+                {
+                  backgroundColor: "#F2F4FC",
+                  justifyContent: "center",
+                  alignItems: "center",
+                },
+              ]}
+            >
+              <Image
+                source={{ uri: item.thumbnailUrl }}
+                style={Styles.imageStyleIcon}
+              />
+              {actionButton(index)}
+            </View>
+          ) : item?.type === "DOC" ? (
+            <View
+              style={[
+                Styles.imageStyle,
+                {
+                  backgroundColor: "#F2F4FC",
+                  justifyContent: "center",
+                  alignItems: "center",
+                },
+              ]}
+            >
+              <Image
+                source={require("../../../../Assets/Images/PNG/document.png")}
+                style={Styles.imageStyleIcon}
+              />
+              {actionButton(index)}
+            </View>
+          ) : item?.type === "PDF" ? (
+            <View
+              style={[
+                Styles.imageStyle,
+                {
+                  backgroundColor: "#F2F4FC",
+                  justifyContent: "center",
+                  alignItems: "center",
+                },
+              ]}
+            >
+              <Image
+                source={require("../../../../Assets/Images/PNG/document.png")}
+                style={Styles.imageStyleIcon}
+              />
+              {actionButton(index)}
+            </View>
+          ) : item.type == "AUDIO" ? (
+            <View style={[Styles.imageStyle, Styles.mediaContainerView]}>
+              <Image
+                source={require("../../../../Assets/Images/PNG/music-file.png")}
+                style={Styles.imageStyleIcon}
+              />
+              {actionButton(index)}
+            </View>
+          ) : item.type == "URL" ? (
+            <View style={[Styles.imageStyle, Styles.mediaContainerView]}>
+              <Image
+                source={require("../../../../Assets/Images/PNG/flash.png")}
+                style={Styles.imageStyleIcon}
+              />
+              {actionButton(index)}
+            </View>
+          ) : (
+            item.type === "TEXT" && (
+              <View style={[Styles.imageStyle, Styles.mediaContainerView]}>
+                <Text
+                  source={{ uri: item.contentToDisplay?.imageUrl }}
+                  style={{ width: "100%" }}
+                >
+                  {" "}
+                  {item.contentToDisplay?.htmlForMobile}{" "}
+                </Text>
+                {actionButton(index)}
+              </View>
+            )
+          )}
+
+          <AppText style={Styles.videoName} numberOfLines={2}>{item.name}</AppText>
+        </View>
       </View>
     );
   };
@@ -185,45 +196,53 @@ const CampaignArrangeMedia = ({
     let regionData11 = data[activateRegion].regionData;
     let regionData12 = data[activateRegion].globalRegionContentPlaylistContents;
     let data12 = [...regionData11];
-    console.log("unchange Data",data12)
-    data12.forEach((object, index) => {
-      object.key = index;
-      console.log("eeee",object)
-    });
-    setRegionData(data12);
+    console.log("unchange arrage Data---->", regionData12);
+
+    const dataWithKeys = data12.map((item, index) => ({
+      ...item,
+      key: `unique_key_${index}`,
+    }));
+
+    setRegionData(dataWithKeys);
     setRegionData1(regionData12);
-    
   }, []);
 
   const removeItemFromRegion = (index) => {
+    console.log(
+      "index of remove ms----->",
+      index,
+      regionData1[index]?.durationInSeconds
+    );
     if (regionData.length == 1) {
       setSelectedItem(-1);
     }
     regionData.splice(index, 1);
     setRegionData([...regionData]);
     regionData1.splice(index, 1);
-    setRegionData1([...regionData]);
+    console.log("after of remove ms----->", index, JSON.stringify(regionData1));
+    setRegionData1([...regionData1]);
   };
 
   const onSave = () => {
     onSubmitArrangeData(regionData, regionData1);
     setCmpArrangeModal(false);
-  };  
+  };
 
   const onDragStart = (data1212) => {
-    console.log("DragStart", data1212);
+    console.log("DragStart", );
   };
   const onDragRelease = (updateData) => {
-    console.log("updateData updateData", updateData);
-    let contentArr = []
-    updateData.map((value,index)=>{
-      const foundItem = regionData1.find(item => item.mediaDetailId === value.mediaDetailId);
+    // console.log("updateData updateData", updateData);
+    let contentArr = [];
+    updateData.map((value, index) => {
+      const foundItem = regionData1.find(
+        (item) => item.mediaDetailId === value.mediaDetailId
+      );
       contentArr.push(foundItem);
-    })
+    });
     setRegionData(updateData);
     setRegionData1(contentArr);
   };
-
 
   return (
     <Portal>
@@ -234,7 +253,9 @@ const CampaignArrangeMedia = ({
           justifyContent: "flex-end",
         }}
       >
-        <ScrollView>
+        <ScrollView ref={scrollViewRef}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={Styles.mainContainer}>
             <View style={Styles.campaignContainerView}>
               <Pressable
@@ -283,17 +304,17 @@ const CampaignArrangeMedia = ({
                         textDecorationLine: "underline",
                       }}
                     >
-                      Media setting:-
+                      Media Setting:-
                     </Text>
                     <View
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        marginTop:20
+                        marginTop: 20,
                       }}
                     >
-                      <View style={{width:"48%"}}>
+                      <View style={{ width: "48%" }}>
                         <AppText style={Styles.labelText}>Order</AppText>
                         <AppTextInput
                           containerStyle={Styles.eventTitleInput}
@@ -305,30 +326,37 @@ const CampaignArrangeMedia = ({
                           keyboardType="numeric"
                           textInputStyle={{
                             fontSize: moderateScale(15),
+                            color:"#C0C0C0"
                           }}
                         />
                       </View>
-                      <View style={{width:"48%"}}>
-                        <AppText style={Styles.labelText}>Duration (in seconds)</AppText>
-                      <AppTextInput
-                        containerStyle={Styles.eventTitleInput}
-                        isEditable={regionData1[selectedItem]?.mediaType=="VIDEO"? false : true}
-                        placeHolderText="Duration"
-                        value={
-                          regionData1[
-                            selectedItem
-                          ]?.durationInSeconds?.toString() || 5
-                        }
-                        placeholderTextColor={themeColor.placeHolder}
-                        keyboardType="numeric"
-                        onChangeText={(txt) => {
-                          regionData1[selectedItem].durationInSeconds = txt;
-                          setRegionData1([...regionData1]);
-                        }}
-                        textInputStyle={{
-                          fontSize: moderateScale(15),
-                        }}
-                      />
+                      <View style={{ width: "48%" }}>
+                        <AppText style={Styles.labelText}>
+                          Duration (in seconds)
+                        </AppText>
+                        <AppTextInput
+                          containerStyle={Styles.eventTitleInput}
+                          isEditable={
+                            regionData1[selectedItem]?.mediaType == "VIDEO"
+                              ? false
+                              : true
+                          }
+                          placeHolderText="Duration"
+                          value={
+                            regionData1[
+                              selectedItem
+                            ]?.durationInSeconds?.toString() || 5
+                          }
+                          placeholderTextColor={themeColor.placeHolder}
+                          keyboardType="numeric"
+                          onChangeText={(txt) => {
+                            regionData1[selectedItem].durationInSeconds = txt;
+                            setRegionData1([...regionData1]);
+                          }}
+                          textInputStyle={{
+                            fontSize: moderateScale(15),
+                          }}
+                        />
                       </View>
                     </View>
                     <AppText style={Styles.labelText}>Display Mode</AppText>
@@ -363,14 +391,16 @@ const CampaignArrangeMedia = ({
                         flexDirection: "row",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        marginTop:20
+                        marginTop: 20,
                       }}
                     >
                       <View style={{ width: "48%" }}>
-                      <AppText style={Styles.labelText}>Entry</AppText>
+                        <AppText style={Styles.labelText}>Entry</AppText>
                         <CampaignDropDown
                           placeHolderText={"Entry"}
-                          value={regionData1[selectedItem]?.entryAnimationId || 0}
+                          value={
+                            regionData1[selectedItem]?.entryAnimationId || 0
+                          }
                           dataList={[
                             { label: "Left to right", value: 1 },
                             { label: "Right to left", value: 2 },
@@ -386,10 +416,12 @@ const CampaignArrangeMedia = ({
                         />
                       </View>
                       <View style={{ width: "48%" }}>
-                      <AppText style={Styles.labelText}>Exit</AppText>
+                        <AppText style={Styles.labelText}>Exit</AppText>
                         <CampaignDropDown
                           placeHolderText={"Exit"}
-                          value={regionData1[selectedItem]?.exitAnimationId || 0}
+                          value={
+                            regionData1[selectedItem]?.exitAnimationId || 0
+                          }
                           dataList={[
                             { label: "Left to right", value: 1 },
                             { label: "Right to left", value: 2 },
@@ -397,7 +429,6 @@ const CampaignArrangeMedia = ({
                             { label: "Top to bottom", value: 4 },
                             { label: "Bottom to top", value: 5 },
                           ]}
-                          
                           onChange={(item) => {
                             regionData1[selectedItem].exitAnimationId =
                               item.value;
@@ -410,15 +441,19 @@ const CampaignArrangeMedia = ({
                 </>
               )}
 
-              <View >
+              <View>
                 <ThemedButton
-                  containerStyle={{ marginTop: 35,marginBottom:15, marginHorizontal: 10 }}
+                  containerStyle={{
+                    marginTop: 35,
+                    marginBottom: 15,
+                    marginHorizontal: 10,
+                  }}
                   onClick={() => {
                     onSave();
                   }}
                   title={"Save"}
                 />
-                <View style={{height:20}}></View>
+                <View style={{ height: 20 }}></View>
               </View>
             </View>
           </View>
@@ -446,7 +481,7 @@ const ModalStyles = (COLORS) =>
       alignItems: "center",
       justifyContent: "space-between",
       padding: moderateScale(10),
-      width:'80%',
+      width: "80%",
     },
     bodyHeaderText: {
       fontSize: moderateScale(14),
@@ -455,7 +490,7 @@ const ModalStyles = (COLORS) =>
       marginVertical: moderateScale(10),
       color: COLORS.textColor,
     },
-    labelText:{
+    labelText: {
       color: COLORS.placeHolder,
       fontSize: moderateScale(14),
     },
@@ -493,6 +528,7 @@ const ModalStyles = (COLORS) =>
       borderWidth: moderateScale(1),
       borderColor: "#0000000F",
       overflow: "hidden",
+      // backgroundColor:"red",
     },
     imageStyle: {
       height: moderateScale(100),

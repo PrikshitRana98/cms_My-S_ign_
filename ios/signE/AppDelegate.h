@@ -1,6 +1,7 @@
 #import <RCTAppDelegate.h>
 #import <UIKit/UIKit.h>
-
-@interface AppDelegate : RCTAppDelegate
+#import <Firebase.h>
+#import <UserNotifications/UNUserNotificationCenter.h>
+@interface AppDelegate : RCTAppDelegate<RCTBridgeDelegate, UNUserNotificationCenterDelegate>
 
 @end

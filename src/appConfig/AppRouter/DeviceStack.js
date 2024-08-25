@@ -11,6 +11,7 @@ import EditRegisterDevice from '../../screens/RegisterDevice/EditRegisterDevice'
 import DraggableCompents from '../../screens/MediaPlayerGroups/DraggableCompents';
 import EditUnRegisterDevice from '../../screens/RegisterDevice/EditUnRegisterDevice';
 import ReplaceDevice from '../../screens/RegisterDevice/ReplaceDevice';
+import Policy from '../../screens/Settings/Policy';
 
 
 const DeviceStack = props => {
@@ -69,6 +70,10 @@ const DeviceStack = props => {
       <Stack.Screen
         name={NAVIGATION_CONSTANTS.ADD_MEDIA_PLAYER_GROUP}
         component={AddMediaPlayerGroup}
+      />
+      <Stack.Screen
+        name={NAVIGATION_CONSTANTS.POLICY}
+        component={Policy}
       />
     </Stack.Navigator>
   );

@@ -220,6 +220,7 @@ const scheduleStyles = (COLORS) =>
       justifyContent: "center",
       marginRight: moderateScale(2),
       width: width1,
+      paddingBottom:10,
     }),
     textcontainer: {
       width: "97%",

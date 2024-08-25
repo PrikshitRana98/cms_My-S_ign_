@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
   BackHandler,
+  Dimensions,
 } from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -59,6 +60,7 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { SchedulerManagerService } from "../Scheduler/SchedulerApi";
 import { FONT_FAMILY } from "../../Assets/Fonts/fontNames";
+import SuccessModal from "../../Components/Molecules/SuccessModal";
 // import DropDownPicker from 'react-native-dropdown-picker';
 
 let cdate = new Date();
@@ -79,7 +81,8 @@ const RadioButton = ({ label, isSelected, onSelect }) => {
 const AddNewPlanogram = ({ navigation }) => {
   const themeColor = useThemeContext();
   const Styles = CommonStyles(themeColor);
-
+  const [isSuccessModal,setIsSuccessModal]=useState(false)
+  const [msg,setMsg]=useState("");
   const [currentSection, setCurrentSection] = useState(0);
   const [searchType, setSearchType] = useState("location");
   const [campaignType, setCampaignType] = useState(0);
@@ -89,8 +92,12 @@ const AddNewPlanogram = ({ navigation }) => {
   const [endDate, setEndDate] = useState(null);
   const [isTimePickerVisible, setTimePickerVisible] = useState(false);
   const [startTime, setStartTime] = useState(null);
+  const [startTimeSec, setStartTimeSec] = useState(null);
+  const [iseditname, setiseditname] = useState(false);
   const [isTimePickerVisible1, setTimePickerVisible1] = useState(false);
   const [endTime, setEndTime] = useState(null);
+  const [endTimeSec, setEndTimeSec] = useState(null);
+
   const [ratioId, setRatioId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
@@ -117,6 +124,7 @@ const AddNewPlanogram = ({ navigation }) => {
       console.log('device back')
   })
   }, [navigation])
+  
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -222,6 +230,16 @@ const AddNewPlanogram = ({ navigation }) => {
     });
   }, [currentSection]);
 
+  function formatTime(timeString) {
+    if(timeString){
+      const timeArray = timeString.split(':');
+    const formattedTime = timeArray.slice(0, 2).join(':');
+    return formattedTime;
+    }else{
+      return "-"
+    }
+  }
+
   const getIcon = (checked) => (
     <>
       {checked ? (
@@ -299,6 +317,235 @@ const AddNewPlanogram = ({ navigation }) => {
       </View>
     );
   };
+
+  const handlePlonogram1 = (satus) => {
+    let hasError = false;
+    if (!title.trim() || title === "") {
+      setError((prev) => {
+        return { ...prev, planogramTitle: "Please enter planogram title" };
+      });
+      hasError = true;
+    }
+    if (!state?.ratioId) {
+      setError((prev) => {
+        return { ...prev, asspectRatio: "Please select aspect ratio" };
+      });
+      hasError = true;
+    }
+
+    if (!startDate) {
+      setError((prev) => {
+        return { ...prev, startDate: "Select start date" };
+      });
+      hasError = true;
+    }
+    if (!endDate) {
+      setError((prev) => {
+        return { ...prev, endDate: "Select end date" };
+      });
+      hasError = true;
+    }
+    if (!startTime) {
+      setError((prev) => {
+        return { ...prev, startTime: "Select start time" };
+      });
+      hasError = true;
+    }
+    if (!endTime) {
+      setError((prev) => {
+        return { ...prev, endTime: "Select end time" };
+      });
+      hasError = true;
+    }
+
+    if (
+      moment(startDate).format("DD-MM-YYYY") <
+      moment(new Date()).format("DD-MM-YYYY")
+    ) {
+      setError((prev) => {
+        return {
+          ...prev,
+          startDate:
+            "Start date should be equals to or greater than current date.",
+        };
+      });
+      hasError = true;
+    }
+
+    if (
+      moment(endDate).format("YYYY-MM-DD") <
+      moment(startDate).format("YYYY-MM-DD")
+    ) {
+      setError((prev) => {
+        return {
+          ...prev,
+          endDate: "End date can not be lesser than to start date.",
+        };
+      });
+      hasError = true;
+    }
+
+    if (
+      moment(startDate).format("DD-MM-YYYY") <=
+      moment(new Date()).format("DD-MM-YYYY")
+    ) {
+      if (
+        moment(startTime).format("HHmmss") <=
+        moment(new Date()).format("HHmmss")
+      ) {
+        console.log(
+          startTime <= new Date(),
+          "kjhgfcgvhbjk",
+          moment(startTime).format("HHmmss"),
+          "**",
+          moment(new Date()).format("hh:mm:ss")
+        );
+        setError((prev) => {
+          return { ...prev, startTime: "Please select future time." };
+        });
+        hasError = true;
+        // Alert.alert("Validation Error", "Please select future time.");
+        // return false;
+      } else if (
+        moment(startTime).format("HHmmss") > moment(new Date()).format("HHmmss")
+      ) {
+        setError((prev) => {
+          return { ...prev, startTime: "" };
+        });
+      }
+    }
+
+    if (
+      moment(endTime).format("HHmmss") < moment(startTime).format("HHmmss") &&
+      moment(endDate).format("YYYY-MM-DD") ==
+        moment(startDate).format("YYYY-MM-DD")
+    ) {
+      setError((prev) => {
+        return {
+          ...prev,
+          endTime: "End time can not be lesser than start time.",
+        };
+      });
+      hasError = true;
+    } else if (
+      moment(endTime).format("HHmmss") > moment(startTime).format("HHmmss")
+    ) {
+      setError((prev) => {
+        return { ...prev, endTime: "" };
+      });
+    }
+
+    if (hasError) {
+      return false;
+    }
+
+    console.log("ha err");
+
+    if (recState.recurrenceOnOff && recurrence.recurrenceType === null) {
+      Alert.alert("Validation Error", "Please select recurrence type.");
+      return false;
+    }
+
+    if (
+      (recurrence.recurrenceType === "HOURLY" &&
+        recurrence.repeatHours === null) ||
+      recurrence.repeatHours === ""
+    ) {
+      Alert.alert("Validation Error", "Please select repeat hours.");
+      return false;
+    }
+
+    if (
+      (recurrence.recurrenceType === "MINUTE" &&
+        recurrence.repeatMinutes === null) ||
+      recurrence.repeatMinutes === ""
+    ) {
+      Alert.alert("Validation Error", "Please select repeat minute.");
+      return false;
+    }
+
+    if (recurrence.recurrenceType === "WEEKLY") {
+      if (recurrence.repeatWeeks === null) {
+        Alert.alert("Validation Error", "Please select repeat weeks.");
+        return false;
+      }
+      if (recurrence.weekly.length === 0) {
+        Alert.alert("Validation Error", "Please select week days.");
+        return false;
+      }
+    }
+
+    if (
+      recurrence.recurrenceType === "MONTHLY" &&
+      recurrence.monthly === null
+    ) {
+      Alert.alert("Validation Error", "Please select month.");
+      return false;
+    }
+
+    EditSubmitPress(satus);
+  };
+
+  const EditSubmitPress = async (satus) => {
+    let slugId = await getStorageForKey("slugId");
+
+    const params = {
+      slugId: slugId,
+      planogramId: state.planogramId,
+      isPriorityPlanogram: state?.isPriorityPlanogram,
+      data: {
+        planogramId: state.planogramId,
+        state: satus,
+        title: title,
+        aspectRatioId: state?.ratioId,
+        recurrence: recurrence,
+        startTime: startTime
+        .toLocaleString("en-US", { hour12: false })
+        .split(",")[1]
+        .trim(),
+        endTime: endTime
+        .toLocaleString("en-US", { hour12: false })
+        .split(",")[1]
+        .trim(),
+        startDate:startDate.toISOString().split("T")[0],
+        endDate:endDate.toISOString().split("T")[0],
+        isPriorityPlanogram: state?.isPriorityPlanogram,
+      },
+    };
+
+    setIsLoading(true);
+    const succussCallBack = async (response) => {
+      setIsLoading(false);
+      // console.log("response", response);
+      if (response) {
+        getDeviceLogic(response?.data?.planogramId);
+        if(satus=="DRAFT"){
+          navigation.goBack()
+        }else{
+         if (currentSection !== 3) {
+            setCurrentSection(currentSection + 1);
+          }
+        }
+        setResponseValue(response);
+      }
+    };
+    const failureCallBack = (error) => {
+      // console.log("response", error);
+      setIsLoading(false);
+      if (error?.data?.length > 0) {
+        alert(error?.data[0]?.message);
+      } else {
+        alert(error?.message);
+      }
+    };
+    
+    PlanogramManagerService.editPlanogram(
+      params,
+      succussCallBack,
+      failureCallBack
+    );
+  };
+
 
   const handlePlonogram = async (status) => {
     let hasError = false;
@@ -468,12 +715,17 @@ const AddNewPlanogram = ({ navigation }) => {
      
       setIsLoading(false);
       if (response?.code == 200) {
+        
         setState((prev) => {
           return { ...prev, planogramId: response?.data?.planogramId };
         });
         getDeviceLogic(response?.data?.planogramId);
-        if (currentSection !== 3) {
-          setCurrentSection(currentSection + 1);
+        if(status=="DRAFT"){
+          navigation.goBack()
+        }else{
+         if (currentSection !== 3) {
+            setCurrentSection(currentSection + 1);
+          }
         }
       } else {
         if (response?.data?.length > 0) {
@@ -533,6 +785,7 @@ const AddNewPlanogram = ({ navigation }) => {
     };
 
     const failureCallBack = (error) => {
+      console.log("line 559 prik eror",JSON.stringify(error))
       setIsLoading(false);
       if (error?.data?.length > 0) {
         alert(error?.data[0]?.message);
@@ -685,6 +938,7 @@ const AddNewPlanogram = ({ navigation }) => {
 
     setIsLoading(true);
     const succussCallBack = async (response) => {
+      console.log("711---<",JSON.stringify(response))
       setIsLoading(false);
       if (response?.code == 200) {
         planogramCampaignStringList();
@@ -703,11 +957,15 @@ const AddNewPlanogram = ({ navigation }) => {
       }
     };
     const failureCallBack = (error) => {
+      console.log("733---<",JSON.stringify(error.response))
       setIsLoading(false);
       if (error?.data?.length > 0) {
-        alert(error?.data[0]?.message);
-      } else {
-        alert(error?.message);
+        Alert.alert("Error",error?.data[0]?.message);
+      } else if(error?.response){
+        Alert.alert("Error",error.response.data.message)
+      }
+      else {
+        Alert.alert("Error",error?.message);
       }
     };
 
@@ -721,6 +979,78 @@ const AddNewPlanogram = ({ navigation }) => {
   const resetLocationAndGroupDevice = () => {
     setState({ ...state, selectedDeviceGroups: [] });
     setSelectedLocations([]);
+  };
+
+  const removeCampaignIndex = (index) => {
+    if (state.selectedCampaign.length > 0) {
+      const dataArr=[...state.selectedCampaign] 
+      dataArr.splice(index, 1);
+      setState({...state,selectedCampaign:dataArr});
+    }
+  };
+
+  const removeCampaignStringIndex = (index) => {
+    if (state.selectedCampaignString.length > 0) {
+      const dataArr=[...state.selectedCampaignString] 
+      dataArr.splice(index, 1);
+      setState({...state,selectedCampaignString:dataArr});
+    }
+  };
+
+  const RemoveCampaign = ({ item, index }) => {
+    const ind=index
+    const data1=state.campaignString.filter((item)=>state.selectedCampaignString.includes(item.campaignStringId))
+    console.log("Remove Campaign--->",state.selectedCampaignString,data1)
+    if(item){
+      if (campaignType == 0) {
+        return (
+          <View
+            style={{
+              width:Dimensions.get("window").width*0.8,
+              backgroundColor:"white",
+              borderWidth:1,
+              flexDirection:"row",
+              justifyContent:"space-between",
+              alignItems:"center",
+              borderRadius:10,paddingLeft:16,
+              paddingRight:5,
+              marginVertical:5,}}
+          >
+            <Text style={{color:"black",textAlignVertical:"center"}} numberOfLines={1}>
+              {item.campaignTitle!=undefined?item.campaignTitle:""}
+            </Text>
+            <TouchableOpacity
+                style={{borderWidth:0,height:38,alignItems:'center',justifyContent:'center'}}
+                onPress={(index) => {
+                  removeCampaignIndex(ind);
+                  console.log("close",ind)
+                }}
+              >
+                <Entypo name="cross" color="#000" size={25} />
+              </TouchableOpacity>
+          </View>
+        );
+      } else {
+        return (
+          <View
+            style={{width:Dimensions.get("window").width*0.8,backgroundColor:"white",borderWidth:1,borderRadius:10,paddingHorizontal:16 ,marginVertical:5,flexDirection:"row",justifyContent:"space-between"}}
+          >
+            <Text style={{color:"black",textAlignVertical:"center"}} numberOfLines={1}>
+            {item.campaignStringName}
+            </Text>
+            <TouchableOpacity
+                style={{borderWidth:0,height:38,alignItems:'center',justifyContent:'center'}}
+                onPress={(index) => {
+                  removeCampaignStringIndex(ind);
+                  console.log("close",ind)
+                }}
+              >
+                <Entypo name="cross" color="#000" size={25} />
+              </TouchableOpacity>
+          </View>
+        );
+      }
+    }
   };
   // ==============End 2nd step========================
 
@@ -738,7 +1068,8 @@ const AddNewPlanogram = ({ navigation }) => {
               : Styles.campaignStrContainer
           }
         >
-          <AppText style={Styles.dateText}>{item.campaignTitle}</AppText>
+          <AppText  numberOfLines={1} style={Styles.dateText}>{item.campaignTitle}</AppText>
+        
           <AppText style={Styles.dateText}>
             {`Duration:  ${item.duration}s`}
           </AppText>
@@ -756,6 +1087,7 @@ const AddNewPlanogram = ({ navigation }) => {
               : Styles.campaignStrContainer
           }
         >
+          
           <AppText style={Styles.dateText}>{item.campaignStringName}</AppText>
           <AppText style={Styles.dateText}>
             {`Duration:  ${item.displayDurationInSeconds}s`}
@@ -838,13 +1170,14 @@ const AddNewPlanogram = ({ navigation }) => {
     );
   };
   const addCampaign = (item, index) => {
+    console.log("add item-->",item)
     if (state?.selectedCampaign?.includes(item.campaignId)) {
       let remainingArr = state?.selectedCampaign?.filter(
         (fitem) => fitem != item.campaignId
       );
       setState({
         ...state,
-        selectedCampaign: [...remainingArr],
+        selectedCampaign: [...state.selectedCampaign, item.campaignId],
       });
     } else {
       setState({
@@ -854,23 +1187,33 @@ const AddNewPlanogram = ({ navigation }) => {
     }
   };
   const addCampaignString = (item, index) => {
-    if (state?.selectedCampaignString?.includes(item.campaignStringId)) {
-      let remainingArr = state?.selectedCampaignString?.filter(
-        (fitem) => fitem != item.campaignStringId
-      );
-      setState({
-        ...state,
-        selectedCampaignString: [...remainingArr],
-      });
-    } else {
-      setState({
-        ...state,
-        selectedCampaignString: [
-          ...state.selectedCampaignString,
-          item.campaignStringId,
-        ],
-      });
-    }
+    setState({
+      ...state,
+      selectedCampaignString: [
+        ...state.selectedCampaignString,
+        item.campaignStringId,
+      ],
+    });
+    // if (state?.selectedCampaignString?.includes(item.campaignStringId)) {
+    //   let remainingArr = state?.selectedCampaignString?.filter(
+    //     (fitem) => fitem != item.campaignStringId
+    //   );
+    //   setState({
+    //     ...state,
+    //     selectedCampaignString: [
+    //       ...state.selectedCampaignString,
+    //       item.campaignStringId,
+    //     ],
+    //   });
+    // } else {
+    //   setState({
+    //     ...state,
+    //     selectedCampaignString: [
+    //       ...state.selectedCampaignString,
+    //       item.campaignStringId,
+    //     ],
+    //   });
+    // }
   };
   const isCampaignCheckde = (id) => {
     if (state.selectedCampaign.includes(id)) {
@@ -1047,7 +1390,7 @@ const AddNewPlanogram = ({ navigation }) => {
         <View style={[Styles.nameView, { width: "25%" }]}>
           <AppText
             style={Styles.nameText}
-          >{`${item.startTime} - ${item.endTime}`}</AppText>
+          >{`${formatTime(item.startTime)}- ${formatTime(item.endTime)}`}</AppText>
         </View>
         <View style={[Styles.nameView, { width: "25%" }]}>
           <AppText style={Styles.nameText}>{item.state}</AppText>
@@ -1135,7 +1478,18 @@ const AddNewPlanogram = ({ navigation }) => {
     const succussCallBack = async (response) => {
       setIsLoading(false);
       if (response?.code === 200) {
+        setIsSuccessModal(true)
+        setMsg("Planogram saved successfully");
         btnSubmittedStatus(btnType);
+        // Alert.alert("Info!", "Planogram saved successfully", [
+        //   {
+        //     text: "Ok",
+        //     onPress: () => {
+        //       btnSubmittedStatus(btnType);
+        //     },
+        //   },
+        // ]);
+        
       } else {
         if (response?.data?.length > 0) {
           alert(response?.data[0]?.message);
@@ -1164,14 +1518,15 @@ const AddNewPlanogram = ({ navigation }) => {
   };
   const btnSubmittedStatus = async (btnType) => {
     if (btnType == "DRAFT") {
-      Alert.alert("Info!", "Planogram saved successfully", [
-        {
-          text: "Ok",
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      navigation.goBack();
+      // Alert.alert("Info!", "Planogram saved successfully", [
+      //   {
+      //     text: "Ok",
+      //     onPress: () => {
+      //       navigation.goBack();
+      //     },
+      //   },
+      // ]);
       return false;
     }
 
@@ -1183,14 +1538,16 @@ const AddNewPlanogram = ({ navigation }) => {
     const succussCallBack = async (response) => {
       setIsLoading(false);
       if (response.code == 20) {
-        Alert.alert("Info!", "Planogram saved successfully", [
-          {
-            text: "Ok",
-            onPress: () => {
-              navigation.goBack();
-            },
-          },
-        ]);
+        console.log("Planogram saved successfully")
+        navigation.goBack();
+        // Alert.alert("Info!", "Planogram saved successfully", [
+        //   {
+        //     text: "Ok",
+        //     onPress: () => {
+        //       navigation.goBack();
+        //     },
+        //   },
+        // ]);
       } else if (response.code == 21) {
         Alert.alert("Error!", response?.message, [
           {
@@ -1240,6 +1597,7 @@ const AddNewPlanogram = ({ navigation }) => {
       const textData = txt.toUpperCase();
       return itemData.indexOf(textData) > -1;
     });
+    console.log("fdata-->",JSON.stringify(fData))
     setState((pre) => {
       return { ...pre, campaigns: fData };
     });
@@ -1664,9 +2022,10 @@ const AddNewPlanogram = ({ navigation }) => {
   };
   const searchLocationApi = async (searchLoc) => {
     const slugId = await getStorageForKey("slugId");
-    setIsLoading(true);
+    // setIsLoading(true);
     const successCallBack = async (response) => {
-      setLocationData(response.data);
+      console.log("------->",response.data)
+      setLocationData(response.data[0]);
       setIsLoading(false);
     };
 
@@ -1713,7 +2072,7 @@ const AddNewPlanogram = ({ navigation }) => {
       setIsLoading(false);
     };
 
-    setIsLoading(true);
+    // setIsLoading(true);
     SchedulerManagerService.searchList(
       params,
       succussCallBack,
@@ -1748,11 +2107,15 @@ const AddNewPlanogram = ({ navigation }) => {
     setDatePickerVisible(false);
   };
   const [scrollenable, setscrollenable] = useState(true);
+  const onComplete=()=>{
+    setIsSuccessModal(false)
+  }
 
   return (
     <View style={Styles.mainContainer}>
       <Loader visible={isLoading} />
       <ClockHeader />
+      {isSuccessModal&&<SuccessModal Msg={msg} onComplete={onComplete}/>}
       <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{flex: 1,marginBottom:(Platform.OS === 'ios' && isKeyboardOpen) ? 100 : 0 ,}}
@@ -1916,9 +2279,9 @@ const AddNewPlanogram = ({ navigation }) => {
                   title="Start Time*"
                   text={
                     startTime
-                      ? startTime
-                          .toLocaleString("en-US", { hour12: false })
-                          .split(",")[1]
+                      ? formatTime(startTime
+                      .toLocaleString("en-US", { hour12: false })
+                      .split(",")[1])
                       : "Select Time"
                   }
                   isIcon
@@ -1937,7 +2300,12 @@ const AddNewPlanogram = ({ navigation }) => {
                   date={startTime != null ? startTime : defaultDate}
                   // minimumDate={new Date()}
                   onConfirm={(date) => {
-                    setStartTime(date);
+                    const updatedDate = new Date(date);
+
+                    updatedDate.setSeconds(0);
+                    console.log("daaa-->",updatedDate,moment(date).format("hh:mm "))
+                    setStartTime(updatedDate);
+                    setStartTimeSec(date)
                     setTimePickerVisible(false);
                     setError((prev) => {
                       return { ...prev, startTime: "" };
@@ -1953,9 +2321,9 @@ const AddNewPlanogram = ({ navigation }) => {
                   title="End Time*"
                   text={
                     endTime
-                      ? endTime
-                          .toLocaleString("en-US", { hour12: false })
-                          .split(",")[1]
+                      ? formatTime(endTime
+                        .toLocaleString("en-US", { hour12: false })
+                        .split(",")[1])
                       : "Select time"
                   }
                   isIcon
@@ -1971,10 +2339,15 @@ const AddNewPlanogram = ({ navigation }) => {
                   open={isTimePickerVisible1}
                   date={endTime != null ? endTime : defaultDate}
                   onDateChange={(time) => {
-                    setEndTime(time);
+                    const updatedDate = new Date(time);
+                    updatedDate.setSeconds(0);
+                    setEndTime(updatedDate);
                   }}
                   onConfirm={(date) => {
-                    setEndTime(date);
+                    const updatedDate = new Date(date);
+                    updatedDate.setSeconds(0);
+                    setEndTime(updatedDate);
+                    setEndTimeSec(date)
                     setTimePickerVisible1(false);
                     setError((prev) => {
                       return { ...prev, startTime: "" };
@@ -2086,6 +2459,7 @@ const AddNewPlanogram = ({ navigation }) => {
                       }}
                       onChangeText={(value) => {
                         setSearchLocation(value);
+                        searchLocationApi(value);
                       }}
                     />
                     {locationData1 && (
@@ -2118,6 +2492,10 @@ const AddNewPlanogram = ({ navigation }) => {
                       </AppText>
                       <View style={Styles.iconContainer}>
                         <Pressable
+                          style={{
+                            backgroundColor:showGroupOrMedia=="group"?themeColor.appBackground:"white",
+                            padding:5
+                          }}
                           onPress={() => {
                             setShowGroupOrMedia("group");
                           }}
@@ -2125,7 +2503,7 @@ const AddNewPlanogram = ({ navigation }) => {
                           <FontAwesome
                             name={"navicon"}
                             size={25}
-                            color={themeColor.themeColor}
+                            color={showGroupOrMedia=="group"? themeColor.themeColor:"grey"}
                           />
                         </Pressable>
                         <Pressable
@@ -2136,9 +2514,11 @@ const AddNewPlanogram = ({ navigation }) => {
                           <Image
                             source={AppIcon}
                             style={{
-                              height: 40,
-                              width: 40,
-                              tintColor: themeColor.themeColor,
+                              height: 35,
+                              width: 35,
+                              tintColor: showGroupOrMedia=="device"?themeColor.themeColor:"grey",
+                              backgroundColor:showGroupOrMedia=="device"?themeColor.appBackground:"white",
+                              marginLeft:5
                             }}
                           />
                         </Pressable>
@@ -2170,6 +2550,7 @@ const AddNewPlanogram = ({ navigation }) => {
                       }}
                       onChangeText={(value) => {
                         setsearchtext(value);
+                        makeUrlData(showGroupOrMedia);
                       }}
                     />
                     {showGroupOrMedia == "group" ? (
@@ -2183,6 +2564,7 @@ const AddNewPlanogram = ({ navigation }) => {
                                     btnAddDeviceGroup(item.deviceGroupId);
                                   }}
                                   name={item.deviceGroupName}
+                                  containerStyle={{maxWidth:"95%"}}
                                   icon={() =>
                                     getIcon(
                                       isGroupDeviceCheked(item.deviceGroupId)
@@ -2277,12 +2659,15 @@ const AddNewPlanogram = ({ navigation }) => {
                           {`No data found`}
                         </AppText>
                       ) : (
-                        <FlatList
-                          scrollEnabled={false}
-                          numColumns={2}
-                          data={state.campaigns}
-                          renderItem={renderCampaign}
-                        />
+                        <View style={{width:'100%'}}>
+                            <FlatList
+                              scrollEnabled={false}
+                              numColumns={2}
+                              data={state.campaigns}
+                              renderItem={renderCampaign}
+                            />
+                        </View>
+                        
                       )}
                     </>
                   </>
@@ -2310,17 +2695,61 @@ const AddNewPlanogram = ({ navigation }) => {
                             {`No data found`}
                           </AppText>
                         ) : (
-                          <FlatList
-                            scrollEnabled={false}
-                            numColumns={2}
-                            data={state.campaignString}
-                            renderItem={renderCampaign}
-                          />
+                          <View style={{width:'100%'}}>
+                            <FlatList
+                              scrollEnabled={false}
+                              numColumns={2}
+                              data={state.campaignString}
+                              renderItem={renderCampaign}
+                            />
+                          </View>
                         )}
                       </>
                     </>
                   )
                 }
+              </View>
+              <View style={{padding:16}}>
+              {campaignType == 0 && state.selectedCampaign.length>0 ? (
+                <>
+                  <AppText style={{ color: "black", fontSize:moderateScale(18) ,marginVertical:5 }}>
+                    Selected Campaigns
+                  </AppText>
+                  
+                  <View style={{marginBottom:10,width:"100%"}}>
+                    <Separator/>
+                  </View>
+                  <View style={{alignItems:"center"}}>
+                    <FlatList
+                      scrollEnabled={false}
+                      numColumns={1}
+                      data={state.selectedCampaign.map((id) => state.campaigns.find((item) => item.campaignId === id))}
+                      renderItem={RemoveCampaign}
+                      
+                    />
+                  </View>
+                </>
+              ) : (
+                campaignType == 1 &&state.selectedCampaignString.length>0&&(
+                  <>
+                  <AppText style={{ color: "black", fontSize:moderateScale(18) ,marginVertical:5 }}>
+                    Selected Campaign Strings
+                  </AppText>
+                  
+                  <View style={{marginBottom:10,width:"100%"}}>
+                    <Separator/>
+                  </View>
+                  <View style={{alignItems:"center"}}>
+                  <FlatList
+                    scrollEnabled={false}
+                    numColumns={1}
+                    data={[...state.selectedCampaignString.map((id) => state.campaignString.find((item) => item.campaignStringId === id))]}
+                    renderItem={RemoveCampaign}
+                  />
+                  </View>
+                </>
+                )
+              )}
               </View>
             </View>
           )}
@@ -2389,7 +2818,14 @@ const AddNewPlanogram = ({ navigation }) => {
         numOfButtons={3}
         onPressSave={() => {
           if (currentSection == 0) {
-            handlePlonogram("SUBMITTED");
+            if (iseditname == true) {
+              handlePlonogram1("SUBMITTED");
+            }
+            else
+            {
+              handlePlonogram("SUBMITTED");
+            }
+           
           } else if (currentSection == 1) {
             btnSubmitDeviceGroup();
           } else if (currentSection == 2) {
@@ -2414,7 +2850,12 @@ const AddNewPlanogram = ({ navigation }) => {
         onPressCancel={() => {
           if (currentSection === 0 ) {
             navigation.goBack();
-          } else {
+          } 
+          if (currentSection === 1 ) {
+            setiseditname(true);
+            setCurrentSection(currentSection - 1);
+          } 
+          else {
             setCurrentSection(currentSection - 1);
           }
         }}

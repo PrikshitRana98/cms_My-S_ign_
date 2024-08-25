@@ -3,13 +3,17 @@ import {
   Alert,
   FlatList,
   Image,
-  Pressable,KeyboardAvoidingView,Platform,Keyboard,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
   BackHandler,
+  Dimensions,
 } from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -32,7 +36,10 @@ import { useThemeContext } from "../../appConfig/AppContext/themeContext";
 import CommonStyles from "./style";
 import DatePicker from "react-native-date-picker";
 import { Dropdown } from "react-native-element-dropdown";
-import { getResolutionData, getWorkFlow } from "../../Services/AxiosService/ApiService";
+import {
+  getResolutionData,
+  getWorkFlow,
+} from "../../Services/AxiosService/ApiService";
 import { useSelector } from "react-redux";
 import { headers, CampaignData, ListHeaders, campaignData } from "./contants";
 import CampaignDropDown from "../../Components/Organisms/CMS/Campaign/CampaignDropDown";
@@ -56,27 +63,32 @@ import { Checkbox, Switch } from "react-native-paper";
 import { FONT_FAMILY } from "../../Assets/Fonts/fontNames";
 import { SchedulerManagerService } from "../Scheduler/SchedulerApi";
 
-import Icon from 'react-native-vector-icons/MaterialIcons'; // You can choose any icon from react-native-vector-icons library
+import Icon from "react-native-vector-icons/MaterialIcons"; // You can choose any icon from react-native-vector-icons library
+import DraggableGrid from "react-native-draggable-grid";
+import SuccessModal from "../../Components/Molecules/SuccessModal";
 
 const RadioButton = ({ label, isSelected, onSelect }) => {
   return (
-    <TouchableOpacity onPress={onSelect} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <TouchableOpacity
+      onPress={onSelect}
+      style={{ flexDirection: "row", alignItems: "center" }}
+    >
       <MaterialIcons
-        name={isSelected ? 'radio-button-checked' : 'radio-button-unchecked'}
+        name={isSelected ? "radio-button-checked" : "radio-button-unchecked"}
         size={24}
-        color={isSelected ? 'purple' : 'purple'}
+        color={isSelected ? "purple" : "purple"}
       />
-      <Text style={{ marginLeft: 8,color:'black' }}>{label}</Text>
+      <Text style={{ marginLeft: 8, color: "black" }}>{label}</Text>
     </TouchableOpacity>
   );
 };
-
 
 const PlanogramEdit = ({ navigation, route }) => {
   const themeColor = useThemeContext();
   const Styles = CommonStyles(themeColor);
   const { planogramItem } = route.params;
 
+  
   const [currentSection, setCurrentSection] = useState(0);
   const [searchType, setSearchType] = useState("location");
   const [campaignType, setCampaignType] = useState(0);
@@ -122,7 +134,7 @@ const PlanogramEdit = ({ navigation, route }) => {
     pCamp: [],
     pCampStr: [],
     planogramPriorityList: [],
-    isPriorityPlanogram:false
+    isPriorityPlanogram: false,
   });
   const [error, setError] = useState({
     planogramTitle: "",
@@ -141,23 +153,30 @@ const PlanogramEdit = ({ navigation, route }) => {
   const deviceData1 = useSelector((state) => state.CommonReducer.deviceData);
   const [deviceData, setdeviceData] = useState(deviceData1);
 
+  const [successModal,setSuccessModal]=useState(false)
+  const [successMsg,setSuccessMsg]=useState("")
+
+  const onComplete = () => {
+    setSuccessModal(false);
+  };
+
   const scrollRef = useRef(null);
 
   const workFlow = useSelector((state) => state.userReducer.workFlow);
 
-  useEffect(()=>{
-    makeUrlData("")
-  },[1])
+  useEffect(() => {
+    makeUrlData("");
+  }, [1]);
 
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', async() => {
-      console.log("device back");
-      navigation.goBack();
-
-  })
-    
-  }, [navigation])
-
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      async () => {
+        console.log("device back");
+        navigation.goBack();
+      }
+    );
+  }, [navigation]);
 
   useEffect(() => {
     getWorkFlow(navigation);
@@ -183,6 +202,8 @@ const PlanogramEdit = ({ navigation, route }) => {
       const etime123 = ned + " " + planogramItem.endTime;
       setStartTime(new Date(stime));
       setEndTime(new Date(etime123));
+
+      console.log("SAesasasasa---->",ned,stime,etime123)
     }
 
     getLocationList();
@@ -212,6 +233,23 @@ const PlanogramEdit = ({ navigation, route }) => {
     id: resolution.campaignId,
   }));
 
+  const removeCampaignIndex = (index) => {
+    if (state.selectedCampaign.length > 0) {
+      const dataArr=[...state.selectedCampaign] 
+      console.log("before====>",dataArr);
+      dataArr.splice(index, 1);
+      console.log("after====>",dataArr);
+      setState({...state,selectedCampaign:dataArr});
+    }
+  };
+  const removeCampaignStringIndex = (index) => {
+    if (state.selectedCampaignString.length > 0) {
+      const dataArr=[...state.selectedCampaignString] 
+      dataArr.splice(index, 1);
+      setState({...state,selectedCampaignString:dataArr});
+    }
+  };
+
   const handleDropdownChange = (item) => {
     console.log("item=", item.value);
     setRatioId(item.value);
@@ -222,17 +260,16 @@ const PlanogramEdit = ({ navigation, route }) => {
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
-  
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
+      "keyboardDidShow",
       () => {
         setIsKeyboardOpen(true);
       }
     );
 
     const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+      "keyboardDidHide",
       () => {
         setIsKeyboardOpen(false);
       }
@@ -243,9 +280,8 @@ const PlanogramEdit = ({ navigation, route }) => {
     };
   }, []);
 
-
   const handleDateChange = (date) => {
-    console.log("end date",date)
+    console.log("end date", date);
     setStartDate(date);
     setDatePickerVisible(false);
     setError((prev) => {
@@ -257,7 +293,7 @@ const PlanogramEdit = ({ navigation, route }) => {
   };
 
   const handleDateChange1 = (date) => {
-    console.log("end date",date)
+    console.log("end date", date);
     setEndDate(date);
     setDatePickerVisible1(false);
     setError((prev) => {
@@ -269,7 +305,6 @@ const PlanogramEdit = ({ navigation, route }) => {
   };
 
   const handleTimeChange = (date) => {
-   
     setStartTime(date);
     setTimePickerVisible(false);
   };
@@ -278,7 +313,6 @@ const PlanogramEdit = ({ navigation, route }) => {
     setEndTime(date);
     setTimePickerVisible1(false);
   };
-
 
   const getIcon = (checked) => (
     <>
@@ -336,7 +370,7 @@ const PlanogramEdit = ({ navigation, route }) => {
     setIsLoading(true);
     const succussCallBack = async (response) => {
       setIsLoading(false);
-      // console.log("---device logic---", response);
+      console.log("---device logic---", response);
       if (response.code == 200) {
         setState({
           ...state,
@@ -450,7 +484,6 @@ const PlanogramEdit = ({ navigation, route }) => {
       moment(startDate).format("DD-MM-YYYY") <
       moment(new Date()).format("DD-MM-YYYY")
     ) {
-      
       setError((prev) => {
         return {
           ...prev,
@@ -465,7 +498,6 @@ const PlanogramEdit = ({ navigation, route }) => {
       moment(endDate).format("YYYY-MM-DD") <
       moment(startDate).format("YYYY-MM-DD")
     ) {
-     
       setError((prev) => {
         return {
           ...prev,
@@ -474,40 +506,62 @@ const PlanogramEdit = ({ navigation, route }) => {
       });
       hasError = true;
     }
- 
 
     if (
       moment(startDate).format("DD-MM-YYYY") <=
       moment(new Date()).format("DD-MM-YYYY")
     ) {
-      if (moment(startTime).format("HHmmss") <= moment(new Date()).format("HHmmss")) {
-        console.log(startTime <= new Date(),"kjhgfcgvhbjk",moment(startTime).format("HHmmss"),"**", moment(new Date()).format("hh:mm:ss"));
+      if (
+        moment(startTime).format("HHmmss") <=
+        moment(new Date()).format("HHmmss")
+      ) {
+        console.log(
+          startTime <= new Date(),
+          "kjhgfcgvhbjk",
+          moment(startTime).format("HHmmss"),
+          "**",
+          moment(new Date()).format("hh:mm:ss")
+        );
         setError((prev) => {
-          return { ...prev, startTime:"Please select future time." };
+          return { ...prev, startTime: "Please select future time." };
         });
         hasError = true;
         // Alert.alert("Validation Error", "Please select future time.");
         // return false;
-      }else if (moment(startTime).format("HHmmss") > moment(new Date()).format("HHmmss")){
+      } else if (
+        moment(startTime).format("HHmmss") > moment(new Date()).format("HHmmss")
+      ) {
         setError((prev) => {
-          return { ...prev, startTime:"" };
+          return { ...prev, startTime: "" };
         });
       }
     }
 
-    if (moment(endTime).format("HHmmss") < moment(startTime).format("HHmmss")&&
-    (moment(endDate).format("YYYY-MM-DD") ==moment(startDate).format("YYYY-MM-DD"))) {
-      setError((prev)=>{return {...prev,endTime:'End time can not be lesser than start time.'}})
-      hasError=true;
-    }else if(moment(endTime).format("HHmmss") > moment(startTime).format("HHmmss")){
-      setError((prev)=>{return {...prev,endTime:''}})
+    if (
+      moment(endTime).format("HHmmss") < moment(startTime).format("HHmmss") &&
+      moment(endDate).format("YYYY-MM-DD") ==
+        moment(startDate).format("YYYY-MM-DD")
+    ) {
+      setError((prev) => {
+        return {
+          ...prev,
+          endTime: "End time can not be lesser than start time.",
+        };
+      });
+      hasError = true;
+    } else if (
+      moment(endTime).format("HHmmss") > moment(startTime).format("HHmmss")
+    ) {
+      setError((prev) => {
+        return { ...prev, endTime: "" };
+      });
     }
 
     if (hasError) {
       return false;
     }
 
-    console.log("ha err")
+    console.log("ha err");
 
     if (recState.recurrenceOnOff && recurrence.recurrenceType === null) {
       Alert.alert("Validation Error", "Please select recurrence type.");
@@ -560,21 +614,15 @@ const PlanogramEdit = ({ navigation, route }) => {
     const params = {
       slugId: slugId,
       planogramId: planogramItem.planogramId,
-      isPriorityPlanogram:state?.isPriorityPlanogram,
+      isPriorityPlanogram: state?.isPriorityPlanogram,
       data: {
         planogramId: planogramItem.planogramId,
         state: satus,
         title: title,
         aspectRatioId: ratioId,
         recurrence: recurrence,
-        startTime: startTime
-          .toLocaleString("en-US", { hour12: false })
-          .split(",")[1]
-          .trim(),
-        endTime: endTime
-          .toLocaleString("en-US", { hour12: false })
-          .split(",")[1]
-          .trim(),
+        startTime: moment(startTime).format("hh:mm:ss"),
+        endTime: moment(endTime).format("hh:mm:ss"),
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
         isPriorityPlanogram: true,
@@ -586,7 +634,13 @@ const PlanogramEdit = ({ navigation, route }) => {
       // console.log("response", response);
       if (response) {
         getDeviceLogic(response?.data?.planogramId);
-        setCurrentSection(currentSection + 1);
+        if(satus=="DRAFT"){
+          navigation.goBack()
+        }else{
+         if (currentSection !== 3) {
+            setCurrentSection(currentSection + 1);
+          }
+        }
         setResponseValue(response);
       }
     };
@@ -599,14 +653,13 @@ const PlanogramEdit = ({ navigation, route }) => {
         alert(error?.message);
       }
     };
+    
     PlanogramManagerService.editPlanogram(
       params,
       succussCallBack,
       failureCallBack
     );
   };
-  
-
 
   const setSelectedCmpAndCmpStr = (layoutAndLayoutStrings) => {
     let cmp = [];
@@ -622,8 +675,8 @@ const PlanogramEdit = ({ navigation, route }) => {
       });
       setState({
         ...state,
-        selectedCampaign: cmp,
-        selectedCampaignString: cmpStr,
+        selectedCampaign: [...cmp],
+        selectedCampaignString: [...cmpStr],
       });
     }
   };
@@ -636,9 +689,13 @@ const PlanogramEdit = ({ navigation, route }) => {
       planogramId: id,
     };
     const succussCallBack = async (response) => {
-      console.log("getPlanogramDetails------", response.data);
+      // console.log("getPlanogramDetails------", response.data);
       if (response && response.data) {
-        setState({ ...state, planogramData: response.data,isPriorityPlanogram:response?.data?.isPriorityPlanogram });
+        setState({
+          ...state,
+          planogramData: response.data,
+          isPriorityPlanogram: response?.data?.isPriorityPlanogram,
+        });
         let res = response.data;
         console.log(
           "res?.recurrence?.repeatEvent",
@@ -775,6 +832,7 @@ const PlanogramEdit = ({ navigation, route }) => {
     console.log("device_logicdevice_logicdevice_logic==", device_logic);
     console.log("deviceLogicData==", state?.deviceLogicData);
 
+
     let postData = "";
     if (device_logic[0].key == "DEVICES") {
       postData = {
@@ -822,13 +880,13 @@ const PlanogramEdit = ({ navigation, route }) => {
       postData: postData,
     };
 
-    console.log("state", state);
-    console.log("postData1", postData1);
+    // console.log("state", state);
+    // console.log("postData1", postData1);
     setIsLoading(true);
     const succussCallBack = async (response) => {
       setIsLoading(false);
-      console.log("btnSubmitDeviceGroup succ", response);
-
+      console.log("btnSubmitDeviceGroup succ--->", response);
+      
       if (response?.code == 200) {
         setSelectedCmpAndCmpStr(state.planogramData?.layoutAndLayoutStrings);
         planogramCampaignStringList();
@@ -869,6 +927,101 @@ const PlanogramEdit = ({ navigation, route }) => {
     setSelectedLocations([]);
   };
   //  3rd stepp=============
+  const onDragStartCampaign = (data1212) => {
+    console.log("DragStart", data1212);
+  };
+  const onDragReleaseCampagin = (updateData) => {
+    console.log("updateData updateData", updateData);
+    // let contentArr = []
+    // updateData.map((value,index)=>{
+    //   const foundItem = regionData1.find(item => item.mediaDetailId === value.mediaDetailId);
+    //   contentArr.push(foundItem);
+    // })
+    // setRegionData(updateData);
+    // setRegionData1(contentArr);
+  };
+  // const [camapignFilterData,setcamapignFilterData]=useState([])
+  function filterArraysCamp() {
+    let arrCmp=[]
+    let arrCmpS=[]
+    arrCmp=state.selectedCampaign.map((id) => state.campaigns.find((item) => item.campaignId === id))
+    setCmpArrSelecte([...arrCmp])
+    arrCmpS=state.selectedCampaignString.map((id) => state.campaignString.find((item) => item.campaignStringId === id))
+    setCsArrSelecte([...arrCmpS])
+    console.log("selected lenght",state.selectedCampaign,arrCmp.length,state.selectedCampaignString,arrCmpS.length)
+  }
+  const [csArrSelected,setCsArrSelecte]=useState([]);
+  const [cmpArrSelected,setCmpArrSelecte]=useState([]);
+  
+  useEffect(()=>{
+    if(state.campaigns.length>0||state.campaignString.length>0){
+      filterArraysCamp()
+      console.log("dadsds--->",state.selectedCampaign)
+    }
+  },[state.campaigns,state.campaignString,state.selectedCampaign,state.selectedCampaignString])
+
+  const RemoveCampaign = ({ item, index }) => {
+    const ind=index
+    if(item){
+      if (campaignType == 0) {
+        return (
+          <View
+            style={{
+              width:Dimensions.get("window").width*0.85,
+              backgroundColor:"white",
+              borderWidth:1,
+              flexDirection:"row",
+              justifyContent:"space-between",
+              alignItems:"center",
+              borderRadius:10,paddingLeft:16,
+              paddingRight:5,
+              marginVertical:5,}}
+          >
+         
+            <Text style={{color:"black",textAlign: 'center',}} numberOfLines={1}>
+            {item?.campaignTitle==undefined?" ":item?.campaignTitle}
+            </Text>
+           
+            <TouchableOpacity
+                style={{borderWidth:0,height:38,alignItems:'center',justifyContent:'center'}}
+                onPress={(index) => {
+                  removeCampaignIndex(ind);
+                  console.log("close",ind)
+                }}
+              >
+                <Entypo name="cross" color="#000" size={25} />
+              </TouchableOpacity>
+          </View>
+        );
+      } else {
+        return (
+          <View
+            style={{
+              width:Dimensions.get("window").width*0.85,
+              backgroundColor:"white",borderWidth:1,
+              borderRadius:10,paddingLeft:16,
+              paddingRight:5,
+              flexDirection:"row",justifyContent:"space-between",
+              marginVertical:5
+            }}
+          >
+            <Text style={{color:"black",textAlignVertical:"center"}} numberOfLines={1}>
+            {item.campaignStringName}
+            </Text>
+            <TouchableOpacity
+                style={{borderWidth:0,height:38,alignItems:'center',justifyContent:'center'}}
+                onPress={(index) => {
+                  removeCampaignStringIndex(ind);
+                  console.log("close",ind)
+                }}
+              >
+                <Entypo name="cross" color="#000" size={25} />
+              </TouchableOpacity>
+          </View>
+        );
+      }
+    }
+  };
   const renderCampaign = ({ item, index }) => {
     if (campaignType == 0) {
       return (
@@ -882,7 +1035,10 @@ const PlanogramEdit = ({ navigation, route }) => {
               : Styles.campaignStrContainer
           }
         >
-          <AppText style={Styles.dateText}>{item.campaignTitle}</AppText>
+          <Text style={Styles.dateText} numberOfLines={1}>
+          {item.campaignTitle} 
+           
+          </Text>
           <AppText style={Styles.dateText}>
             {`Duration:  ${item.duration}s`}
           </AppText>
@@ -894,7 +1050,6 @@ const PlanogramEdit = ({ navigation, route }) => {
           onPress={() => {
             addCampaignString(item, index);
           }}
-
           style={
             isCampaignStringCheckde(item.campaignStringId)
               ? Styles.campaignStrContainerActive
@@ -903,7 +1058,7 @@ const PlanogramEdit = ({ navigation, route }) => {
         >
           <AppText style={Styles.dateText}>{item.campaignStringName}</AppText>
           <AppText style={Styles.dateText}>
-            {`Duration:  ${item.displayDurationInSeconds}s`}
+            {`Duration: ${item.displayDurationInSeconds}s`}
           </AppText>
         </Pressable>
       );
@@ -916,9 +1071,9 @@ const PlanogramEdit = ({ navigation, route }) => {
       slugId: slugId,
     };
     const succussCallBack = async (response) => {
-      console.log("campaign------", response);
+      // console.log("campaign------", response.data);
       if (response && response.data) {
-        console.log("response.data", response.data);
+        // filterArraysCamp()
         setState((prev) => {
           return {
             ...prev,
@@ -987,13 +1142,19 @@ const PlanogramEdit = ({ navigation, route }) => {
   };
   const addCampaign = (item, index) => {
     if (state?.selectedCampaign?.includes(item.campaignId)) {
-      let remainingArr = state?.selectedCampaign?.filter(
-        (fitem) => fitem != item.campaignId
-      );
+      // let remainingArr = state?.selectedCampaign?.filter(
+      //   (fitem) => fitem != item.campaignId
+      // );
+      // setState({
+      //   ...state,
+      //   selectedCampaign: [...remainingArr],
+      // });
+      console.log(state.selectedCampaign)
       setState({
         ...state,
-        selectedCampaign: [...remainingArr],
+        selectedCampaign: [...state.selectedCampaign, item.campaignId],
       });
+      
     } else {
       setState({
         ...state,
@@ -1008,7 +1169,10 @@ const PlanogramEdit = ({ navigation, route }) => {
       );
       setState({
         ...state,
-        selectedCampaignString: [...remainingArr],
+        selectedCampaignString: [
+          ...state.selectedCampaignString,
+          item.campaignStringId,
+        ],
       });
     } else {
       setState({
@@ -1191,8 +1355,7 @@ const PlanogramEdit = ({ navigation, route }) => {
             style={[
               Styles.nameText,
               {
-                marginLeft: item.title != title?15:2,
-                
+                marginLeft: item.title != title ? 15 : 2,
               },
             ]}
           >
@@ -1207,7 +1370,7 @@ const PlanogramEdit = ({ navigation, route }) => {
         <View style={[Styles.nameView, { width: "25%" }]}>
           <AppText
             style={Styles.nameText}
-          >{`${item.startTime} - ${item.endTime}`}</AppText>
+          >{`${item?.startTime?item?.startTime.split(":").splice(0,2).join(":"):"-"} - ${item.endTime?item?.endTime.split(":").splice(0,2).join(":"):"-"}`}</AppText>
         </View>
         <View style={[Styles.nameView, { width: "25%" }]}>
           <AppText style={Styles.nameText}>{item.state}</AppText>
@@ -1239,7 +1402,7 @@ const PlanogramEdit = ({ navigation, route }) => {
     };
     setIsLoading(true);
     const succussCallBack = async (response) => {
-      console.log("getPlangogramPriority string------", response);
+      
       setIsLoading(false);
       if (response?.code === 200) {
         let plData = response?.data;
@@ -1295,9 +1458,12 @@ const PlanogramEdit = ({ navigation, route }) => {
     };
     setIsLoading(true);
     const succussCallBack = async (response) => {
-      console.log("getPlangogramPriority string------", response);
+      
       setIsLoading(false);
       if (response?.code === 200) {
+        setSuccessModal(true)
+        setSuccessMsg("Planogram updated successfully");
+        
         btnSubmittedStatus(btnType);
       } else {
         if (response?.data?.length > 0) {
@@ -1328,14 +1494,15 @@ const PlanogramEdit = ({ navigation, route }) => {
   };
   const btnSubmittedStatus = async (btnType) => {
     if (btnType == "DRAFT") {
-      Alert.alert("Info!", "Planogram update successfully", [
-        {
-          text: "Ok",
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-      ]);
+      navigation.goBack();
+      // Alert.alert("Success", "Planogram update successfully", [
+      //   {
+      //     text: "Ok",
+      //     onPress: () => {
+      //       navigation.goBack();
+      //     },
+      //   },
+      // ]);
       return false;
     }
 
@@ -1348,15 +1515,17 @@ const PlanogramEdit = ({ navigation, route }) => {
       console.log("camp response", response);
       setIsLoading(false);
       if (response.code == 20) {
-        Alert.alert("Info!", "Planogram update successfully", [
-          {
-            text: "Ok",
-            onPress: () => {
-              navigation.goBack();
-            },
-          },
-        ]);
-      }else if(response.code == 21){
+        console.log("Planogram saved successfully")
+        navigation.goBack();
+        // Alert.alert("Success", "Planogram update successfully", [
+        //   {
+        //     text: "Ok",
+        //     onPress: () => {
+        //       navigation.goBack();
+        //     },
+        //   },
+        // ]);
+      } else if (response.code == 21) {
         Alert.alert("Error!", response?.message, [
           {
             text: "Ok",
@@ -1457,24 +1626,24 @@ const PlanogramEdit = ({ navigation, route }) => {
   const [targetValue, setTargetValue] = useState("");
 
   const optionValuesMin = Array.from({ length: 60 }, (_, index) => {
-    if(index==0){
-      return { label: `Repeat Every`, value:null }
-    }else{
-      return { label: `${index}`, value: index }
+    if (index == 0) {
+      return { label: `Repeat Every`, value: null };
+    } else {
+      return { label: `${index}`, value: index };
     }
   });
   const optionValuesHours = Array.from({ length: 13 }, (_, index) => {
-    if(index==0){
-      return { label: `Repeat Every`, value:null }
-    }else{
-      return { label: `${index}`, value: index }
+    if (index == 0) {
+      return { label: `Repeat Every`, value: null };
+    } else {
+      return { label: `${index}`, value: index };
     }
   });
   const optionValuesWeekly = Array.from({ length: 6 }, (_, index) => {
-    if(index==0){
-      return { label: `Repeat Every`, value:null }
-    }else{
-      return { label: `${index}`, value: index }
+    if (index == 0) {
+      return { label: `Repeat Every`, value: null };
+    } else {
+      return { label: `${index}`, value: index };
     }
   });
   const weekArra = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
@@ -1667,40 +1836,41 @@ const PlanogramEdit = ({ navigation, route }) => {
           <View>
             {recState.recurrenceOnOff && showIntervalMinuteCheckBox && (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                 <RadioButton label="Interval" 
-                 isSelected={recurrence.recurrenceType === "MINUTE"} 
-                 onSelect={() =>  setRecurrence({ ...recurrence, recurrenceType: "MINUTE" })} />
-     
+                <RadioButton
+                  label="Interval"
+                  isSelected={recurrence.recurrenceType === "MINUTE"}
+                  onSelect={() =>
+                    setRecurrence({ ...recurrence, recurrenceType: "MINUTE" })
+                  }
+                />
               </View>
             )}
 
             {recState.recurrenceOnOff && showIntervalHourlyCheckBox && (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-               
-<RadioButton label="Interval" 
-                 isSelected={ recurrence.recurrenceType === "HOURLY"} 
-                 onSelect={() =>  setRecurrence({ ...recurrence, recurrenceType: "HOURLY" })} />
-     
-
-
-
-               
+                <RadioButton
+                  label="Interval"
+                  isSelected={recurrence.recurrenceType === "HOURLY"}
+                  onSelect={() =>
+                    setRecurrence({ ...recurrence, recurrenceType: "HOURLY" })
+                  }
+                />
               </View>
             )}
 
             {recState.recurrenceOnOff && startDate && endDate ? (
               getBetweenDays(startDate, endDate) > 7 ? (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  
-                  <RadioButton label="Weekly" 
-                 isSelected={ recurrence.recurrenceType === "WEEKLY"} 
-                 onSelect={() =>    setRecurrence({
-                  ...recurrence,
-                  recurrenceType: "WEEKLY",
-                })} />
-
-
-                
+                  <RadioButton
+                    label="Weekly"
+                    isSelected={recurrence.recurrenceType === "WEEKLY"}
+                    onSelect={() =>
+                      setRecurrence({
+                        ...recurrence,
+                        recurrenceType: "WEEKLY",
+                      })
+                    }
+                  />
                 </View>
               ) : null
             ) : null}
@@ -1708,15 +1878,16 @@ const PlanogramEdit = ({ navigation, route }) => {
             {recState.recurrenceOnOff && startDate && endDate ? (
               getBetweenDays(startDate, endDate) > 30 ? (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                 
-                    <RadioButton label="Monthly" 
-                 isSelected={ recurrence.recurrenceType === "MONTHLY"} 
-                 onSelect={() =>     setRecurrence({
-                  ...recurrence,
-                  recurrenceType: "MONTHLY",
-                })} />
-
-                 
+                  <RadioButton
+                    label="Monthly"
+                    isSelected={recurrence.recurrenceType === "MONTHLY"}
+                    onSelect={() =>
+                      setRecurrence({
+                        ...recurrence,
+                        recurrenceType: "MONTHLY",
+                      })
+                    }
+                  />
                 </View>
               ) : null
             ) : null}
@@ -1724,17 +1895,21 @@ const PlanogramEdit = ({ navigation, route }) => {
               //============================== add disable code here ===================================================
               recState.recurrenceOnOff &&
                 recurrence.recurrenceType === "HOURLY" && (
-                  <><CampaignDropDown
-                    dataList={optionValuesHours}
-                    placeHolderText="Repeat Every"
-                    containerStyle={Styles.textcontainer}
-                    placeholderTextColor="#000000"
-                    onChange={(e) => {
-                      changeRecurrence("repeatHours", e.value);
-                    }}
-                    value={recurrence.repeatHours}
-                  />
-                  <AppText style={{color:'#000',fontSize:12}}>hour(s) (computed from start time)</AppText></>
+                  <>
+                    <CampaignDropDown
+                      dataList={optionValuesHours}
+                      placeHolderText="Repeat Every"
+                      containerStyle={Styles.textcontainer}
+                      placeholderTextColor="#000000"
+                      onChange={(e) => {
+                        changeRecurrence("repeatHours", e.value);
+                      }}
+                      value={recurrence.repeatHours}
+                    />
+                    <AppText style={{ color: "#000", fontSize: 12 }}>
+                      hour(s) (computed from start time)
+                    </AppText>
+                  </>
                 )
             }
 
@@ -1742,16 +1917,20 @@ const PlanogramEdit = ({ navigation, route }) => {
               // add disable code here
               recState.recurrenceOnOff &&
                 recurrence.recurrenceType === "MINUTE" && (
-                  <><CampaignDropDown
-                    dataList={optionValuesMin}
-                    placeHolderText="Repeat Every"
-                    containerStyle={Styles.textcontainer}
-                    onChange={(e) => {
-                      changeRecurrence("repeatMinutes", e.value);
-                    }}
-                    value={recurrence.repeatMinutes}
-                  />
-                  <AppText style={{color:'#000',fontSize:12}}>minute(s) (computed from start time)</AppText></>
+                  <>
+                    <CampaignDropDown
+                      dataList={optionValuesMin}
+                      placeHolderText="Repeat Every"
+                      containerStyle={Styles.textcontainer}
+                      onChange={(e) => {
+                        changeRecurrence("repeatMinutes", e.value);
+                      }}
+                      value={recurrence.repeatMinutes}
+                    />
+                    <AppText style={{ color: "#000", fontSize: 12 }}>
+                      minute(s) (computed from start time)
+                    </AppText>
+                  </>
                 )
             }
 
@@ -1839,10 +2018,10 @@ const PlanogramEdit = ({ navigation, route }) => {
 
   const searchLocationApi = async (searchLoc) => {
     const slugId = await getStorageForKey("slugId");
-    setIsLoading(true);
+    // setIsLoading(true);
     const successCallBack = async (response) => {
-      console.log("location success", response.data.childNode);
-      setLocationData(response.data);
+      console.log("location success", JSON.stringify(response.data));
+      setLocationData(response.data[0]);
       setIsLoading(false);
     };
 
@@ -1873,7 +2052,7 @@ const PlanogramEdit = ({ navigation, route }) => {
       endpoint: endPoint,
     };
     const succussCallBack = async (response) => {
-      console.log('device-management response',response)
+      
       setIsLoading(false);
       if (type == "group") {
         setdeviceGroupData(response?.result);
@@ -1882,7 +2061,7 @@ const PlanogramEdit = ({ navigation, route }) => {
       }
     };
     const failureCallBack = (error) => {
-      console.log('device-management error',error)
+      console.log("device-management error", error);
 
       if (error?.data?.length > 0) {
         alert(error?.data[0]?.message);
@@ -1892,7 +2071,7 @@ const PlanogramEdit = ({ navigation, route }) => {
       setIsLoading(false);
     };
 
-    setIsLoading(true);
+    // setIsLoading(true);
     SchedulerManagerService.searchList(
       params,
       succussCallBack,
@@ -1904,214 +2083,221 @@ const PlanogramEdit = ({ navigation, route }) => {
   return (
     <View style={Styles.mainContainer}>
       <Loader visible={isLoading} />
+      {successModal&&<SuccessModal Msg={successMsg} onComplete={onComplete}/>}
       <ClockHeader />
       <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{flex: 1,marginBottom:(Platform.OS === 'ios' && isKeyboardOpen) ? 100 : 0 ,}}
-    >
-    
-      <ScrollView
-        scrollEnabled={scrollenable}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{
+          flex: 1,
+          marginBottom: Platform.OS === "ios" && isKeyboardOpen ? 100 : 0,
+        }}
       >
-        <View style={Styles.subContainer}>
-          <View style={Styles.headerContainer}>
-            <CreateNewHeader
-              title="Edit Planogram"
-              onClickIcon={() => navigation.goBack()}
+        <ScrollView
+          scrollEnabled={scrollenable}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={Styles.subContainer}>
+            <View style={Styles.headerContainer}>
+              <CreateNewHeader
+                title="Edit Planogram"
+                onClickIcon={() => navigation.goBack()}
+              />
+            </View>
+            <Separator />
+
+            <FlatList
+              data={headers}
+              ref={scrollRef}
+              renderItem={renderItem}
+              horizontal
+              style={{
+                padding: moderateScale(10),
+                backgroundColor: themeColor.white,
+              }}
             />
-          </View>
-          <Separator />
-
-          <FlatList
-            data={headers}
-            ref={scrollRef}
-            renderItem={renderItem}
-            horizontal
-            style={{
-              padding: moderateScale(10),
-              backgroundColor: themeColor.white,
-            }}
-          />
-          {currentSection === 0 && (
-            <View style={Styles.bodyContainer}>
-              <AppText style={Styles.bodyHeaderText}>
-                ADD PLANOGRAM DETAILS
-              </AppText>
-              <Separator />
-              <View style={Styles.bodyRowsContainer}>
-                <AppTextInput
-                  containerStyle={Styles.eventTitleInput}
-                  value={title}
-                  placeHolderText="Planogram Event Title *"
-                  onChangeText={(text) => {
-                    setTitle(text);
-                    if (text.trim().length <= 0) {
-                      setError((prev) => {
-                        return {
-                          ...prev,
-                          planogramTitle: "Please enter planogram title",
-                        };
-                      });
-                    } else {
-                      setError((prev) => {
-                        return { ...prev, planogramTitle: "" };
-                      });
-                    }
-                  }}
-                  placeholderTextColor={themeColor.placeHolder}
-                  textInputStyle={{
-                    fontSize: moderateScale(15),
-                  }}
-                />
-                {error?.planogramTitle && (
-                  <Text style={Styles.errorText}>{error?.planogramTitle}</Text>
-                )}
-                <View style={{ marginVertical: moderateScale(10) }}>
-                  <Dropdown
-                    style={Styles.dropdown}
-                    placeholderStyle={Styles.placeholderStyle}
-                    selectedTextStyle={Styles.selectedTextStyle}
-                    inputSearchStyle={Styles.inputSearchStyle}
-                    iconStyle={Styles.iconStyle}
-                    itemTextStyle={{ color: "#000000" }}
-                    data={resolutionDropdownData}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={"Aspect Ratio *"}
-                    searchPlaceholder="Search..."
-                    value={ratioId}
-                    onChange={handleDropdownChange}
-                  />
-                  {error?.asspectRatio ? (
-                    <Text style={Styles.errorText}>{error?.asspectRatio}</Text>
-                  ) : null}
-                </View>
-                <CommonTitleAndText
-                  title="Start Date*"
-                  text={
-                    startDate
-                      ? moment(startDate).format("DD-MM-YYYY")
-                      : "Select Date"
-                  }
-                  isIcon
-                  isCalender
-                  onPress={() => setDatePickerVisible(true)}
-                />
-                {error?.startDate && (
-                  <Text style={Styles.errorText}>{error?.startDate}</Text>
-                )}
-                <DatePicker
-                  modal
-                  mode="date"
-                  open={isDatePickerVisible}
-                  date={startDate != null ? new Date() : new Date()}
-                  minimumDate={new Date()}
-                  onConfirm={handleDateChange}
-                  onCancel={() => setDatePickerVisible(false)}
-                />
-
-                <CommonTitleAndText
-                  title="End Date*"
-                  text={
-                    endDate
-                      ? moment(endDate).format("DD-MM-YYYY")
-                      : "Select Date"
-                  }
-                  isIcon
-                  isCalender
-                  onPress={() => setDatePickerVisible1(true)}
-                />
-                {error?.endDate && (
-                  <Text style={Styles.errorText}>{error?.endDate}</Text>
-                )}
-                <DatePicker
-                  modal
-                  mode="date"
-                  minimumDate={new Date()}
-                  open={isDatePickerVisible1}
-                  date={endDate != null ? new Date() : new Date()}
-                  onConfirm={handleDateChange1}
-                  onCancel={() => setDatePickerVisible1(false)}
-                />
-
-<CommonTitleAndText
-                  title="Start Time*"
-                  text={startTime?  moment(startTime).format("HH:mm") : "Select Time"
-                  }
-                  isIcon
-                  isClock
-                  onPress={() => {
-                    console.log("Start Time button pressed");
-                    setTimePickerVisible(!isTimePickerVisible);
-                  }}
-                />
-                 {error?.startTime && (
-                  <Text style={Styles.errorText}>{error?.startTime}</Text>
-                )}
-               
-               <DatePicker
-                modal
-                mode="time"
-                open={isTimePickerVisible}
-                date={new Date()}
-                is24hourSource="locale"
-                onConfirm={(date) => handleTimeChange(date)}
-                onCancel={() => setTimePickerVisible(false)}
-              />
-
-                <CommonTitleAndText
-                  title="End Time*"
-                  text={
-                    endTime
-                      ?  moment(endTime).format("HH:mm") 
-                         
-                      : "Select Time"
-                  }
-                  isIcon
-                  isClock
-                  onPress={() => setTimePickerVisible1(true)}
-                />
-                 {error?.endTime && (
-                  <Text style={Styles.errorText}>{error?.endTime}</Text>
-                )}
-               
-
-              <DatePicker
-                modal
-                mode="time"
-                is24hourSource="locale"
-                open={isTimePickerVisible1}
-                date={new Date()}
-                onConfirm={(date) => handleTimeChange1(date)}
-                onCancel={() => setTimePickerVisible1(false)}
-              />
-
-
-
-<View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    marginTop: 10,
-                  }}
-                >
-                  <Text style={{ color: "#000" }}>Is Priority Planogram</Text>
-                  <Switch
-                    value={state.isPriorityPlanogram}
-                    onValueChange={(value) => {
-                      setState((prev) => {
-                        return { ...prev, isPriorityPlanogram: !state.isPriorityPlanogram };
-                      });
+            {currentSection === 0 && (
+              <View style={Styles.bodyContainer}>
+                <AppText style={Styles.bodyHeaderText}>
+                  ADD PLANOGRAM DETAILS
+                </AppText>
+                <Separator />
+                <View style={Styles.bodyRowsContainer}>
+                  <AppTextInput
+                    containerStyle={Styles.eventTitleInput}
+                    value={title}
+                    placeHolderText="Planogram Event Title *"
+                    onChangeText={(text) => {
+                      setTitle(text);
+                      if (text.trim().length <= 0) {
+                        setError((prev) => {
+                          return {
+                            ...prev,
+                            planogramTitle: "Please enter planogram title",
+                          };
+                        });
+                      } else {
+                        setError((prev) => {
+                          return { ...prev, planogramTitle: "" };
+                        });
+                      }
+                    }}
+                    placeholderTextColor={themeColor.placeHolder}
+                    textInputStyle={{
+                      fontSize: moderateScale(15),
                     }}
                   />
-                </View>
-                {returnRecurenceDesign()}
-                <>
-                  {/* <View style={{ width: "100%", marginTop: moderateScale(2) }}>
+                  {error?.planogramTitle && (
+                    <Text style={Styles.errorText}>
+                      {error?.planogramTitle}
+                    </Text>
+                  )}
+                  <View style={{ marginVertical: moderateScale(10) }}>
+                    <Dropdown
+                      style={Styles.dropdown}
+                      placeholderStyle={Styles.placeholderStyle}
+                      selectedTextStyle={Styles.selectedTextStyle}
+                      inputSearchStyle={Styles.inputSearchStyle}
+                      iconStyle={Styles.iconStyle}
+                      itemTextStyle={{ color: "#000000" }}
+                      data={resolutionDropdownData}
+                      search
+                      maxHeight={300}
+                      labelField="label"
+                      valueField="value"
+                      placeholder={"Aspect Ratio *"}
+                      searchPlaceholder="Search..."
+                      value={ratioId}
+                      onChange={handleDropdownChange}
+                    />
+                    {error?.asspectRatio ? (
+                      <Text style={Styles.errorText}>
+                        {error?.asspectRatio}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <CommonTitleAndText
+                    title="Start Date*"
+                    text={
+                      startDate
+                        ? moment(startDate).format("DD-MM-YYYY")
+                        : "Select Date"
+                    }
+                    isIcon
+                    isCalender
+                    onPress={() => setDatePickerVisible(true)}
+                  />
+                  {error?.startDate && (
+                    <Text style={Styles.errorText}>{error?.startDate}</Text>
+                  )}
+                  <DatePicker
+                    modal
+                    mode="date"
+                    open={isDatePickerVisible}
+                    date={startDate != null ? new Date() : new Date()}
+                    minimumDate={new Date()}
+                    onConfirm={handleDateChange}
+                    onCancel={() => setDatePickerVisible(false)}
+                  />
+
+                  <CommonTitleAndText
+                    title="End Date*"
+                    text={
+                      endDate
+                        ? moment(endDate).format("DD-MM-YYYY")
+                        : "Select Date"
+                    }
+                    isIcon
+                    isCalender
+                    onPress={() => setDatePickerVisible1(true)}
+                  />
+                  {error?.endDate && (
+                    <Text style={Styles.errorText}>{error?.endDate}</Text>
+                  )}
+                  <DatePicker
+                    modal
+                    mode="date"
+                    minimumDate={new Date()}
+                    open={isDatePickerVisible1}
+                    date={endDate != null ? new Date() : new Date()}
+                    onConfirm={handleDateChange1}
+                    onCancel={() => setDatePickerVisible1(false)}
+                  />
+
+                  <CommonTitleAndText
+                    title="Start Time*"
+                    text={
+                      startTime
+                        ? moment(startTime).format("HH:mm")
+                        : "Select Time"
+                    }
+                    isIcon
+                    isClock
+                    onPress={() => {
+                      console.log("Start Time button pressed");
+                      setTimePickerVisible(!isTimePickerVisible);
+                    }}
+                  />
+                  {error?.startTime && (
+                    <Text style={Styles.errorText}>{error?.startTime}</Text>
+                  )}
+
+                  <DatePicker
+                    modal
+                    mode="time"
+                    open={isTimePickerVisible}
+                    date={new Date()}
+                    is24hourSource="locale"
+                    onConfirm={(date) => handleTimeChange(date)}
+                    onCancel={() => setTimePickerVisible(false)}
+                  />
+
+                  <CommonTitleAndText
+                    title="End Time*"
+                    text={
+                      endTime ? moment(endTime).format("HH:mm") : "Select Time"
+                    }
+                    isIcon
+                    isClock
+                    onPress={() => setTimePickerVisible1(true)}
+                  />
+                  {error?.endTime && (
+                    <Text style={Styles.errorText}>{error?.endTime}</Text>
+                  )}
+
+                  <DatePicker
+                    modal
+                    mode="time"
+                    is24hourSource="locale"
+                    open={isTimePickerVisible1}
+                    date={new Date()}
+                    onConfirm={(date) => handleTimeChange1(date)}
+                    onCancel={() => setTimePickerVisible1(false)}
+                  />
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      marginTop: 10,
+                    }}
+                  >
+                    <Text style={{ color: "#000" }}>Is Priority Planogram</Text>
+                    <Switch
+                      value={state.isPriorityPlanogram}
+                      onValueChange={(value) => {
+                        setState((prev) => {
+                          return {
+                            ...prev,
+                            isPriorityPlanogram: !state.isPriorityPlanogram,
+                          };
+                        });
+                      }}
+                    />
+                  </View>
+                  {returnRecurenceDesign()}
+                  <>
+                    {/* <View style={{ width: "100%", marginTop: moderateScale(2) }}>
                   <CampaignDropDown
                     dataList={[
                       { label: "1", value: "1" },
@@ -2154,102 +2340,136 @@ const PlanogramEdit = ({ navigation, route }) => {
                     value={filterData?.proirity}
                   />
                 </View> */}
-                </>
-
-                <AppText style={Styles.notesText}>
-                  {
-                    "* In case the end time crosses midnight, the schedule will end on end date+1"
-                  }
-                </AppText>
-              </View>
-            </View>
-          )}
-          {currentSection === 1 && (
-            <View style={Styles.bodyContainer}>
-              <AppText style={Styles.bodyHeaderText}>
-                SELECT MEDIA PLAYER/DEVICE
-              </AppText>
-              <Separator />
-              <View style={Styles.subHeaderText}>
-                <Pressable
-                  onPress={() => setSearchType("location")}
-                  style={[Styles.searchHeaderView(searchType === "location")]}
-                >
-                  <AppText
-                    style={[Styles.searchHeaderText(searchType === "location")]}
-                  >
-                    {"Search by Location"}
-                  </AppText>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setSearchType("device")}
-                  style={[Styles.searchHeaderView(searchType === "device")]}
-                >
-                  <AppText
-                    style={[Styles.searchHeaderText(searchType === "device")]}
-                  >
-                    {"Search by Device"}
-                  </AppText>
-                </Pressable>
-              </View>
-
-              <View style={Styles.locationContainer}>
-                {searchType === "location" ? (
-                  <>
-                    <TextInput
-                      style={{
-                        fontSize: moderateScale(14),
-                        fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
-                        paddingVertical: moderateScale(8),
-                        paddingHorizontal: moderateScale(8),
-                        width: "100%",
-                        marginLeft: 1,
-                        borderRadius: 5,
-                        color: "#000000",
-                        borderWidth: 1,
-                        borderColor: "#00000026",
-                      }}
-                      placeholder={`Search by Location`}
-                      placeholderTextColor={"#00000026"}
-                      value={searchLocation}
-                      onSubmitEditing={(e) => {
-                        searchLocationApi(searchLocation);
-                      }}
-                      onChangeText={(value) => {
-                        setSearchLocation(value);
-                      }}
-                    />
-                    {locationData && (
-                      <LocationsListForPlanogram
-                        data={locationData}
-                        setIsLoading={setIsLoading}
-                        selectedLocations={selectedLocations}
-                        setSelectedLocations={setSelectedLocations}
-                      />
-                    )}
                   </>
-                ) : (
-                  <View style={Styles.deviceContainer}>
-                    <View style={Styles.deviceHeaderPart}>
-                      <AppText style={Styles.deviceSelectedTop}>
-                        <AppText
-                          style={[Styles.deviceSelectedTop, Styles.boldText]}
-                        >
+
+                  <AppText style={Styles.notesText}>
+                    {
+                      "* In case the end time crosses midnight, the schedule will end on end date+1"
+                    }
+                  </AppText>
+                </View>
+              </View>
+            )}
+            {currentSection === 1 && (
+              <View style={Styles.bodyContainer}>
+                <AppText style={Styles.bodyHeaderText}>
+                  SELECT MEDIA PLAYER/DEVICE
+                </AppText>
+                <Separator />
+                <View style={Styles.subHeaderText}>
+                  <Pressable
+                    onPress={() => setSearchType("location")}
+                    style={[Styles.searchHeaderView(searchType === "location")]}
+                  >
+                    <AppText
+                      style={[
+                        Styles.searchHeaderText(searchType === "location"),
+                      ]}
+                    >
+                      {"Search by Location"}
+                    </AppText>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setSearchType("device")}
+                    style={[Styles.searchHeaderView(searchType === "device")]}
+                  >
+                    <AppText
+                      style={[Styles.searchHeaderText(searchType === "device")]}
+                    >
+                      {"Search by Device"}
+                    </AppText>
+                  </Pressable>
+                </View>
+
+                <View style={Styles.locationContainer}>
+                  {searchType === "location" ? (
+                    <>
+                      <TextInput
+                        style={{
+                          fontSize: moderateScale(14),
+                          fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
+                          paddingVertical: moderateScale(8),
+                          paddingHorizontal: moderateScale(8),
+                          width: "100%",
+                          marginLeft: 1,
+                          borderRadius: 5,
+                          color: "#000000",
+                          borderWidth: 1,
+                          borderColor: "#00000026",
+                        }}
+                        placeholder={`Search by Location`}
+                        placeholderTextColor={"#00000026"}
+                        value={searchLocation}
+                        onSubmitEditing={(e) => {
+                          searchLocationApi(searchLocation);
+                        }}
+                        onChangeText={(value) => {
+                          setSearchLocation(value);
+                          searchLocationApi(value);
+                        }}
+                      />
+                      {locationData && (
+                        <LocationsListForPlanogram
+                          data={locationData}
+                          setIsLoading={setIsLoading}
+                          selectedLocations={selectedLocations}
+                          setSelectedLocations={setSelectedLocations}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <View style={Styles.deviceContainer}>
+                      <View style={Styles.deviceHeaderPart}>
+                        <AppText style={Styles.deviceSelectedTop}>
+                          <AppText
+                            style={[Styles.deviceSelectedTop, Styles.boldText]}
+                          >
+                            {showGroupOrMedia == "group"
+                              ? `(${state.selectedDeviceGroups.length})`
+                              : `(${state.selectedDevice.length})`}{" "}
+                          </AppText>
+                          of{" "}
                           {showGroupOrMedia == "group"
-                            ? `(${state.selectedDeviceGroups.length})`
-                            : `(${state.selectedDevice.length})`}{" "}
+                            ? ` (${
+                                deviceGroupData ? deviceGroupData.length : 0
+                              }) `
+                            : ` (${deviceData ? deviceData.length : 0}) `}{" "}
+                          devices selected
                         </AppText>
-                        of{" "}
-                        {showGroupOrMedia == "group"
-                          ? ` (${
-                              deviceGroupData ? deviceGroupData.length : 0
-                            }) `
-                          : ` (${deviceData ? deviceData.length : 0}) `}{" "}
-                        devices selected
-                      </AppText>
-                      <View style={Styles.iconContainer}>
+                        {/* <View style={Styles.iconContainer}>
+                          <Pressable
+                            onPress={() => {
+                              setShowGroupOrMedia("group");
+                            }}
+                          >
+                            <FontAwesome
+                              name={"navicon"}
+                              size={25}
+                              color={themeColor.themeColor}
+                            />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => {
+                              setShowGroupOrMedia("device");
+                            }}
+                          >
+                            <Image
+                              source={AppIcon}
+                              style={{
+                                height: 40,
+                                width: 40,
+                                tintColor: themeColor.themeColor,
+                              }}
+                            />
+                          </Pressable>
+                        </View> */}
+                         <View style={Styles.iconContainer}>
                         <Pressable
+                          style={{
+                            backgroundColor:showGroupOrMedia=="group"?themeColor.appBackground:"white",
+                            padding:5
+                          }}
                           onPress={() => {
                             setShowGroupOrMedia("group");
                           }}
@@ -2257,7 +2477,7 @@ const PlanogramEdit = ({ navigation, route }) => {
                           <FontAwesome
                             name={"navicon"}
                             size={25}
-                            color={themeColor.themeColor}
+                            color={showGroupOrMedia=="group"? themeColor.themeColor:"grey"}
                           />
                         </Pressable>
                         <Pressable
@@ -2268,203 +2488,267 @@ const PlanogramEdit = ({ navigation, route }) => {
                           <Image
                             source={AppIcon}
                             style={{
-                              height: 40,
-                              width: 40,
-                              tintColor: themeColor.themeColor,
+                              height: 35,
+                              width: 35,
+                              tintColor: showGroupOrMedia=="device"?themeColor.themeColor:"grey",
+                              backgroundColor:showGroupOrMedia=="device"?themeColor.appBackground:"white",
+                              marginLeft:5
                             }}
                           />
                         </Pressable>
                       </View>
+                      </View>
+                      <TextInput
+                        style={{
+                          fontSize: moderateScale(14),
+                          fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
+                          paddingVertical: moderateScale(8),
+                          paddingHorizontal: moderateScale(8),
+                          width: "95%",
+                          borderRadius: 5,
+                          color: "#000000",
+                          borderWidth: 1,
+                          borderColor: "#00000026",
+                          marginVertical: 10,
+                          alignSelf: "center",
+                        }}
+                        placeholder={
+                          showGroupOrMedia == "group"
+                            ? `Search by Device Group`
+                            : `Search by Device list`
+                        }
+                        placeholderTextColor={"#00000026"}
+                        value={searchtext}
+                        onSubmitEditing={(e) => {
+                          makeUrlData(showGroupOrMedia);
+                        }}
+                        onChangeText={(value) => {
+                          setsearchtext(value);
+                          makeUrlData(showGroupOrMedia);
+                        }}
+                      />
+                      {showGroupOrMedia == "group" ? (
+                        <View style={Styles.deviceBodyContainer}>
+                          {deviceGroupData && deviceGroupData.length > 0 ? (
+                            deviceGroupData?.map((item, dIndex) => {
+                              return (
+                                <View key={dIndex + "device"}>
+                                  <CustomIconText
+                                    onPress={() => {
+                                      btnAddDeviceGroup(item.deviceGroupId);
+                                    }}
+                                    name={item.deviceGroupName}
+                                    icon={() =>
+                                      getIcon(
+                                        isGroupDeviceCheked(item.deviceGroupId)
+                                      )
+                                    }
+                                  />
+                                  {dIndex + 1 != deviceGroupData.length &&
+                                    deviceGroupData.length != 1 && (
+                                      <Separator />
+                                    )}
+                                </View>
+                              );
+                            })
+                          ) : (
+                            <AppText
+                              style={{
+                                color: "#000",
+                                textAlign: "center",
+                                marginVertical: 10,
+                              }}
+                            >
+                              No Device Group Found
+                            </AppText>
+                          )}
+                        </View>
+                      ) : (
+                        <View style={Styles.deviceBodyContainer}>
+                          {deviceData && deviceData.length > 0 ? (
+                            deviceData?.map((item, dIndex) => {
+                              return (
+                                <View key={dIndex + "device"}>
+                                  <CustomIconText
+                                    onPress={() => {
+                                      btnAddDevice(item.deviceId);
+                                    }}
+                                    name={item.deviceName}
+                                    icon={() =>
+                                      getIcon(isDeviceCheked(item.deviceId))
+                                    }
+                                  />
+                                  {dIndex + 1 != deviceData.length &&
+                                    deviceData.length != 1 && <Separator />}
+                                </View>
+                              );
+                            })
+                          ) : (
+                            <AppText
+                              style={{
+                                color: "#000",
+                                textAlign: "center",
+                                marginVertical: 10,
+                              }}
+                            >
+                              No Device Found
+                            </AppText>
+                          )}
+                        </View>
+                      )}
                     </View>
-                    <TextInput
-                      style={{
-                        fontSize: moderateScale(14),
-                        fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
-                        paddingVertical: moderateScale(8),
-                        paddingHorizontal: moderateScale(8),
-                        width: "95%",
-                        borderRadius: 5,
-                        color: "#000000",
-                        borderWidth: 1,
-                        borderColor: "#00000026",
-                        marginVertical:10,
-                        alignSelf:"center"
-                      }}
-                      placeholder={
-                        showGroupOrMedia == "group"
-                          ? `Search by Device Group`
-                          : `Search by Device list`
-                      }
-                      placeholderTextColor={"#00000026"}
-                      value={searchtext}
-                      onSubmitEditing={(e) => {
-                        makeUrlData(showGroupOrMedia);
-                      }}
-                      onChangeText={(value) => {
-                        setsearchtext(value);
-                      }}
-                    />
-                    {showGroupOrMedia == "group" ? (
-                      <View style={Styles.deviceBodyContainer}>
-                        {(deviceGroupData && deviceGroupData.length>0) ?
-                          deviceGroupData?.map((item, dIndex) => {
-                            return (
-                              <View key={dIndex + "device"}>
-                                <CustomIconText
-                                  onPress={() => {
-                                    btnAddDeviceGroup(item.deviceGroupId);
-                                  }}
-                                  name={item.deviceGroupName}
-                                  icon={() =>
-                                    getIcon(
-                                      isGroupDeviceCheked(item.deviceGroupId)
-                                    )
-                                  }
-                                />
-                                {dIndex + 1 != deviceGroupData.length &&
-                                  deviceGroupData.length != 1 && <Separator />}
-                              </View>
-                            );
-                          })
-                          :
-                          <AppText style={{color:'#000',textAlign:"center",marginVertical:10}}>Data not found</AppText>
-                        }
-                      </View>
-                    ) : (
-                      <View style={Styles.deviceBodyContainer}>
-                        {(deviceData && deviceData.length>0) ?
-                          deviceData?.map((item, dIndex) => {
-                            return (
-                              <View key={dIndex + "device"}>
-                                <CustomIconText
-                                  onPress={() => {
-                                    btnAddDevice(item.deviceId);
-                                  }}
-                                  name={item.deviceName}
-                                  icon={() =>
-                                    getIcon(isDeviceCheked(item.deviceId))
-                                  }
-                                />
-                                {dIndex + 1 != deviceData.length &&
-                                  deviceData.length != 1 && <Separator />}
-                              </View>
-                            );
-                          })
-                          :
-                          <AppText style={{color:'#000',textAlign:"center",marginVertical:10}}>Data not found</AppText>
-                        }
-                      </View>
-                    )}
-                  </View>
-                )}
+                  )}
+                </View>
               </View>
-            </View>
-          )}
-          {currentSection === 2 && (
-            <View style={Styles.bodyContainer}>
-              <AppText style={Styles.bodyHeaderText}>
-                SELECT A CAMPAIGN/CAMPAIGN STRING
-              </AppText>
-              <Separator />
-              <View style={Styles.subHeaderText}>
-                <Pressable
-                  onPress={() => setCampaignType(0)}
-                  style={[Styles.searchHeaderView(campaignType === 0)]}
-                >
-                  <AppText
-                    style={[Styles.searchHeaderText(campaignType === 0)]}
-                  >{`Campaign (${state.campaigns.length})`}</AppText>
-                </Pressable>
+            )}
+            {currentSection === 2 && (
+              <View style={Styles.bodyContainer}>
+                <AppText style={Styles.bodyHeaderText}>
+                  SELECT A CAMPAIGN/CAMPAIGN STRING
+                </AppText>
+                <Separator />
+                <View style={Styles.subHeaderText}>
+                  <Pressable
+                    onPress={() => setCampaignType(0)}
+                    style={[Styles.searchHeaderView(campaignType === 0)]}
+                  >
+                    <AppText
+                      style={[Styles.searchHeaderText(campaignType === 0)]}
+                    >{`Campaign (${state.campaigns.length})`}</AppText>
+                  </Pressable>
 
-                <Pressable
-                  onPress={() => setCampaignType(1)}
-                  style={[Styles.searchHeaderView(campaignType === 1)]}
+                  <Pressable
+                    onPress={() => setCampaignType(1)}
+                    style={[Styles.searchHeaderView(campaignType === 1)]}
+                  >
+                    <AppText
+                      style={[Styles.searchHeaderText(campaignType === 1)]}
+                    >{`Campaign Strings (${state.campaignString.length})`}</AppText>
+                  </Pressable>
+                </View>
+                <View
+                  style={{
+                    marginHorizontal: moderateScale(15),
+                    alignItems: "center",
+                  }}
                 >
-                  <AppText
-                    style={[Styles.searchHeaderText(campaignType === 1)]}
-                  >{`Campaign Strings (${state.campaignString.length})`}</AppText>
-                </Pressable>
-              </View>
-              <View style={{ marginHorizontal: moderateScale(15),alignItems:'center' }}>
-
-              {campaignType == 0 ? (
-                <>
-                  <>
-                    <SearchBox
-                      placeholder="Search by Campaign"
-                      isIcon
-                      containerStyle={Styles.searchCategoryStyle}
-                      stateValue={campaignSearch}
-                      changeText={(txt) => {
-                        onChangeCampaignSearch(txt);
-                      }}
-                      iconStyle={{
-                        height: moderateScale(15),
-                        width: moderateScale(15),
-                      }}
-                      inputStyle={{
-                        fontSize: moderateScale(15),
-                      }}
-                    />
-                    {state.campaigns.length <= 0 ? (
-                      <AppText
-                        style={Styles.dateText}
-                      >{`No data found`}</AppText>
+                  {campaignType == 0 ? (
+                    <>
+                      <>
+                        <SearchBox
+                          placeholder="Search by Campaign"
+                          isIcon
+                          containerStyle={Styles.searchCategoryStyle}
+                          stateValue={campaignSearch}
+                          changeText={(txt) => {
+                            onChangeCampaignSearch(txt);
+                          }}
+                          iconStyle={{
+                            height: moderateScale(15),
+                            width: moderateScale(15),
+                          }}
+                          inputStyle={{
+                            fontSize: moderateScale(15),
+                          }}
+                        />
+                        {state.campaigns.length <= 0 ? (
+                          <AppText
+                            style={Styles.dateText}
+                          >{`No data found`}</AppText>
+                        ) : (
+                          <View style={{width:"100%"}}>
+                            <FlatList
+                            scrollEnabled={false}
+                            numColumns={2}
+                            data={state.campaigns}
+                            renderItem={renderCampaign}
+                          />
+                          </View>
+                        )}
+                      </>
+                    </>
+                  ) : (
+                    <>
+                      <>
+                        <SearchBox
+                          placeholder="Search by Campaign String"
+                          isIcon
+                          containerStyle={Styles.searchCategoryStyle}
+                          changeText={(txt) => {
+                            onChangeCampaignStringSearch(txt);
+                          }}
+                          stateValue={campaignStringSearch}
+                          iconStyle={{
+                            height: moderateScale(15),
+                            width: moderateScale(15),
+                          }}
+                          inputStyle={{
+                            fontSize: moderateScale(15),
+                          }}
+                        />
+                        {state.campaignString.length <= 0 ? (
+                          <AppText
+                            style={Styles.dateText}
+                          >{`No data found`}</AppText>
+                        ) : (
+                          <View style={{width:"100%"}}>
+                            <FlatList
+                            scrollEnabled={false}
+                            numColumns={2}
+                            data={state.campaignString}
+                            renderItem={renderCampaign}
+                          />
+                          </View>
+                        )}
+                      </>
+                    </>
+                  )}
+                </View>
+                <View style={{padding:16}}>
+                    {campaignType == 0 && state.selectedCampaign.length>0&&cmpArrSelected.length>0&&cmpArrSelected!=undefined ? (
+                      <>
+                        <AppText style={{ color: "black", fontSize:moderateScale(16) ,marginVertical:5 }}>
+                          Selected Campaigns 
+                        </AppText>
+                        
+                        <View style={{marginBottom:10,width:"100%"}}>
+                          <Separator/>
+                        </View>
+                        <FlatList
+                          scrollEnabled={false}
+                          numColumns={1}
+                          data={cmpArrSelected}
+                          renderItem={RemoveCampaign}
+                        />
+                      </>
                     ) : (
-                      <FlatList
-                        scrollEnabled={false}
-                        numColumns={2}
-                        data={state.campaigns}
-                        renderItem={renderCampaign}
-                      />
+                      campaignType == 1&&state.selectedCampaignString.length>0&&csArrSelected.length>0&&csArrSelected!=undefined &&(<>
+                        <AppText style={{ color: "black", fontSize:moderateScale(16) ,marginVertical:5 }}>
+                        Selected Campaign Strings
+                        </AppText>
+                        
+                        <View style={{marginBottom:10,width:"100%"}}>
+                          <Separator/>
+                        </View>
+                        <FlatList
+                          scrollEnabled={false}
+                          numColumns={1}
+                          data={csArrSelected}
+                          renderItem={RemoveCampaign}
+                        />
+                      </>)
                     )}
-                  </>
-                </>
-              ) : (
-                <>
-                  <>
-                    <SearchBox
-                      placeholder="Search by Campaign String"
-                      isIcon
-                      containerStyle={Styles.searchCategoryStyle}
-                      changeText={(txt) => {
-                        onChangeCampaignStringSearch(txt);
-                      }}
-                      stateValue={campaignStringSearch}
-                      iconStyle={{
-                        height: moderateScale(15),
-                        width: moderateScale(15),
-                      }}
-                      inputStyle={{
-                        fontSize: moderateScale(15),
-                      }}
-                    />
-                    {state.campaignString.length <= 0 ? (
-                      <AppText
-                        style={Styles.dateText}
-                      >{`No data found`}</AppText>
-                    ) : (
-                      <FlatList
-                        scrollEnabled={false}
-                        numColumns={2}
-                        data={state.campaignString}
-                        renderItem={renderCampaign}
-                      />
-                    )}
-                  </>
-                </>
-              )}
+                </View>
               </View>
-            </View>
-          )}
-          {currentSection === 3 && (
-            <View style={Styles.bodyContainer}>
-              <AppText style={Styles.bodyHeaderText}>
-                Review Planogram Priority
-              </AppText>
-              <Separator />
-              <View style={Styles.subHeaderText}>
-                {/* <Pressable
+            )}
+            {currentSection === 3 && (
+              <View style={Styles.bodyContainer}>
+                <AppText style={Styles.bodyHeaderText}>
+                  Review Planogram Priority
+                </AppText>
+                <Separator />
+                <View style={Styles.subHeaderText}>
+                  {/* <Pressable
                   onPress={() => setCampaignType(0)}
                   style={[Styles.searchHeaderView(campaignType === 0)]}
                 >
@@ -2481,39 +2765,39 @@ const PlanogramEdit = ({ navigation, route }) => {
                     style={[Styles.searchHeaderText(campaignType === 1)]}
                   >{`Campaign Strings (${state.pCampStr.length})`}</AppText>
                 </Pressable> */}
+                </View>
+                {state.planogramPriorityList?.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    bounces={false}
+                    scrollEnabled={scrollenable}
+                  >
+                    <NestableScrollContainer>
+                      <NestableDraggableFlatList
+                        data={state.planogramPriorityList}
+                        renderItem={renderCampaignList}
+                        keyExtractor={(item, index) => index}
+                        onDragBegin={() => {
+                          setscrollenable(false);
+                          console.log("Bigen");
+                        }}
+                        onRelease={() => {
+                          setscrollenable(true);
+                        }}
+                        onDragEnd={({ data }) => {
+                          setscrollenable(true);
+                          setState({ ...state, planogramPriorityList: data });
+                        }}
+                        ListHeaderComponent={renderCampaignHeader}
+                      />
+                    </NestableScrollContainer>
+                  </ScrollView>
+                )}
               </View>
-              {state.planogramPriorityList?.length > 0 && (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  bounces={false}
-                  scrollEnabled={scrollenable} 
-                >
-                  <NestableScrollContainer>
-                    <NestableDraggableFlatList
-                      data={state.planogramPriorityList}
-                      renderItem={renderCampaignList}
-                      keyExtractor={(item,index) => index}
-                      onDragBegin={() => {
-                        setscrollenable(false);
-                        console.log("Bigen");
-                      }}
-                      onRelease={() => {
-                        setscrollenable(true);
-                      }}
-                      onDragEnd={({ data }) => {
-                        setscrollenable(true);
-                        setState({ ...state, planogramPriorityList: data });
-                      }}
-                      ListHeaderComponent={renderCampaignHeader}
-                    />
-                  </NestableScrollContainer>
-                </ScrollView>
-              )}
-            </View>
-          )}
-        </View>
-      </ScrollView>
+            )}
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
       <ActionContainer
         isContinue={currentSection === 2}
@@ -2524,7 +2808,12 @@ const PlanogramEdit = ({ navigation, route }) => {
         cancelText={currentSection > 0 ? "Go Back" : "Cancel"}
         numOfButtons={3}
         saveText={
-          (currentSection=== 3 && workFlow  && (workFlow?.approverWorkFlow === "PLANOGRAM" || workFlow?.approverWorkFlow === 'PLANOGRAM_AND_CAMPAIGN')) ? "Send For Approval" :'Save & Next'
+          currentSection === 3 &&
+          workFlow &&
+          (workFlow?.approverWorkFlow === "PLANOGRAM" ||
+            workFlow?.approverWorkFlow === "PLANOGRAM_AND_CAMPAIGN")
+            ? "Send For Approval"
+            : "Save & Next"
         }
         onPressSave={() => {
           if (currentSection == 0) {

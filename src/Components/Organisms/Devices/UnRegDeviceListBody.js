@@ -228,7 +228,7 @@ const UnRegDeviceListBody = ({
           backgroundColor:'white'
         }}
       >
-        No Data Found
+        No Device Found
       </Text>
     );
   };

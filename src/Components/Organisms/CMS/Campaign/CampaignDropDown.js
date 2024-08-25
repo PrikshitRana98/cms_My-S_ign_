@@ -61,7 +61,7 @@ const UIStyle = (COLORS) =>
     selectedTextStyle: {
       fontSize: moderateScale(13),
       fontFamily: FONT_FAMILY.OPEN_SANS_REGULAR,
-      color:COLORS.textColor,
+      color:"black",
       
     },
     inputSearchStyle: {

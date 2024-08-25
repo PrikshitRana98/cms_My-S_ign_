@@ -23,6 +23,7 @@ const SelectLocationModalForCampaign = ({
   locationSelected=[],
   setLocationSelected,
   locationData1,
+  onLocationCancel,
   onChangeLocatioValue
 }) => {
   const themeColor = useThemeContext();
@@ -32,8 +33,8 @@ const SelectLocationModalForCampaign = ({
  
 
   const onClickSave=()=>{
-    console.log("\nselectedLocations==>",selectedLocations,"\nlocationSelected==>",locationSelected)
-    if(selectedLocations.length < 0){
+    console.log("\nselectedLocations==>",selectedLocations,selectedLocations.length,"\nlocationSelected==>",locationSelected)
+    if(selectedLocations.length <= 0){
       alert('Select Location')
     }else{
       onChangeLocatioValue(selectedLocations,locationSelected);
@@ -74,6 +75,7 @@ const SelectLocationModalForCampaign = ({
             <ThemedButton
               onClick={() => {
                 setModal(false)
+                onLocationCancel()
               }}
               title="Cancel"
               containerStyle={{backgroundColor:'transparent',borderColor:'red',borderWidth:1,marginRight:12}}

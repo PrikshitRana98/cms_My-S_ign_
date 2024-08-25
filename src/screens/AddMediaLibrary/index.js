@@ -14,7 +14,9 @@ import {
   TouchableOpacity,
   View,
   BackHandler,
+  ToastAndroid,
 } from 'react-native';
+import RNHeicConverter from 'react-native-heic-converter';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import TickIcon from '../../Assets/Images/PNG/tick.png';
 import ClockHeader from '../../Components/Atoms/ClockHeaders';
@@ -47,6 +49,7 @@ import CampaignAddTag from '../../Components/Organisms/CMS/Campaign/CampaignAddT
 import { useSelector } from 'react-redux';
 import CampaignAddMediaTag from '../../Components/Organisms/CMS/Campaign/CampaignAddMediaTag';
 import { platform } from 'os';
+import { resetRedux } from '../../appConfig/AppRouter/Contents';
 
 
 export async function requestStoragePermission() {
@@ -72,14 +75,17 @@ export async function requestStoragePermission() {
 }
 
 
+
 const AddMediaLibrary = ({navigation}) => {
 
   const userData = useSelector((state) => state.userReducer.userDetails.data);
 
   useEffect(() => {
+
     // Check and request external storage permission when the component mounts
     if(Platform.OS == 'android')
     {
+
     requestStoragePermission11();
     }
   }, []);
@@ -138,46 +144,13 @@ const AddMediaLibrary = ({navigation}) => {
       path: require('../../Assets/Images/PNG/pdf.png'),
       isShow:true
     },
-    // {
-    //   name: 'Doc',
-    //   path: require('../../Assets/Images/PNG/Doc.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
+   
     {
       name: 'PPT',
       path: require('../../Assets/Images/PNG/ppt.png'),
-      isShow:userData.customerType=="ADVANCED"?true:false,
+      isShow:userData?.customerType=="ADVANCED"?true:false,
     },
-    // {
-    //   name: 'HTML',
-    //   path: require('../../Assets/Images/PNG/html.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
-    // {
-    //   name: 'RSS',
-    //   path: require('../../Assets/Images/PNG/rss.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
-    // {
-    //   name: 'TWITTER',
-    //   path: require('../../Assets/Images/PNG/twitter.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
-    // {
-    //   name: 'FACEBOOK',
-    //   path: require('../../Assets/Images/PNG/facebook.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
-    // {
-    //   name: 'URL',
-    //   path: require('../../Assets/Images/PNG/url.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
-    // {
-    //   name: 'Stream URL',
-    //   path: require('../../Assets/Images/PNG/stream.png'),
-    //   isShow:userData.customerType=="ADVANCED"?true:false,
-    // },
+   
   ];
 
   const deleteIcon=require('../../Assets/Images/PNG/delete.png')
@@ -281,29 +254,52 @@ const updateTags = (key, newValue) => {
   const getImageNameFromPath = (imagePath) => {
     const parts = imagePath.split('/');
     const imageName = parts[parts.length - 1];
+    console.log("file name-->",imageName)
     return imageName;
   };
   
+
+
+  
+
+
   const chooseFile = async(type) => {
     console.log(type=="photo",type)
+    setUploadFile([]);
     try {
       await ImageCropPicker.openPicker({
         multiple: true,
+        maxFiles:10,
         mediaType:type=="photo"?'photo':type,
         cropping: false
       }).then(async(images) => {
-        console.log("linr255====>",JSON.stringify(images))
-         let newarray = [];
+        console.log("selected--->",images)
         for (let i = 0; i < images.length; i++) {
-          newarray.push({
-            "uri":images[i].path,
-            "name":getImageNameFromPath(images[i].path),
-            "size":images[i].size,
-            "type":images[i].mime,
-          });
+         
+         if (images[i].filename && (images[i].filename.endsWith('.heic') || images[i].filename.endsWith('.HEIC'))) {
+         const source = Image.resolveAssetSource({ uri: images[i].sourceURL });
+         RNHeicConverter.convert({ path: source.uri})
+	        .then((result) => {
+            let value = {
+              "uri":result.path,
+              "name":getImageNameFromPath(result.path),
+              "size":images[i].size,
+              "type":"image/jpeg",
+            };
+            setUploadFile(prevArray => [...prevArray, value]);           
+	        });
+          }
+          else
+          {
+            let value = {
+              "uri":images[i].path,
+              "name":Platform.OS === "ios" ?  images[i].filename ? images[i].filename : getImageNameFromPath(images[i].path) : getImageNameFromPath(images[i].path) ,
+              "size":images[i].size,
+              "type":images[i].mime,
+            };
+          setUploadFile(prevArray => [...prevArray, value]); 
+          }
         }
-      
-       setUploadFile(newarray)
       });
     } catch (error) {
       console.log("ooop", error);
@@ -319,20 +315,13 @@ const updateTags = (key, newValue) => {
     if(file=="Image")
     {
       chooseFile("photo");
-    }else if(file=="Video"){
+    }
+    else if(file=="Video"){
       chooseFile("video")
     }
     else
     {
     try {
-      // if(file=="Image"){
-      //    response = await DocumentPicker.pick({
-      //     presentationStyle: 'fullScreen',
-      //     allowMultiSelection:true,
-      //     multiple: true,
-      //     type:[DocumentPicker.types.images]
-      //   });
-      // }else 
       if(file=="PDF"){
          response = await DocumentPicker.pick({
           presentationStyle: 'fullScreen',
@@ -406,7 +395,7 @@ const updateTags = (key, newValue) => {
         lastModified: new Date().getTime(),
         type:uploadFile[myyi].type,
       })
-      console.log(myyi,JSON.stringify(formdata1),uploadFile[myyi].name);
+     
 
       const onSuccess=async(resp)=>{
         console.log("response upload",resp.status)
@@ -433,17 +422,37 @@ const updateTags = (key, newValue) => {
         }
       }
       const onFailure=async(e)=>{
-        console.log("error media upload",JSON.stringify(e.response.data));
+        console.log("error media upload",e.response.data);
         setUploadBtn(false);
         if(myyi+1==uploadFile.length){
           setIsLoading(false)
           setloaderState(false)
         }
         myyi=myyi+1;
-        Alert.alert("Error",e.response.data.message +". "+e.response.data?.remedialMessage)
+        if(e.response){
+          console.log("sasdad",e.response.data)
+          if(e.response.data.code=="401"||e.response.data.code==401){
+          Alert.alert("Unauthorized!", 'Please login.', [
+            {
+              text: "Ok",
+              onPress: () => {
+                resetRedux()
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: NAVIGATION_CONSTANTS.LOGIN }],
+                });
+              },
+            },
+          ]);
+        }
+        }else{
+          Alert.alert("Error",error.message)
+        }
        
       }
-      await axios.post(`${baseUrl}content-management/cms/${slugId}/v1/media/file`,
+
+      console.log("this is uploaded data-->",JSON.stringify(formdata1))
+      await axios.post(`${baseUrl}service-gateway/cms/${slugId}/v1/media/file`,
                         formdata1,
                         {headers:authHeader}
                       )
@@ -535,7 +544,7 @@ const updateTags = (key, newValue) => {
     
         const successCallBack = async (response) => {
           // dispatch(updateMediaLib(response))
-          console.log(response)
+          
           if(response.status==200){          
             if(ii+1==mediaUploaded.length){
               // call_getApi()
@@ -547,18 +556,22 @@ const updateTags = (key, newValue) => {
             }
           }
           ii=ii+1;
+          // if(ii==mediaUploaded.length){
           // setIsLoading(false)
+          // }
           
         } 
       
         const errorCallBack = async (error) => {
-          console.log("errorCallBackerrorCallBack\n",JSON.stringify(error),"\n\n\n")
+          console.log("errorCallBackerrorCallBack==>\n",JSON.stringify(error.response.data))
+          alert("Error",error.message)
           setIsLoading(false)
           ii=ii+1;
           
         }
-        setIsLoading(false)
-        await axios.put(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaIDD}?uploading=true`,
+        setIsLoading(true)
+        console.log("this is name updatre----->\n",JSON.stringify(params))
+        await axios.put(`${baseUrl}service-gateway/cms/${slugId}/v1/media/${mediaIDD}?uploading=true`,
                           params,
                           {headers:authHeader}
                         )
@@ -795,8 +808,8 @@ const updateTags = (key, newValue) => {
                   renderItem={renderMediaItem}
                   /> */}
                   {uploadFile.map((item,i)=>{
-                    return(<View key={i} style={{flexDirection:"row",justifyContent:"space-between",alignItems:"baseline",width:"85%",padding:10}}>
-                    <AppText style={{color: themeColor.textColor,marginVertical:5}}>
+                    return(<View key={i} style={{flexDirection:"row",justifyContent:"space-between",alignItems:"center",width:"85%",padding:10}}>
+                    <AppText style={{color: themeColor.textColor,marginVertical:5,width:"95%"}} numberOfLines={1}>
                       {item.name?item.name:"No file Choosen"}
                     </AppText>
                     <TouchableOpacity onPress={()=>{
@@ -929,7 +942,7 @@ const updateTags = (key, newValue) => {
                 </AppText>
                 <AppText style={Styles.disclaimerText}>
                   {selectedFileType=="Video"&&"• Video Files: wmv, avi, mpg, mpeg, flv, mov, mp4, mkv, vob, 3gp"}
-                  {selectedFileType=="Image"&&"• Image File: .png,.jpg,.bmp,.gif,.tif"}
+                  {selectedFileType=="Image"&&"• Image File: .png,.jpg,.bmp,.gif"}
                   {selectedFileType=="Audio"&&"• Audio File: .mp3,.wav"}
                   {selectedFileType=="Doc"&&"• Doc File: .docx,.doc"}
                   {selectedFileType=="PDF"&&"• PDF File: .pdf"}
@@ -959,3 +972,4 @@ const updateTags = (key, newValue) => {
 };
 
 export default AddMediaLibrary;
+

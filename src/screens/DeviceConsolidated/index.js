@@ -326,10 +326,6 @@ const DeviceConsolidated = ({ navigation, route }) => {
               {renderTitleAndValue("Latitude", `${deviceInfo?.latitude || "-"}`)}
               <Separator />
               {renderTitleAndValue("Longitude", `${deviceInfo?.longitude || "-"}`)}
-              
-              <Separator />
-              {renderTitleAndValue("Longitude", `${deviceInfo?.longitude || "-"}`)}
-              
               <Separator />
               {renderTitleAndValue("Last Sync", deviceInfo?.lastSyncTime?`${moment(deviceInfo?.lastSyncTime).format("DD-MM-YYYY, hh:mm a")}`:"-")}
               <Separator />

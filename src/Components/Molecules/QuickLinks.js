@@ -10,6 +10,7 @@ import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
 import AppText from "../Atoms/CustomText";
 import { useSelector } from "react-redux";
 import { PREVILAGES } from "../../Constants/privilages";
+
 const QuickLinks = ({isSchedulerEnabled}) => {
   const themeColor = useThemeContext();
   const Styles = QuickStyle(themeColor);
@@ -60,7 +61,7 @@ const QuickLinks = ({isSchedulerEnabled}) => {
         
         {(authorization.includes(PREVILAGES.PLANOGRAM.ADD_PLANOGRAM) || authorization.includes(PREVILAGES.SCHEDULER.ADD_SCHEDULER)) &&<Pressable
           onPress={() => {
-            (isSchedulerEnabled==true) ?
+            (isSchedulerEnabled==true) ?  
             navigation.navigate(NAVIGATION_CONSTANTS.ADD_SCHEDULER)
             :
             navigation.navigate(NAVIGATION_CONSTANTS.ADD_NEW_PLANOGRAM)

@@ -11,7 +11,7 @@ const ActionContainerMedia = ({
   onPressCancel = () => {},
   onPressDraft = () => {},
   isContinue = false,
-  continueText = "Save & continue",
+  continueText = "Save & Continue",
   cancelText = "Cancel",
   draftText = "Save As Draft",
   saveText = "Save & Next",

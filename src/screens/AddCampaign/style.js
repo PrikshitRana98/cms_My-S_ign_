@@ -59,7 +59,7 @@ const Styles = (COLORS) =>
       fontSize: moderateScale(15),
       fontFamily: FONT_FAMILY.OPEN_SANS_BOLD,
       marginHorizontal: moderateScale(10),
-      marginVertical: moderateScale(15),
+      marginVertical: moderateScale(10),
       color: COLORS.textColor,
     },
     bodyRowsContainer: {

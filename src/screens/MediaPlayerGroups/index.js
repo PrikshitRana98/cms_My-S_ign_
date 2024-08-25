@@ -156,7 +156,7 @@ const MediaPlayerGroup = ({navigation}) => {
       }
     };
     const failureCallBack = (error) => {
-      console.log("campaignDeleteError", error);
+      console.log("campaignDeleteError-----000>", error);
       setConfirmBoxData({
         ...confirmBoxData,
         confirmModalFlag: false,
@@ -206,7 +206,7 @@ const MediaPlayerGroup = ({navigation}) => {
       }
     };
     const failureCallBack = (error) => {
-      console.log("campaignDeleteError", error);
+      console.log("campaignDeleteError123456543212345--->", error);
       setConfirmBoxData({
         ...confirmBoxData,
         confirmModalFlag: false,
@@ -258,7 +258,7 @@ const MediaPlayerGroup = ({navigation}) => {
           titleTextStyle={{
             fontSize: moderateScale(17),
           }}
-          renderDelete={authorization?.includes(PREVILAGES.MEDIA.DELETE_MEDIA)}
+          renderDelete={authorization?.includes(PREVILAGES.DEVICE_GROUP.DELETE_DEVICE_GROUP)}
           title="Media Player Groups"
           pageName="Media Player Groups"
           btnOpenModelType={btnOpenModelType}
@@ -283,6 +283,7 @@ const MediaPlayerGroup = ({navigation}) => {
           selectedData={selectedData}
           setSelectedData={setSelectedData}
           btnOpenModelType={btnOpenModelType}
+          getDevicePlanogram={()=>getDevicePlanogram()}
         />
 
         <View style={Styles.mainContainer}>

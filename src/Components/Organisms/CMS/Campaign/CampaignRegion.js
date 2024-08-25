@@ -19,6 +19,7 @@ import WebView from "react-native-webview";
 export default function CampaignRegion({
   selectedBgImg = null,
   regions = [],
+  muteAudio,
   selectMediaForRegion,
   setSelectetRegionForEdit,
   removeRegionData,
@@ -29,8 +30,10 @@ export default function CampaignRegion({
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(true);
   const themeColor = useThemeContext();
-  const returnMediaView = (item) => {
+  const returnMediaView = (item,audio) => {
     let displayMode = item?.displayMode
+
+    console.log("audio",audio)
     
     if (item?.type == "VIDEO") {
       return (
@@ -39,6 +42,8 @@ export default function CampaignRegion({
             width: "100%",
             height: "100%",
           }}
+          
+          // onPress={()=>console.log('\n',regions)}
         >
          <Video
             source={{
@@ -49,7 +54,8 @@ export default function CampaignRegion({
             style={{
               flex: 1,
             }}
-            muted={isMuted}
+            muted={!audio}
+                        
           />
          
         </View>
@@ -131,7 +137,7 @@ export default function CampaignRegion({
           }}
         >
           <Image
-            source={require("../../../../Assets/Images/PNG/flash.png")}
+            source={require("../../../../Assets/Images/PNG/url.png")}
             style={{ width: 40, height: 40 }}
           />
           <Text style={{ color: "#000", fontSize: 20 }}> {item?.name}</Text>
@@ -178,22 +184,26 @@ export default function CampaignRegion({
       {(regions && regions.length) > 0 && (
         <>
           {regions.map((item, index) => {
+            console.log("line185",index,item.isAudioEnabled)
             let tp = 1;
             if(item?.regionTransparencyInPercentage < 1){
-              tp=item?.regionTransparencyInPercentage;
+              tp=(1-item?.regionTransparencyInPercentage);
+              
             }
+            
           
             
             return (
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   setSelectetRegionForEdit(index);
                   console.log("item.locations===>",item.locations)
+                  console.log("line 196-->",muteAudio&&muteAudio?.isAudioEnabled,regions)
                   item.locations?.length>0 ? setLocationName([...item.locations]):null;                  
                 }}
-                activeOpacity={1}
+                
                 key={"campaign" + index}
-                style={[styles.regionContainer(item,tp),{zIndex:99}]}
+                style={[styles.regionContainer(item,tp),{zIndex:99,opacity:tp}]}
               > 
                 <View style={styles.regionNameContainer} >
                   <Text style={{ color: "#ffffff",fontSize:12 }}>
@@ -204,6 +214,7 @@ export default function CampaignRegion({
                     <View style={{ flexDirection: "row" }}>
                       <Pressable style={{backgroundColor:'#fff',padding:2,borderRadius:7,justifyContent:'center',alignItems:'center' }} onPress={() => {
                       selectMediaForRegion(index);
+                      console.log("line 211")
                     }}>
                         <Image
                           source={require("../../../../Assets/Images/PNG/select.png")}
@@ -213,6 +224,7 @@ export default function CampaignRegion({
                       <Pressable style={{ marginLeft: 15,backgroundColor:'#fff',padding:2,borderRadius:7,justifyContent:'center',alignItems:'center' }} onPress={()=>{
                         setCmpArrangeModal(true)
                         setActiveRegion(index)
+                        console.log("line 220")
                       }}>
                          <Ionicons name="eye" size={21} color={themeColor.themeColor} />
                         {/* <Image
@@ -223,6 +235,7 @@ export default function CampaignRegion({
                       <Pressable style={{  marginLeft: 15,backgroundColor:'#fff',padding:2,borderRadius:7,justifyContent:'center',alignItems:'center' }} onPress={()=>{
                         removeRegionData(index)
                         setActiveRegion(index)
+                        console.log("line 230")
                       }}>
                         <Image
                           source={require("../../../../Assets/Images/PNG/delete-button.png")}
@@ -236,11 +249,12 @@ export default function CampaignRegion({
                 </View>
 
                 {item?.regionData?.length > 0 ? (
-                  <>{returnMediaView(item?.regionData[0], index)}</>
+                  <>{returnMediaView(item?.regionData[0],item.isAudioEnabled?item.isAudioEnabled:false)}</>
                 ) : (
                   <Pressable
                     onPress={() => {
                       selectMediaForRegion(index);
+                      console.log("line 248")
                     }}
                     style={{ justifyContent: "center", alignItems: "center" }}
                   >
@@ -253,7 +267,7 @@ export default function CampaignRegion({
                     </Text>
                   </Pressable>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </>

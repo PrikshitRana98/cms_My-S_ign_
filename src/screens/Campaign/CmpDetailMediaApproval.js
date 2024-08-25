@@ -14,9 +14,11 @@ import { moderateScale, width } from "../../Helper/scaling";
 import { FONT_FAMILY } from "../../Assets/Fonts/fontNames";
 import Video from "react-native-video";
 import Pdf from "react-native-pdf";
+import SvgIcons from "../../Assets/Images/SvgIcons";
 
 const CmpDetailMediaApproval = ({mediaArr,sliderValue}) => {
   const themeColor = useThemeContext();
+  console.log("mediaArr12345ty",mediaArr)
   const Styles = CampaignStyles(themeColor);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(true);
@@ -35,6 +37,9 @@ const CmpDetailMediaApproval = ({mediaArr,sliderValue}) => {
     let interValTime = 0
     if(mediaArr[currentIndex]?.nodata || !mediaArr[currentIndex]?.defaultDurationInSeconds){
       interValTime=0
+    }
+    else if(mediaArr[currentIndex].hasOwnProperty("widgetType")){
+      interValTime=5000
     }else{
       interValTime = parseInt(mediaArr[currentIndex]?.defaultDurationInSeconds) * 1000
     }
@@ -50,6 +55,25 @@ const CmpDetailMediaApproval = ({mediaArr,sliderValue}) => {
     if (!item) {
       return (
         <Text style={{ width: "100%", height: "100%" }}>Content not found</Text>
+      );
+    }
+    if (item.hasOwnProperty("widgetType")) {
+      
+      return (
+        <View
+        style={{ backgroundColor: "#00000",justifyContent:"center",alignItems:"center" }}
+      >
+        <Image
+          source={SvgIcons[item.widgetType.toLowerCase()]}
+          style={{width: "50%", height: "50%",tintColor:"black",resizeMode:"contain"}}
+          // resizeMethod={"contain"}
+        />
+        {/* <FastImage 
+            source={SvgIcons[item.widgetType]}
+            resizeMode={true?FastImage.resizeMode.stretch:FastImage.resizeMode.contain}
+            style={{ width: "100%", height: "100%" }}
+          /> */}
+      </View>
       );
     }
     if (item?.type == "VIDEO") {

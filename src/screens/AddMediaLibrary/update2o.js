@@ -177,7 +177,7 @@ const AddMediaLibrary = ({navigation}) => {
       }
     }
 
-    await axios.post(`${baseUrl}content-management/cms/${slugId}/v1/media/file`,
+    await axios.post(`${baseUrl}service-gateway/cms/${slugId}/v1/media/file`,
     formdata,
     {headers:authHeader}).then(resp=>{onSuccess(resp)})
     .catch(e=>{onFailure(e)}

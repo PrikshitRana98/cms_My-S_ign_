@@ -28,6 +28,7 @@ export default function SelectAudio({
               style={{borderWidth:0,height:20,alignItems:'center',justifyContent:'center'}}
               onPress={(index) => {
                 removeAudio(ind);
+                console.log("close")
               }}
             >
             <Image
@@ -42,14 +43,12 @@ export default function SelectAudio({
       <Pressable
         disabled={isDisabled}
         onPress={() => {
-          console.log("opne audio modal")
           setMediaModalType("audio");
           setModal(true);
         }}
       >
         <CommonTitleAndText title="Audio" text="Select Audio" 
          onPress={() => {
-          console.log("opne audio modal")
           setMediaModalType("audio");
           setModal(true);
         }}

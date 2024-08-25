@@ -216,7 +216,7 @@ const LocationsForDasboard = ({
   };
 
   const expandChild = (name,value) => {
-    
+    console.log("expandChild-->",viewing?.cityChild,value)
     if (viewing?.cityChild === value) {
       setViewing({
         ...viewing,
@@ -259,7 +259,10 @@ const LocationsForDasboard = ({
               }}
               isChevron={ele?.childNode}
               isChevronUp={viewing.cityChild==ele.locationName}
-              onPressArrow={()=>expandChild("cityChild",ele.locationName)}
+              onPressArrow={()=>{
+                expandChild("cityChild",ele.locationName);
+                console.log("0-00-0\n",ele?.childNode[0],viewing.cityChild,ele.locationName)
+              }}
               onClickChecked={() =>
                 addChild(
                   data?.locationId,
@@ -271,7 +274,7 @@ const LocationsForDasboard = ({
                 )
               }
             />
-            {ele?.childNode&&viewing.cityChild==ele.locationName&&renderChild(ele.childNode,data,country,state,city)}
+            {ele?.childNode!=null&&renderChild(ele.childNode,data,country,state,city)}
           </React.Fragment>
       }</>);
       })    )

@@ -143,7 +143,7 @@ const EditMediaLib = ({navigation, route}) => {
     }
 
     const successCallBack = async response => {
-      console.log("this is chnage item list===>",JSON.stringify(response.data))
+      console.log("this is chnage item list===>146",JSON.stringify(response.data))
       // dispatch(updateMediaLib(response))
       if(response.status=="OK"){
         call_getApi()

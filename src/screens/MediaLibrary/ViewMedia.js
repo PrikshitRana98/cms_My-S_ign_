@@ -101,9 +101,9 @@ const ViewMedia = ({navigation, route}) => {
         }
       }
     };
-    AppState.addEventListener('change', handleAppStateChange);
+    const subscription=AppState.addEventListener('change', handleAppStateChange);
     return () => {
-      AppState.removeEventListener('change', handleAppStateChange);
+      subscription.remove()
     };
   }, []);
 
@@ -111,7 +111,7 @@ const ViewMedia = ({navigation, route}) => {
 
     const slugId = await getStorageForKey("slugId");
     setIsLoading(true);
-    const endPoint=`content-management/cms/${slugId}/v1/media/${data.mediaDetailId}`
+    const endPoint=`service-gateway/cms/${slugId}/v1/media/${data.mediaDetailId}`
     const successCallBack = async (response) => {      
       if(response.status=="OK"&&response.message=="success"){
         setMediaDetails(response.data.mediaDetails[0]);

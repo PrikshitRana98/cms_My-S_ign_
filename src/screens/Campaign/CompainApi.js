@@ -32,7 +32,7 @@ const createQueryParamString = async (arr) => {
 export const getCampaignData = async (setIsLoading = () => { }, params, q, search = '') => {
   const slugId = await getStorageForKey("slugId");
   setIsLoading(true);
-  // //content-management/cms/${params.slugId}/v1/campaign/
+  // //service-gateway/cms/${params.slugId}/v1/campaign/
   const successCallBack = async (response) => {
     console.log('responseSuccess', response)
     dispatch(updateCampaingnList(response));
@@ -58,7 +58,7 @@ export const getCampaignSearchData = async (setIsLoading = () => { }, params, se
   setIsLoading(true);
   let newParams = await createQueryParamString(searchArr)
 
-  // //content-management/cms/${params.slugId}/v1/campaign/
+  // //service-gateway/cms/${params.slugId}/v1/campaign/
   let nUrl = `${search}?${newParams}&pageNumber=${params.page}&pageSize=${params.pageSize}`
 
   //&pageNumber=${params.page}&pageSize=${params.pageSize}
@@ -144,7 +144,7 @@ export const getCmpData = async (endPoint,setIsLoading = () => {}) => {
   };
 
   const errorCallBack = (response) => {
-    console.log('getCmpData error', response)
+    console.log('getCmpData error-->', response)
     setIsLoading(false);
   };
 
@@ -160,51 +160,51 @@ export const CampaignManagerService = {
     AxiosService('GET', params.endPoint, {}, {}, success, failure, 'Loading');
   },
   fetchCampaignList: (params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/search?pageNumber=${1}&pageSize=${30}`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/search?pageNumber=${1}&pageSize=${30}`, {}, {}, success, failure, 'Loading');
   },
   fetchCampaignSearchList: (params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/${params.url}`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/${params.url}`, {}, {}, success, failure, 'Loading');
   },
   fetchCampaignPageList: (params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/${params.url}`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/${params.url}`, {}, {}, success, failure, 'Loading');
   },
   fetchCampaignArchiveList: (params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/archive`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/archive`, {}, {}, success, failure, 'Loading');
   },
   DeleteCampaign: (params = {}, success = () => { }, failure = () => { }) => {
     let data = {
       ids:params.ids
     }
     console.log('params delete',params)
-    AxiosService('DELETE', `content-management/cms/${params.slugId}/v1/campaign/`, data, {}, success, failure, 'Loading');
+    AxiosService('DELETE', `service-gateway/cms/${params.slugId}/v1/campaign/`, data, {}, success, failure, 'Loading');
   },
   cloneCampaign: (params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('POST', `content-management/cms/${params.slugId}/v1/campaign/clone/${params.ids}`, params, {}, success, failure, 'Loading');
+    AxiosService('POST', `service-gateway/cms/${params.slugId}/v1/campaign/clone/${params.ids}`, params, {}, success, failure, 'Loading');
   },
   archiveCampaign: (params = {}, success = () => { }, failure = () => { }) => {
     let data = {
       ids:params.ids
     }
-    AxiosService('POST', `content-management/cms/${params.slugId}/v1/campaign/archive`, data, {}, success, failure, 'Loading');
+    AxiosService('POST', `service-gateway/cms/${params.slugId}/v1/campaign/archive`, data, {}, success, failure, 'Loading');
   },
   unArchiveCampaign: (params = {}, success = () => { }, failure = () => { }) => {
     let data = {
       ids:params.ids
     }
-    AxiosService('POST', `content-management/cms/${params.slugId}/v1/campaign/unarchive`, data, {}, success, failure, 'Loading');
+    AxiosService('POST', `service-gateway/cms/${params.slugId}/v1/campaign/unarchive`, data, {}, success, failure, 'Loading');
   },
   
   addAdvertisement: (params = {}, success = () => {}, failure = () => {}) => {
     console.log('paramsparamsparams',params)
-    AxiosService('POST', `content-management/cms/${params.slugId}/v1/campaign-advertisement`, params?.data, {}, success, failure, 'Loading');
+    AxiosService('POST', params.endPoint, params?.data, {}, success, failure, 'Loading');
   },
   editAdvertisement: (params = {}, success = () => {}, failure = () => {}) => {
     console.log('paramsparamsparams',params)
-    AxiosService('PUT', `content-management/cms/${params.slugId}/v1/campaign-advertisement/${params?.campaignId}`, params?.data, {}, success, failure, 'Loading');
+    AxiosService('PUT', params.endPoint, params?.data, {}, success, failure, 'Loading');
   },
   addCampaign: (params = {}, success = () => {}, failure = () => {}) => {
     console.log('paramsparamsparams',params)
-    AxiosService('POST', `content-management/cms/${params.slugId}/v1/campaign`, params?.data, {}, success, failure, 'Loading');
+    AxiosService('POST', `service-gateway/cms/${params.slugId}/v1/campaign`, params?.data, {}, success, failure, 'Loading');
   },
   editCampaign: (params = {}, success = () => {}, failure = () => {}) => {
     console.log('paramsparamsparams==>put',params)
@@ -212,19 +212,19 @@ export const CampaignManagerService = {
   },
   campaignSubmittedStatusAdd:(params = {}, success = () => {}, failure = () => {}) => {
     console.log('paramsparamsparams',params)
-    AxiosService('POST', `content-management/cms/${params.slugId}/campaign/${params.campaignId}/submit`, params?.data, {}, success, failure, 'Loading');
+    AxiosService('POST', `service-gateway/cms/${params.slugId}/campaign/${params.campaignId}/submit`, params?.data, {}, success, failure, 'Loading');
   },
   fetchMediaList:(params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/media/search`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/media/search`, {}, {}, success, failure, 'Loading');
   },
   fetchTempleteList:(params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/template/filter`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/template/filter`, {}, {}, success, failure, 'Loading');
   },
   getCmpaignDataCount:(params = {}, success = () => { }, failure = () => { }) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/countByState`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/countByState`, {}, {}, success, failure, 'Loading');
   },
   getArchiveData: (params = {}, success = () => {}, failure = () => {}) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/search?pageNumber=1&noPerPage=10&isArchieved=true`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/search?pageNumber=1&noPerPage=10&isArchieved=true`, {}, {}, success, failure, 'Loading');
   },
   onApprove: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService('POST', `service-gateway/cms/${params.slugId}/campaign/${params.campaignId}/approve`, {}, {}, success, failure, 'Loading');
@@ -236,7 +236,7 @@ export const CampaignManagerService = {
   editCmpLoc:async(params = {}, success = () => {}, failure = () => {})=>{
     const token = await getStorageForKey("authToken");
     const slugId = await getStorageForKey("slugId");
-    const networkUrl =baseUrl + `content-management/cms/${params.slugId}/content-playlist/${params.campaignId}`;
+    const networkUrl =baseUrl + `service-gateway/cms/${params.slugId}/content-playlist/${params.campaignId}`;
     console.log("thisis netwo",networkUrl)
     console.log("bodyy---->yy",JSON.stringify(params.data))
     try{
@@ -307,6 +307,7 @@ export const getTempleteDataForCampAdd = async (setIsLoading = () => { }) => {
   };
   const errorCallBack = (response) => {
     console.log('errorCallBack responseError', response)
+    
     setIsLoading(false);
   };
 

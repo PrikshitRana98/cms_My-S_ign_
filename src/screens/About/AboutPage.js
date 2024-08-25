@@ -26,6 +26,8 @@ import { Button } from 'react-native-paper'
 import { NAVIGATION_CONSTANTS } from '../../Constants/navigationConstant'
 import { useNavigation } from '@react-navigation/native'
 import RenderHTML from 'react-native-render-html'
+import ClockHeader from '../../Components/Atoms/ClockHeaders'
+import CopyRightText from '../../Components/Molecules/CopyRightText'
 
 const AboutPage = () => {
   const navigation = useNavigation();
@@ -65,8 +67,13 @@ const AboutPage = () => {
       whiteSpace: 'normal',
       color: '#aaa',
       margin: 0,
+      padding:5,
+      // justifyContent:"center",
+      textAlign:"justify",
+      
     },
-    ul: { margin: 0, padding: 0 },
+    
+    ul: { margin: 0, padding: 0,textAlign: 'justify'},
     li: {
       color: 'black',
       paddingHorizontal: 5,
@@ -74,27 +81,38 @@ const AboutPage = () => {
     p: {
       color: 'black',
       textAlign: 'space-between',
+      textAlign: 'justify',
     },
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: moderateScale(16) }}>
-      <View style={Styles.headerCont}>
+    <SafeAreaView style={{ flex: 1, paddingHorizontal: moderateScale(16) }}>
+      <ClockHeader/>
+      <CreateNewHeader
+        title={title}
+        onClickIcon={() => navigation.goBack()}
+      />
+      {/* <View style={Styles.headerCont}>
         <AppText style={Styles.headerText}>{title}</AppText>
-      </View>
+      </View> */}
       <ScrollView contentContainerStyle={Styles.scroll}>
         <View style={{ paddingHorizontal: 10 }}>
           <View style={{ justifyContent: 'space-between' }}>
             
             <RenderHTML
               contentWidth={Dimensions.get('window').width}
-              contentContainerStyle={{ textAlign: 'justify', backgroundColor: 'white', }}
+              // contentContainerStyle={{  backgroundColor: 'red',justifyContent:"center" }}
               source={{ html: info }}
               tagsStyles={mixedStyle}
             />
           </View>
         </View>
       </ScrollView>
+      <CopyRightText
+         containerStyle={{
+          marginVertical: 5,
+        }}
+      />
     </SafeAreaView>
   );
 };

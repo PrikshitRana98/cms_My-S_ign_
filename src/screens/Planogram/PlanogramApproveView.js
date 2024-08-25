@@ -19,6 +19,7 @@ import { getStorageForKey } from "../../Services/Storage/asyncStorage";
 import CreateNewHeader from "../../Components/Atoms/CreateNewHeader";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import DownArr from "../../Assets/Images/PNG/down_arr.png";
+import UpArrow from "../../Assets/Images/PNG/up_arr.png";
 import AppText from "../../Components/Atoms/CustomText";
 import CampaignPrewiewActions from "../../Components/Organisms/CMS/Campaign/CampaignPrewiewActions";
 import PlanogramPreviewActions from "../../Components/Organisms/CMS/Planogram/PlanogramPreviewActions";
@@ -74,7 +75,7 @@ const PlanogramApproveView = ({ navigation }) => {
 
   const setSelectedCmpAndCmpStr = () => {
     let { layoutAndLayoutStrings } = deviceData;
-    console.log("layoutAndLayoutStrings", layoutAndLayoutStrings);
+    
     let campData = [];
     let cmp = [];
     if (layoutAndLayoutStrings && layoutAndLayoutStrings.length > 0) {
@@ -231,7 +232,23 @@ const PlanogramApproveView = ({ navigation }) => {
     setDeviceData1([...deviceData]);
   };
 
-  const ListHeaders = ["#", "Campaign Name", "Duration(in seconds )", "Action"];
+  const ListHeaders = ["Sr. No.", "Campaign Name", "Duration(in seconds)", "Action"];
+  const ListEmptyComponent =  ({ item }) => {
+    return (
+      <View key={"bssd31a"} style={{paddingHorizontal:15,backgroundColor:themeColor.appBackground,marginVertical:10}}>
+        <AppText
+        style={{
+          padding: 10,
+          fontSize: 18,
+          // marginLeft:width/2-80,
+          color:'black',
+        }}
+      >
+        No Data Found
+      </AppText>
+      </View>
+    );
+  };
 
   const renderCampaignHeader = () => {
     return (
@@ -258,7 +275,6 @@ const PlanogramApproveView = ({ navigation }) => {
   };
   const renderCampaignList = ({ item, index }) => {
     let campaignTags1 = "--";
-    console.log('item------',item)
     return (
       <View style={Styles.renderContainer}>
         <View style={[Styles.nameView, { width: "16%" }]}>
@@ -386,7 +402,7 @@ const PlanogramApproveView = ({ navigation }) => {
           <Text style={Styles.EventTitle}>Event Start Time</Text>
           <View style={Styles.titleView}>
             {planogramList.startTime ? (
-              <Text style={Styles.titleName}>{planogramList.startTime}</Text>
+              <Text style={Styles.titleName}>{planogramList.startTime?planogramList.startTime.split(":").slice(0,2).join(":"):"-"}</Text>
             ) : (
               <Text style={Styles.titleName}>-</Text>
             )}
@@ -403,7 +419,7 @@ const PlanogramApproveView = ({ navigation }) => {
           <Text style={Styles.EventTitle}>Event End Time</Text>
           <View style={Styles.titleView}>
             {planogramList.endTime ? (
-              <Text style={Styles.titleName}>{planogramList.endTime}</Text>
+              <Text style={Styles.titleName}>{planogramList.endTime?planogramList.endTime.split(":").slice(0,2).join(":"):"-"}</Text>
             ) : (
               <Text style={Styles.titleName}>-</Text>
             )}
@@ -445,13 +461,28 @@ const PlanogramApproveView = ({ navigation }) => {
             
           </View>
           </>}
-          <Text style={Styles.EventTitle}>Campaign Name</Text>
-          <View style={Styles.titleView}>
+          <Text style={Styles.EventTitle}>Campaign / Campaign List </Text>
+          {/*=======campaign campaign string list==== */}
+          <ScrollView
+            horizontal
+            contentContainerStyle={{ marginBottom: 20 }}
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            style={{}}
+          >
+            <FlatList
+              data={campaignData}
+              renderItem={renderCampaignList}
+              ListEmptyComponent={ListEmptyComponent}
+              ListHeaderComponent={renderCampaignHeader}
+            />
+          </ScrollView>
+          {/* <View style={Styles.titleView}>
             <Text style={Styles.titleName}>
               {campName.length > 0 ? campName.join(", ") : "-"}
             </Text>
-          </View>
-
+          </View> */}
+          <Text style={Styles.EventTitle}>Devices/DevicesGroup List/Location</Text>
           <View style={{ width: "100%", marginTop: 9 }}>
             <View
               style={{
@@ -462,7 +493,11 @@ const PlanogramApproveView = ({ navigation }) => {
             >
               <Pressable
                 onPress={() => {
-                  setOpenFlag("device_group");
+                  if(openFlag=="device_group"){
+                    setOpenFlag("")
+                  }else{
+                    setOpenFlag("device_group");
+                  }
                 }}
                 style={{
                   paddingVertical: moderateScale(15),
@@ -474,7 +509,7 @@ const PlanogramApproveView = ({ navigation }) => {
               >
                 <Text style={{ color: "#00000056" }}>Group Device{` (${deviceGroupData1?.length})`}</Text>
                 <Image
-                  source={DownArr}
+                  source={openFlag=="device_group"?UpArrow:DownArr}
                   style={{
                     height: moderateScale(7),
                     width: moderateScale(11),
@@ -515,7 +550,11 @@ const PlanogramApproveView = ({ navigation }) => {
             >
               <Pressable
                 onPress={() => {
-                  setOpenFlag("devices");
+                  if(openFlag=="devices"){
+                    setOpenFlag("");
+                  }else{
+                    setOpenFlag("devices");
+                  }
                 }}
                 style={{
                   paddingVertical: moderateScale(15),
@@ -527,7 +566,7 @@ const PlanogramApproveView = ({ navigation }) => {
               >
                 <Text style={{ color: "#00000056" }}>Devices{` (${deviceData1?.length})`}</Text>
                 <Image
-                  source={DownArr}
+                  source={openFlag=="devices"?UpArrow:DownArr}
                   style={{
                     height: moderateScale(7),
                     width: moderateScale(11),
@@ -548,7 +587,7 @@ const PlanogramApproveView = ({ navigation }) => {
                     deviceData1.map((dGroup) => {
                       return (
                         <Text
-                          style={{ color: "#000" }}
+                          style={{ color: "#000",marginVertical:3 }}
                         >{`${dGroup.label}`}</Text>
                       );
                     })}
@@ -568,7 +607,11 @@ const PlanogramApproveView = ({ navigation }) => {
             >
               <Pressable
                 onPress={() => {
-                  setOpenFlag("locations");
+                  if(openFlag=="locations"){
+                    setOpenFlag("")
+                  }else{
+                    setOpenFlag("locations");
+                  }
                 }}
                 style={{
                   paddingVertical: moderateScale(15),
@@ -580,7 +623,7 @@ const PlanogramApproveView = ({ navigation }) => {
               >
                 <Text style={{ color: "#00000056" }}>Locations{` (${locationData1?.length})`}</Text>
                 <Image
-                  source={DownArr}
+                  source={openFlag=="locations"?UpArrow:DownArr}
                   style={{
                     height: moderateScale(7),
                     width: moderateScale(11),
@@ -621,7 +664,11 @@ const PlanogramApproveView = ({ navigation }) => {
             >
               <Pressable
                 onPress={() => {
-                  setOpenFlag("locations_device_group");
+                  if(openFlag=="locations_device_group"){
+                    setOpenFlag("")
+                  }else{
+                    setOpenFlag("locations_device_group");
+                  }
                 }}
                 style={{
                   paddingVertical: moderateScale(15),
@@ -635,7 +682,7 @@ const PlanogramApproveView = ({ navigation }) => {
                   Locations Device Groups{` (${deviceGroupData1?.length})`}
                 </Text>
                 <Image
-                  source={DownArr}
+                  source={openFlag=="locations_device_group"?UpArrow:DownArr}
                   style={{
                     height: moderateScale(7),
                     width: moderateScale(11),
@@ -671,20 +718,7 @@ const PlanogramApproveView = ({ navigation }) => {
             </View>
           </View>
 
-          {/*=======campaign campaign string list==== */}
-          <ScrollView
-            horizontal
-            contentContainerStyle={{ marginBottom: 20 }}
-            showsHorizontalScrollIndicator={false}
-            bounces={false}
-            style={{}}
-          >
-            <FlatList
-              data={campaignData}
-              renderItem={renderCampaignList}
-              ListHeaderComponent={renderCampaignHeader}
-            />
-          </ScrollView>
+          
         </View>
       </ScrollView>
     </View>

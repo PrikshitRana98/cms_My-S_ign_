@@ -220,7 +220,7 @@ const Scheduler = props => {
       sortByPlanogramName:false,
       sortByCreatedOn:false
     });
-    setVisible(false);
+    // setVisible(false);
     setStartDate(new Date());
     setEndDate(new Date());
     setStartTime(new Date());
@@ -387,7 +387,7 @@ const Scheduler = props => {
                {/*===============Durations========== */}
 
                <View style={Styles.ratioContainer}>
-                <AppText style={Styles.aspectText}>Duration (In Sec.)</AppText>
+                {/* <AppText style={Styles.aspectText}>Duration (In Sec.)</AppText> */}
                 <View style={Styles.styleRatio}>
                   <View style={{ width: "40%" }}>
                     <CampaignDropDown
@@ -426,8 +426,8 @@ const Scheduler = props => {
               </View>
 
               {/* state========= */}
-              <View style={{ width: "100%" }}>
-                <AppText style={Styles.aspectText}>State</AppText>
+              <View style={{ width: "100%",marginVertical:moderateScale(5) }}>
+                {/* <AppText style={Styles.aspectText}>State</AppText> */}
                 <CampaignDropDown
                   dataList={[
                     { label: "All", value: "" },
@@ -449,8 +449,8 @@ const Scheduler = props => {
               </View>
 
                {/* ratio============= */}
-              <View style={{ width: "100%", }}>
-                  <AppText style={Styles.aspectText}>Aspect Ratio</AppText>                
+              <View style={{ width: "100%",marginVertical:moderateScale(5) }}>
+                  {/* <AppText style={Styles.aspectText}>Aspect Ratio</AppText>                 */}
 
                 <CampaignDropDown
                   dataList={resolutionDropdownData}
@@ -482,7 +482,7 @@ const Scheduler = props => {
               </View> */}
 
               <View style={Styles.ratioContainer}>
-                <AppText style={Styles.aspectText}>Device Group</AppText>
+                {/* <AppText style={Styles.aspectText}>Device Group</AppText> */}
               
                 <CampaignDropDown               
                   dataList={deviceGroupData}
@@ -495,17 +495,15 @@ const Scheduler = props => {
               </View>
 
               <View style={Styles.ratioContainer}>
-                <AppText style={Styles.aspectText}>Device</AppText>
-              
-            <CampaignDropDown               
-              dataList={deviceData}
-              placeHolderText="Select Device"
-              onChange={(item) => {
-                  setFilterData({ ...filterData, device: item.value });
-              }}
-              value={filterData?.device}
-            />
-
+                {/* <AppText style={Styles.aspectText}>Device</AppText> */}
+                <CampaignDropDown               
+                  dataList={deviceData}
+                  placeHolderText="Select Device"
+                  onChange={(item) => {
+                      setFilterData({ ...filterData, device: item.value });
+                  }}
+                  value={filterData?.device}
+                />
               </View>
               <View style={[
                 Styles.SubmitContainer,
@@ -522,6 +520,7 @@ const Scheduler = props => {
                 <TouchableOpacity
                  onPress={() =>
                   {
+                  setVisible(false)
                   btnSchedularData()}}
                   style={Styles.submitBox}
                 >
@@ -629,7 +628,7 @@ const Scheduler = props => {
           else if (key === "sortByCreatedOn") {
             if(type === "Created On")
             {
-            queryParams.push(`${key}=${encodeURIComponent(filterData[key]  == true ? false : true)}`);
+            queryParams.push(`${key}=${encodeURIComponent(filterData[key]  == true ? false : false)}`);
             setFilterData({ ...filterData, sortByCreatedOn: filterData.sortByCreatedOn == true ? false :true});
                
             }
@@ -653,7 +652,7 @@ const Scheduler = props => {
 useEffect(()=>{
   console.log("schedularData calling",filterData.PlanogramName)
   btnSchedularData()
-},[filterData.PlanogramName])
+},[filterData.PlanogramName,filterData.CreatedBy,filterData.ApprovedBy])
 
   const btnSchedularData = async () => {
     // console.log("schedularData calling",filterData.PlanogramName)
@@ -707,9 +706,9 @@ useEffect(()=>{
     if (queryParams.length > 0) {
       endPoint += `?${queryParams.join("&")}`;
     }
-    console.log("enjndjnjenfjnjenf=====> endpoint",endPoint)
-      setVisible(false)
-      console.log("schedularData calling1234",filterData.PlanogramName)
+    // console.log("enjndjnjenfjnjenf=====> endpoint",endPoint)
+      // setVisible(false)
+      // console.log("schedularData calling1234",filterData.PlanogramName)
       getSchedulerList(endPoint, ()=>{});
   };
 
@@ -815,7 +814,7 @@ useEffect(()=>{
     {
       setschedularlist([]);
     }
-    setVisible(false);
+    // setVisible(false);
   }, [schedularlistss]);
 
 
@@ -1194,6 +1193,7 @@ useEffect(()=>{
           <View style={Styles.schedulerList}>
             <View style={{ flexDirection:'row',paddingTop:5}}>
               <FlatList horizontal
+              keyExtractor={(item,index)=> index}
               data={ChooseType}
               renderItem={renderactions}
               />    

@@ -2,6 +2,7 @@ import {
     GET_TEMPLATE_DATA,
     GET_TEMPLATE_DATA_PAGINATION,
     REMOVE_TEMPLATE_DATA,
+    RESET,
     } from '../ActionTypes/commonActionTypes';
     
     const initialState = {
@@ -10,7 +11,7 @@ import {
     };
     const templateReducer = (state = initialState, action) => {
       switch (action.type) {
-  
+        case RESET:()=>initialState;
         case GET_TEMPLATE_DATA:
           return {
             ...state,

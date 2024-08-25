@@ -62,12 +62,12 @@ const CampaignStringScrollHeader = ({
     ];
   }
 
-  const returnwidth = () => {
+  const returnwidth = (index,item) => {
     let value = 100 / 6;
     if (workFlow && workFlow?.approverWorkFlow == "CAMPAIGN_STRING") {
       value = 100 / 7;
     }
-    // console.log(value, "width");
+    
     return `${value}%`;
   };
 
@@ -113,7 +113,7 @@ const CampaignStringScrollHeader = ({
         return (
           <View
             key={item + index}
-            style={[Styles.mainContainer(returnwidth())]}
+            style={[Styles.mainContainer(returnwidth(index,item))]}
           >
             <View
               style={
@@ -137,10 +137,11 @@ const CampaignStringScrollHeader = ({
                   flexDirection: "row",
                   justifyContent: "space-between",
                   paddingHorizontal: 20,
+                  
                 }}
               >
-                <AppText style={Styles.boldText}>{"Campaign"}</AppText>
-                <AppText style={Styles.boldText1}>{"Total"}</AppText>
+                <AppText style={[Styles.boldText,{width:"50%",textAlign:"left"}]}>{"Campaign"}</AppText>
+                <AppText style={[Styles.boldText1,{width:"50%",textAlign:'left'}]}>{" "}{" Total"}</AppText>
               </View>
             )}
             {(item == "Campaign String" || item == "Created By") && (
@@ -197,8 +198,9 @@ const HeaderStyles = (COLORS) =>
     mainContainer: (width) => ({
       paddingHorizontal: moderateScale(10),
       justifyContent: "center",
-      marginHorizontal: moderateScale(2),
+      // marginHorizontal: moderateScale(2),
       width: width,
+      // borderWidth:1
     }),
     arrowStyle: {
       height: moderateScale(16),

@@ -156,7 +156,7 @@ import {
       };
       return new Promise((resolve, reject) => {
         axios
-          .get(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaId}`, {
+          .get(`${baseUrl}service-gateway/cms/${slugId}/v1/media/${mediaId}`, {
             headers: authHeader,
           })
           .then((response) => {

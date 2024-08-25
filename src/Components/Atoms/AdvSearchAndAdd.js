@@ -15,7 +15,6 @@ const AdvSearchAndAdd = ({
 }) => {
   const themeColor = useThemeContext();
   const Styles = SearchStyles(themeColor);
-
   return (
     <View style={[Styles.mainContainer, containerStyle]}>
       <ThemedButton

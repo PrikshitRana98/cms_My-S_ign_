@@ -13,10 +13,10 @@ const headerData = [
   'Scheduler Name',
   'Created By',
   'Date & Time',
-  'Approved/Rejected By',
+  'Approved / Rejected By',
   'Created On',
   'State',
-  'Running/Not Running',
+  'Running / Not Running',
   'Action',
 ];
 
@@ -70,7 +70,9 @@ const ScheduleScrollHeaderSearch = ({onchange,approval, filterData,btnSchedularD
          if(index === 3 && approval === false)
          return null;
          return ( 
-          <View key={item + index} style={[Styles.mainContainer(index),{ width: approval ? (index === 0 ? '12%' : index === 1 ? '12%' : index === 2 ? '15%' : index === 3 ? '12%' : index === 4 ? '12%' :index === 5 ? '10%' : index === 6 ?'10%' :'15%') : (index === 0 ? '15%' : index === 1 ? '12%' : index === 2 ? '20%' : index === 3 ? '12%' : index === 4 ? '12%' :index === 5 ? '10%' : index === 6 ?'9%' :'22%'),
+          <View key={item + index} style={[Styles.mainContainer(index),
+            { width: approval ? (index === 0 ? '12%' : index === 1 ? '12.5%' : index === 2 ? '15%' : index === 3 ? '12%' : index === 4 ? '12%' :index === 5 ? '10.5%' : index === 6 ?'10%' :'15%') : 
+            (index === 0 ? '15%' : index === 1 ? '12.5%' : index === 2 ? '20%' : index === 3 ? '12%' : index === 4 ? '12%' :index === 5 ? '10.5%' : index === 6 ?'9%' :'22%'),
         }]}>
                <View style={Styles.headerContainer}>
                  <Text style={Styles.boldText}>{item}</Text>

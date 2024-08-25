@@ -88,8 +88,10 @@ const SelectMediaModal = ({
       if(!isImageSelected(itrem)){
         setselRegionData([...selRegionData,itrem]) 
       }else{
-        let remData = selRegionData.filter((sel)=>sel.mediaDetailId!=itrem.mediaDetailId)
-        setselRegionData([...remData])
+        // let remData = selRegionData.filter((sel)=>sel.mediaDetailId!=itrem.mediaDetailId)
+        // setselRegionData([...remData])
+        console.log("again added",itrem.mediaDetailId)
+        setselRegionData([...selRegionData,itrem]) 
       }
     } else {
       setselRegionData([itrem]) 

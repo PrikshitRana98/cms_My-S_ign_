@@ -8,6 +8,8 @@ import {
   StyleSheet,
   View,
   Text,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import AppIcon from "../../Assets/Images/PNG/appIcon.png";
@@ -63,6 +65,7 @@ import CommonHeaderTitleActionMedia from "../../Components/Atoms/commonHeaderMed
 import MediaActions from "./MediaAction";
 import { MediaApiService } from "./MediaApi";
 import { PREVILAGES } from "../../Constants/privilages";
+import { resetRedux } from "../../appConfig/AppRouter/Contents";
 
 
 export const _getAllMediaBySearchFilter = (queryParamsData) => {
@@ -531,8 +534,8 @@ const MediaLibrary = ({ navigation }) => {
     };
 
     const failureCallBack = (error) => {
-      // console.log("error of delete", error, slugId);
-      Alert.alert("Error",error.message);
+      console.log("error of delete", error, slugId);
+      // Alert.alert("Error","");
       // setConfirmBoxData({
       //   ...confirmBoxData,
       //   confirmModalFlag: false,
@@ -710,7 +713,7 @@ const MediaLibrary = ({ navigation }) => {
 
     const slugId = await getStorageForKey("slugId");
     // setIsLoading(true);
-    const endPoint=`content-management/cms/${slugId}/v1/total-media-archive-count`
+    const endPoint=`service-gateway/cms/${slugId}/v1/total-media-archive-count`
     const successCallBack = async (response) => {
       const count=response.data.totalMediaCount-response.data.totalArchiveCount
       if(count>0){
@@ -719,9 +722,24 @@ const MediaLibrary = ({ navigation }) => {
       setarchiveTotalCount(response.data.totalArchiveCount);
     };
   
-    const errorCallBack = (response) => {
-     console.log("Error",response)
+    const errorCallBack = (error) => {
+     console.log("Error",error)
       setIsLoading(false);
+      if(error.status==401||error.status=="401"||error.message=="Request failed with status code 401"){
+        
+        Alert.alert("Unauthorized", 'Please login', [
+          {
+            text: "Ok",
+            onPress: () => {
+              resetRedux()
+              navigation.navigate(NAVIGATION_CONSTANTS.LOGIN);
+              
+            },
+          },
+        ]);
+      }else{
+        Alert.alert("Something went wrong. Please try later")
+      }
     };
   
     MediaApiService.getMediaCount(
@@ -733,7 +751,7 @@ const MediaLibrary = ({ navigation }) => {
 
   useEffect(()=>{
     call_getApi()
-  },[mediaName])
+  },[mediaName,uploadedBy,tag])
 
   const call_getApi = async (uploadedDate1="") => {
     const params = {
@@ -762,6 +780,35 @@ const MediaLibrary = ({ navigation }) => {
     getMediaDataCount()
     getArchivedList(()=>{}, params, (q = advUrl));
     getMediaLibData(()=>{}, params, (q = advUrl));
+  };
+
+  const call_getApiDate = async (uploadedDate1="") => {
+    const params = {
+      page: currentPage,
+      pageSize: 10+PageSize,
+      isArchive: false,
+    };
+    
+    if (duration) {
+      params["duration"] = duration;
+    }
+
+    if (mediaName) {
+      params["mediaName"] = mediaName;
+    }  
+    if (uploadedBy) {
+      params["uploadedBy"] = uploadedBy;
+    } 
+    if (typeof(uploadedDate1)=="number") {
+      params["uploadedDate"] = uploadedDate1;
+    } 
+     if (tag) {
+      params["tag"] = tag;
+    } 
+    
+    getMediaDataCount()
+    getArchivedList(setIsLoading, params, (q = advUrl));
+    getMediaLibData(setIsLoading, params, (q = advUrl));
   };
 
   const handleCallApi = async (data) => {
@@ -1315,7 +1362,8 @@ const MediaLibrary = ({ navigation }) => {
                   }
                   renderItem={renderMediaList}
                   ListHeaderComponent={
-                    <View style={[myStyles.headerView,{alignItems:'center'}]}>
+                    <KeyboardAvoidingView  behavior='position' keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 10}>
+                      <View style={[myStyles.headerView,{alignItems:'center'}]}>
                       <TouchableOpacity
                         onPress={() => {
                           handleAllSelect(!selectAllMediaFlag);
@@ -1386,11 +1434,12 @@ const MediaLibrary = ({ navigation }) => {
                             setDate(date);
                             setuploadedDate(new Date(date));
                             // call_getApi()
-                            call_getApi(new Date(date).getTime());
+                            call_getApiDate(new Date(date).getTime());
                             // console.log(new Date(date).getTime())
                           }}
                           onCancel={() => {
                             setOpen(false);
+                            setDate(new Date());
                             call_getApi()
                             setuploadedDate("");
                           }}
@@ -1402,7 +1451,8 @@ const MediaLibrary = ({ navigation }) => {
                         </View>
                         <View style={{height:moderateScale(40)}}></View>
                       </View>
-                    </View>
+                      </View>
+                    </KeyboardAvoidingView>
                   }
                 />
                 {/* {(
@@ -1484,6 +1534,7 @@ const HeaderStyles = (COLORS) =>
       alignItems: "flex-start",
       width: moderateScale(width * 3.5),
       padding: moderateScale(10),
+      paddingBottom:18,
       marginVertical: moderateScale(1),
     },
     iconCenterView: {

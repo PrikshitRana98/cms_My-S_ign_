@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useThemeContext } from "../../../appConfig/AppContext/themeContext";
 import MediaPlayerScrollHeader from "./MediaPlayerScrollHeader";
-
+import Entypo from "react-native-vector-icons/Entypo";
 import Feather from "react-native-vector-icons/Feather";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -29,7 +29,7 @@ import { PREVILAGES } from "../../../Constants/privilages";
 
 
 
-const MediaPlayerGroupList = ({ deviceGroupList,selectedData,setSelectedData,btnOpenModelType }) => {
+const MediaPlayerGroupList = ({ deviceGroupList,selectedData,setSelectedData,btnOpenModelType,getDevicePlanogram }) => {
   const themeColor = useThemeContext();
   const Styles = MediaPlayerStyles(themeColor);
   const [selectedMediaPlayerName, setSelectedMediaPlayerName] = useState("");
@@ -64,7 +64,9 @@ const MediaPlayerGroupList = ({ deviceGroupList,selectedData,setSelectedData,btn
           </TouchableOpacity>}
 
           {(authorization.includes(PREVILAGES.DEVICE_GROUP.EDIT_DEVICE_GROUP) &&authorization.includes(PREVILAGES.DEVICE_GROUP.ADD_DEVICE_GROUP))&&<TouchableOpacity activeOpacity={0.5} style={Styles.iconBackView} onPress={()=>{ navigation.navigate('DraggableCompents',{mediaData:item})}}>
-            <FontAwesome6 name="arrow-right-arrow-left" size={20} color={themeColor.themeColor} />
+            {/* <FontAwesome6 name="arrow-right-arrow-left" size={20} color={themeColor.themeColor} /> */}
+            <Entypo name="swap" size={20} color={themeColor.themeColor} /> 
+            
           </TouchableOpacity>}
           {authorization.includes(PREVILAGES.DEVICE_GROUP.DELETE_DEVICE_GROUP) && <TouchableOpacity activeOpacity={0.5} style={Styles.iconBackView} onPress={()=>{btnOpenModelType('Delete',item.deviceGroupId)}}>
           <Image source={DeleteIcon} 
@@ -156,8 +158,8 @@ const MediaPlayerGroupList = ({ deviceGroupList,selectedData,setSelectedData,btn
           {renderAction(item)}
         </View>
         {(selectedMediaPlayerName === item.deviceGroupName) ? (<>
-          <AppText>{JSON.stringify(item.panels)}</AppText>
-          <MediaChildList data={item.device} />
+          {/* <AppText>{JSON.stringify(item.panels)}</AppText> */}
+          <MediaChildList data={item.device} getDevicePlanogram={getDevicePlanogram} />
           </>
         ) : null}
       </React.Fragment>

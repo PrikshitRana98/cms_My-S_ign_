@@ -81,7 +81,7 @@ const SchedulerView = ({ navigation }) => {
         </View>
         <View style={Styles.bodyContainer}>
         <AppText style={Styles.bodyHeaderText}>
-                CAMPAIGN/CAMPAIGNSTRING LIST
+                CAMPAIGN / CAMPAIGN STRING LIST
               </AppText>
               
               <ScrollView
@@ -101,7 +101,7 @@ const SchedulerView = ({ navigation }) => {
             </View>
             <View style={Styles.bodyContainer}>
             <AppText style={Styles.bodyHeaderText}>
-                DEVICES/DEVICESGROUP LIST
+                DEVICES / DEVICES GROUP LIST
               </AppText>
               
               <ScrollView

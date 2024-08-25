@@ -1,7 +1,8 @@
 import {
     GET_PLONOGRAM_DATA,
     GET_PLONOGRAM_ARCHIVE_DATA,
-    REMOVE_PLONOGRAM_DATA
+    REMOVE_PLONOGRAM_DATA,
+    RESET
     } from '../ActionTypes/commonActionTypes';
     
     const initialState = {
@@ -13,6 +14,7 @@ import {
   
     const plonogramReducer = (state = initialState, action) => {
       switch (action.type) {
+        case RESET:()=>initialState;
         case GET_PLONOGRAM_DATA:
           return {
             ...state,

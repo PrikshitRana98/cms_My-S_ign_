@@ -64,7 +64,7 @@ export const AddDevicefun=async(params = {}, success = () => {}, failure = () =>
     // "X-Tenant-Id": slugId,
   };
 
-  console.log("networkUrl45678", networkUrl);
+
   
   try{
     await axios.post(networkUrl,params,{headers:authHeader})
@@ -115,7 +115,7 @@ export const deviceManagerService = {
     AxiosService('PUT', `device-management/api/device/status`, params, {}, success, failure, 'Loading');
   },
   getDownloadLinks: (params = {}, success = () => {}, failure = () => {})=>{ 
-    AxiosService("GET",`content-management/cms/${params.slugId}/download-all?start-date=${params.startDate}&end-date=${params.endDate}&device-ids=${params.deviceID}`,{},{},success,failure,"Loading");
+    AxiosService("GET",`service-gateway/cms/${params.slugId}/download-all?start-date=${params.startDate}&end-date=${params.endDate}&device-ids=${params.deviceID}`,{},{},success,failure,"Loading");
   },
   getDownload: (params = {}, success = () => {}, failure = () => {})=>{ 
     AxiosService("GET",params.url,{},{},success,failure,"Loading");

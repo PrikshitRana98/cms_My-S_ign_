@@ -38,6 +38,13 @@ const CreateCampaignString = ({ navigation }) => {
   const [responseData, setResponseData] = useState([]);
   const [responceError, setResponceError] = useState("");
 
+  const [successModal,setSuccessModal]=useState(false)
+  const [msg,setMsg]=useState("")
+
+  const onComplete=()=>{
+    setSuccessModal(false)
+  }
+
   const resolutionList = useSelector(
     (state) => state.ResolutionReducer.resolutionList
   );
@@ -122,7 +129,7 @@ const CreateCampaignString = ({ navigation }) => {
       let remData = selectedImageIds.filter(
         (camp) => camp?.campaignId != campaignId
       );
-      emData.map(ele=>console.log('remDataremData12345',ele))
+      
       setSelectedImageIds([...remData]);
     } else {
       setSelectedImageIds([...selectedImageIds, { campaignId:campaignId, campaignName:campaignName,numberOfLoops:1,deuration:duration }]);
@@ -150,6 +157,7 @@ const CreateCampaignString = ({ navigation }) => {
     <View style={Styles.mainContainer}>
       <Loader visible={isLoading} />
       <ClockHeader />
+      {successModal&&<SuccessModal Msg={msg} onComplete={onComplete}/>}
       <ScrollView>
         <View style={Styles.subContainer}>
           <View style={Styles.headerContainer}>
@@ -195,7 +203,7 @@ const CreateCampaignString = ({ navigation }) => {
                 keyExtractor={(item) => item.campaignId.toString()}
                 renderItem={({ item }) => (
                   <View
-                    style={[Styles.listItem]}
+                    style={[Styles.listItem,]}
                    
                   >
                     <TouchableOpacity
@@ -211,11 +219,12 @@ const CreateCampaignString = ({ navigation }) => {
                           borderColor: themeColor.activeRed,
                           borderWidth: 2,
                           borderRadius:2
-                        },
+                        },{height:50,width:"100%",justifyContent:"center",paddingHorizontal:10}
                       ]}
                     >
-                      </TouchableOpacity>
-                    <Text style={{color:'#000000'}}>{item.campaignTitle}</Text>
+                      <Text numberOfLines={2} style={{color:'#000000'}}>{item.campaignTitle}</Text>
+                    </TouchableOpacity>
+                    
                   </View>
                 )}
               />

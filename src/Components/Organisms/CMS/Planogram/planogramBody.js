@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Entypo from "react-native-vector-icons/Entypo";
 import Foundation from "react-native-vector-icons/Foundation";
+import FontAwesome from "react-native-vector-icons/FontAwesome"
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { FONT_FAMILY } from "../../../../Assets/Fonts/fontNames";
@@ -239,7 +240,7 @@ const PlanogramBody = ({
           <Pressable onPress={()=>{
             onPressToolTip(item)
           }}>
-            <Foundation name="info" size={25} color={themeColor.themeColor} />
+             <FontAwesome name={"info-circle"} color={themeColor.themeColor} size={20}/>
           </Pressable>
         }
       </View>
@@ -293,6 +294,14 @@ const PlanogramBody = ({
     );
   };
 
+  const renderTimeView = (value, index) => {
+    return (
+      <View style={[Styles.commonView, { width: returnwidth(),paddingHorizontal:5 }]}>
+        <AppText style={Styles.commonText}>{value}</AppText>
+      </View>
+    );
+  };
+
   const renderAction = (id, item) => {
     return (
       <View style={[Styles.actionView, { width: returnwidth() }]}>
@@ -340,12 +349,20 @@ const PlanogramBody = ({
           />
         </Pressable>}
 
-        {item.state?.toLowerCase() === "published"&& authorization.includes(PREVILAGES.PLANOGRAM.EDIT_PLANOGRAM) && (
+        {item.state?.toLowerCase() === "published"&&item.planogramStopButtonAction!="HIDE"&& authorization.includes(PREVILAGES.PLANOGRAM.EDIT_PLANOGRAM) && (
           <TouchableOpacity
             style={[Styles.iconBackView,{justifyContent:"center",alignItems:"center",padding:0}]}
             onPress={() => btnOpenModelType("PAUSE", id)}
           >
             <Ionicons name={"stop-circle-outline"} color={themeColor.themeColor} size={24}/>
+          </TouchableOpacity>
+        )}
+        {item.state?.toLowerCase() === "published"&&item.planogramStopped==true&& authorization.includes(PREVILAGES.PLANOGRAM.EDIT_PLANOGRAM) && (
+          <TouchableOpacity
+            style={[Styles.iconBackView,{justifyContent:"center",alignItems:"center",padding:0}]}
+            activeOpacity={1}
+          >
+            <Feather name={"minus-circle"} color={themeColor.red} size={24}/>
           </TouchableOpacity>
         )}
         
@@ -447,7 +464,7 @@ const PlanogramBody = ({
   };
 
   const renderSchedulerItems = ({ item, index }) => {
-    const formattedCreatedOn = moment(item?.createdOn).format("YYYY/MM/DD");
+    const formattedCreatedOn = moment(item?.createdOn).format("DD/MM/YYYY");
     const formattedStartDate = moment(item.startDate).format("DD-MM-YYYY");
     const formattedEndDate = moment(item.endDate).format("DD-MM-YYYY");
     const formattedStartTime = moment(item.startTime, "HH:mm:ss").format(
@@ -499,12 +516,12 @@ const PlanogramBody = ({
           {renderTextView(item.createdByName, index)}
           {workFlow &&
             (workFlow?.approverWorkFlow == "PLANOGRAM" ||
-            workFlow?.approverWorkFlow == "PLANOGRAM_AND_CAMPAIGN") &&
+            workFlow?.approverWorkFlow == "PLANOGRAM_AND_CAMPAIGN")&&
             renderApprovedRejectView(formattedCreatedOn, index, item)}
 
           {item.startDate && item.endDate && item.startTime && item.endTime
-            ? renderTextView(
-                `${formattedStartDate} - ${formattedEndDate} ${formattedStartTime} - ${formattedEndTime}`,
+            ? renderTimeView(
+                `${formattedStartDate} - ${formattedEndDate}, ${formattedStartTime} - ${formattedEndTime}`,
                 index
               )
             : renderTextView("----", index)}
@@ -613,7 +630,7 @@ const scheduleStyles = (COLORS) =>
     commonText: {
       color: COLORS.textColor,
       fontSize: moderateScale(15),
-      paddingHorizontal: moderateScale(15),
+      paddingHorizontal: moderateScale(10),
       margin: moderateScale(0.5),
       backgroundColor: COLORS.white,
       fontFamily: FONT_FAMILY.OPEN_SANS_REGULAR,

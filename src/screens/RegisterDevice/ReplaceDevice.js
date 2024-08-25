@@ -41,7 +41,7 @@ const ReplaceDevice = ({ navigation, route }) => {
   const [locationSelected, setLocationSelected] = useState(null);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [deviceLocation, setDeviceLocation] = useState(null);
-  const [deviceList, setDeviceList] = useState(null);
+  const [deviceList, setDeviceList] = useState([]);
 
   const locationData1 = useSelector(
     (state) => state.CommonReducer.locationData
@@ -77,7 +77,7 @@ const ReplaceDevice = ({ navigation, route }) => {
     setIsLoading(true);
     const successCallBack = async (response) => {
       setIsLoading(false);
-      // console.log("getDeviceByLocation success", response.result);
+      console.log("getDeviceByLocation success", response.result);
       // console.log("getDeviceByLocation deviceLocation", deviceLocation);
       setDeviceList(response.result);
     };
@@ -173,10 +173,10 @@ const ReplaceDevice = ({ navigation, route }) => {
               </Pressable>
             );
           })}
-        {!deviceList && (
+        {deviceList.length==0 && (
           <View style={{ width: "100%" }}>
             <Text style={{ color: "#000", textAlign: "center" }}>
-              Data not found
+              No Data found
             </Text>
           </View>
         )}

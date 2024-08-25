@@ -8,19 +8,38 @@ import SubHeaderText from "../../Atoms/SubHeaderText";
 const ScrollHeader = ({ data, setValue, value }) => {
   const themeColor = useThemeContext();
   const Styles = HeaderStyles(themeColor);
+
+  const scrollRef = React.useRef();
+  const width = 100;
+
+  const scrollToTable = (tableIndex) => {
+    console.log("scroll to recentl header",JSON.stringify(tableIndex))
+    scrollRef.current.scrollTo({
+      x: tableIndex * width,
+      animated: true,
+    });
+  };
+
   const handleItemPress = (item) => {
     setValue(item);
+    
   };
+
+  
   return (
     <ScrollView
       bounces={false}
       horizontal
       showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ alignItems: 'center' }}
+      ref={scrollRef}
     >
       {data.map((item, index) => {
         return (
           <SubHeaderText
-            onPress={() => handleItemPress(item)}
+            onPress={() => {handleItemPress(item)
+              scrollToTable(index)
+            }}
             key={item + index}
             title={item}
             textStyle={{

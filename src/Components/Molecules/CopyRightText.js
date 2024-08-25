@@ -10,7 +10,7 @@ const CopyRightText = ({containerStyle}) => {
   return (
     <View style={[Styles.mainContainer, containerStyle]}>
       <AppText style={Styles.textStyle}>
-        ©Panasonic 2022. All rights reserved.
+        ©Panasonic 2024. All rights reserved.
       </AppText>
       {/* <AppText style={Styles.textStyle}>Need Help?</AppText> */}
     </View>

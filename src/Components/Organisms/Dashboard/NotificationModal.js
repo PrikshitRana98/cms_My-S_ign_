@@ -18,16 +18,25 @@ import {
   import Entypo from "react-native-vector-icons/Entypo";
   import { FONT_FAMILY } from "../../../Assets/Fonts/fontNames";
 import { ThemeContext } from "../../../appConfig/AppContext/themeContext";
-import { getStorageForKey } from "../../../Services/Storage/asyncStorage";
+import { getStorageForKey, removeKeyInStorage, setStorageForKey } from "../../../Services/Storage/asyncStorage";
 import { NotificationApiService } from "../../../Services/AxiosService";
 import { LocalDate1, moderateScale } from "../../../Helper/scaling";
 import AppText from "../../Atoms/CustomText";
 import Separator from "../../Atoms/Separator";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect,useNavigation } from "@react-navigation/native";
 import { all } from "axios";
 import Loader from "../../Organisms/CMS/Loader";
-export const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
+import { NAVIGATION_CONSTANTS } from "../../../Constants/navigationConstant";
+import { ASYNC_STORAGE } from "../../../Constants/asyncConstants";
+import Toast from 'react-native-simple-toast'
+import { resetUserReducer } from "../../../appConfig/Redux/Action/userAction";
+import {useDispatch} from "react-redux"
+import { getXForLineInBar } from "react-native-gifted-charts/src/utils";
+
+const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
     const themeColor = useContext(ThemeContext);
+    const dispatch=useDispatch();
+    const navigation=useNavigation();
     const mStyles = ModalStyles(themeColor);
     const [isNotiLoading, setIsNotiLoading] = useState(false);
     const flatListRef = useRef(null);
@@ -44,14 +53,37 @@ export const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
     const getAllNotification = async () => {
       console.log("\n\ngetAllNotification\n called")
       const slugId = await getStorageForKey("slugId");
-      setIsNotiLoading(true);
+      // setIsNotiLoading(true);
+
+      const logout = async () => {
+        await removeKeyInStorage(ASYNC_STORAGE.USER_DETAILS);
+        await setStorageForKey(ASYNC_STORAGE.LOGGED, false);
+        await removeKeyInStorage("slugId");
+        await removeKeyInStorage("is_scheduler_enabled");
+        await removeKeyInStorage("authorities");
+        await removeKeyInStorage("authToken");
+        await removeKeyInStorage("userDetails");
+        dispatch(resetUserReducer());
+        navigation.reset({
+          index: 0,
+          routes: [{ name: NAVIGATION_CONSTANTS.LOGIN }],
+        });
+        try {
+          // await AsyncStorage.clear();
+          console.log("Storage cleared successfully");
+        } catch (error) {
+          console.log("Error clearing storage:", error);
+        }
+      };
   
       const successCallBack = async (response) => {        
-        console.log("getAllNotification notication\n\n", );
+      
+        console.log("getAllNotification notication\n\n",JSON.stringify(response.data));
         if ((response.status == "OK" || response.code == "200")&&JSON.stringify(notificationData)!=JSON.stringify(response.data)) {
           // setMediaDetails(response.data.mediaDetails[0]);
           // setNoticationCount(response.data.unreadCount)
           setnotificationData(response.data.notifications);
+          ///setnotificationData
         }
         setTimeout(() => {
           setIsNotiLoading(false);
@@ -59,9 +91,23 @@ export const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
       };
   
       const errorCallBack = (error) => {
-        Alert.alert(slugId,error.message);
+        
         console.log("Error getAllNotification [notication]", JSON.stringify(error));
         console.log("Error getAllNotification", error.config.url);
+        if (error?.response?.data) {
+          if (error.response.data.name == "UnAuthorized") {
+            Alert.alert("Unauthorized", error.response.data?.message, [
+              {
+                text: "Ok",
+                onPress: () => {
+                  logout();
+                  navigation.navigate(NAVIGATION_CONSTANTS.LOGIN);
+                  
+                },
+              },
+            ]);
+          }
+        }
         setIsNotiLoading(false);
       };
 
@@ -79,8 +125,10 @@ export const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
           <TouchableOpacity
             key={item.item.messageId}
             onPress={() => {
+              if(!item.item.read){
               setIsNotiLoading(true);
               markRead(item.item.messageId,item)
+            }
             }}
             style={mStyles.campaignContainer(item.item.read)}
           >
@@ -106,9 +154,11 @@ export const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
 
       const slugId = await getStorageForKey("slugId");
       const successCallBack = async (response) => {
+        console.log("notification respose------------->",JSON.stringify(response))
         const newData = [...notificationData];
         newData[item?.index].read = true;
         setIsNotiLoading(false);
+        Toast.show("Message read ", Toast.SHORT);
         setnotificationData(newData);
       };
 
@@ -193,6 +243,7 @@ export const NotiicationModal =({ notiModal, setModal,getNotifiCount }) => {
     );
   };
 
+  export default React.memo(NotiicationModal)
 
   const ModalStyles = (COLORS) =>
   StyleSheet.create({

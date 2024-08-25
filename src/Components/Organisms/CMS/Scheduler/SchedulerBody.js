@@ -109,7 +109,7 @@ const SchedulerBody = ({schedularlist,approval,btnOpenModelType,btnOpenstopType,
   };
   const renderState = (value, index) => {
     return (
-      <View style={[Styles.commonView,{width: '10%',flexDirection:'row',alignItems:'center'}]}>
+      <View style={[Styles.commonView,{width: '10%',flexDirection:'row',alignItems:'center',justifyContent:"space-between"}]}>
         <ThemedText
           title={value.state}
           containerStyle={[Styles.statusView, getBackgroundColor(value.state)]}
@@ -124,7 +124,8 @@ const SchedulerBody = ({schedularlist,approval,btnOpenModelType,btnOpenstopType,
             }
           }}>
           <FontAwesome name={"info-circle"} color={themeColor.themeColor} size={20}/>
-          </TouchableOpacity>}
+          </TouchableOpacity>
+        }
       </View>
     );
   };
@@ -353,6 +354,9 @@ const SchedulerBody = ({schedularlist,approval,btnOpenModelType,btnOpenstopType,
       <FlatList
         scrollEnabled={false}
         data={schedularlist}
+        keyExtractor={(item, index) => {
+          return `index${index}`
+        }}
         renderItem={renderSchedulerItems}
         ListHeaderComponent={
           <ScheduleScrollHeaderSearch

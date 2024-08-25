@@ -19,7 +19,7 @@ import ThemedButton from "../../Components/Atoms/ThemedButton";
 import ThemedText from "../../Components/Atoms/ThemedText";
 import CopyRightText from "../../Components/Molecules/CopyRightText";
 import CampaignBody from "../../Components/Organisms/CMS/Campaign/CampaignBody";
-import { moderateScale } from "../../Helper/scaling";
+import { moderateScale, width } from "../../Helper/scaling";
 import { useThemeContext } from "../../appConfig/AppContext/themeContext";
 import CampaignStyles from "./style";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,6 +29,8 @@ import {
   getCampaignData,
   getCampaignPageData,
   getCampaignSearchData,
+  getMediaDataForCampAdd,
+  getTempleteDataForCampAdd,
 } from "./CompainApi";
 import { getStorageForKey } from "../../Services/Storage/asyncStorage";
 import { removeCampaingnList } from "../../appConfig/Redux/Action/campaignAction";
@@ -38,11 +40,12 @@ import CreateNewHeader from "../../Components/Atoms/CreateNewHeader";
 import AppTextInput from "../../Components/Atoms/AppTextInputs";
 import CampaignDropDown from "../../Components/Organisms/CMS/Campaign/CampaignDropDown";
 import Loader from "../../Components/Organisms/CMS/Loader";
-import { getResolutionData, getWorkFlow } from "../../Services/AxiosService/ApiService";
+import { getResolutionData, getWorkFlow,getCustomerRole } from "../../Services/AxiosService/ApiService";
 import ConfirmBox from "../../Components/Organisms/CMS/ConfirmBox";
 import { PREVILAGES } from "../../Constants/privilages";
 import SuccessModal from "../../Components/Molecules/SuccessModal";
 import PaginationComp from "../../Components/Atoms/PaginationComp";
+import { ResolutionManagerService } from "../../Services/AxiosService";
 
 const CampaignManagement = ({ navigation }) => {
   const themeColor = useThemeContext();
@@ -73,7 +76,7 @@ const CampaignManagement = ({ navigation }) => {
     {
       name: "Archived",
       count: 0,
-      color: themeColor.failedRed,
+      color: themeColor.themeColor,
       status: false,
     },
     // {
@@ -96,7 +99,7 @@ const CampaignManagement = ({ navigation }) => {
     // },
   ]);
   const [campaignList,setcamaignList]=useState({})
-
+  const [isListDataLoading,setIsListDataLoading]=useState(false)
   const dispatch = useDispatch();
  
   const { authorization,userRole } = useSelector((state) => state.userReducer);
@@ -130,16 +133,67 @@ const CampaignManagement = ({ navigation }) => {
   const [successModal,setSuccessModal]=useState(false)
   const [successMsg,setSuccessMsg]=useState("")
 
+  const [resolutionData,setResolutionData]=useState([])
+
   const onComplete = () => {
     setSuccessModal(false);
   };
+
+  const fetchResolutionData = async (setIsLoading = () => {}) => {
+    const slugId = await getStorageForKey("slugId");
+    setIsLoading(true);
+
+    const modifykeys = (data) => {
+      const {
+        actualHeightInPixel,
+        actualWidthInPixel,
+        defaultWidthInPixel,
+        defaultHeightInPixel,
+        aspectRatio,
+        ...rest
+      } = data;
+      return {
+        aspectRatio: aspectRatio,
+        actualWidth: actualWidthInPixel,
+        actualHeight: actualHeightInPixel,
+        resolutions: `${aspectRatio} (${defaultWidthInPixel} x ${defaultHeightInPixel})`,
+        ...rest,
+      };
+    };
+  
+    
+  
+    const successCallBack = async (response) => {
+      // console.log("data of resoluti",response.data)
+      const modifyData = response?.data.map((data) => modifykeys(data));
+      console.log("data of resoluti-=====>",modifyData)
+      setResolutionData(modifyData)
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    };
+  
+    const errorCallBack = (response) => {
+      setIsLoading(false);
+    };
+  
+    ResolutionManagerService.fetchResolutionList(
+      { slugId },
+      successCallBack,
+      errorCallBack
+    );
+  };
+
  
   const getCmpData = async (endPoint,setIsLoading = () => {}) => {
     const slugId = await getStorageForKey("slugId");
     setIsLoading(true);
+    setIsListDataLoading(true)
   
     const successCallBack = async (response) => {
       // console.log("get cmp data",response)
+      setIsListDataLoading(true)
+
       setcamaignList(response)
       let paginationDetail = response?.paginationDetail;
       let campaigns = response?.data;
@@ -154,12 +208,14 @@ const CampaignManagement = ({ navigation }) => {
       }
       setTimeout(() => {
         setIsLoading(false);
+        setIsListDataLoading(false)
       }, 1000);
     };
   
-    const errorCallBack = (response) => {
-      console.log('getCmpData error', response)
+    const errorCallBack = (error) => {
+      console.log('getCmpData error', error.status)
       setIsLoading(false);
+      setIsListDataLoading(false)
     };
   
     CampaignManagerService.ftchCampdata(
@@ -172,11 +228,23 @@ const CampaignManagement = ({ navigation }) => {
   useEffect(() => {
     getWorkFlow(navigation)
     getResolutionData(setIsLoading);
+    fetchResolutionData()
+    //getCustomerRole();
   }, []);
 
   useEffect(() => {
+   setisLocRestricted(userRole?.isUserLocationRestricted)
+  }, [userRole]);
+
+  React.useEffect(() => {
+    getWorkFlow(navigation);
+    getMediaDataForCampAdd(setIsLoading);
+      // get template data
+    getTempleteDataForCampAdd(setIsLoading);
+  }, [1]);
+
+  useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      console.log("ffff00000000000cccccccccuuuusssss")
       makeUrlData();
       btnGetCmpaignCounts();
     });
@@ -186,15 +254,27 @@ const CampaignManagement = ({ navigation }) => {
   const resolutionList = useSelector(
     (state) => state.ResolutionReducer.resolutionList
   );
+
+
+  // const resolutionDropdownData = resolutionList.map((resolution) => ({
+  //   label: resolution.resolutions,
+  //   value: resolution.aspectRatioId,
+  // }));
+
+  const resolutionDropdownData= resolutionData.map((resolution) => ({
+      label: resolution.resolutions,
+      value: resolution.aspectRatioId,
+    }));
+  
   const workFlow = useSelector(
     (state) => state.userReducer.workFlow
   );
- 
 
-  const resolutionDropdownData = resolutionList.map((resolution) => ({
-    label: resolution.resolutions,
-    value: resolution.aspectRatioId,
-  }));
+  // useEffect(()=>{
+  //   resolutionList.forEach(ele=>{
+  //   console.log("resolutionList",ele)
+  //   })
+  // },[1])
 
   const getArchiveData = async (countData) => {
     let slugId = await getStorageForKey("slugId");
@@ -310,7 +390,7 @@ const CampaignManagement = ({ navigation }) => {
         searchData[key] !== 0 &&
         key != "isUsedForUseEffect"
       ) {
-        console.log("key 306",key,searchData[key])
+        
         if (key == "pageNumber" && page != "") {
           queryParams.push(`${key}=${page}`);
         } else if (key == "noPerPage" && noOfItems != "") {
@@ -325,12 +405,14 @@ const CampaignManagement = ({ navigation }) => {
     if (queryParams.length > 0) {
       endPoint += `?${queryParams.join("&")}`;
     }
+    console.log(JSON.stringify(searchData))
+    console.log("getCmpData\(endPoint 408",endPoint,)
     getCmpData(endPoint, ()=>{});
   };
 
   const resetFormApi = async () => {
     let slugId = await getStorageForKey("slugId");
-    let endPoint = `content-management/cms/${slugId}/v1/campaign/search`;
+    let endPoint = `service-gateway/cms/${slugId}/v1/campaign/search`;
     let seadata = {
       ...searchData,
       pageNumber: 1,
@@ -363,12 +445,13 @@ const CampaignManagement = ({ navigation }) => {
     if (queryParams.length > 0) {
       endPoint += `?${queryParams.join("&")}`;
     }
+    console.log("getCmpData\(endPoint 447",endPoint)
     getCmpData(endPoint, setIsLoading);
   };
 
   const handlePageApi = async (index) => {
     let slugId = await getStorageForKey("slugId");
-    let endPoint = `content-management/cms/${slugId}/v1/campaign/search`;
+    let endPoint = `service-gateway/cms/${slugId}/v1/campaign/search`;
     setSearchData({ ...searchData, pageNumber: index });
     for (const key in searchData) {
       if (
@@ -392,6 +475,7 @@ const CampaignManagement = ({ navigation }) => {
       }
     }
     console.log('endPointendPoint===> ',endPoint,searchData.isArchieved)
+    console.log("getCmpData\(endPoint 477",endPoint)
     getCmpData(endPoint, setIsLoading);
     setVisible(false);
   };
@@ -590,6 +674,8 @@ const CampaignManagement = ({ navigation }) => {
 
     const succussCallBack = async (response) => {
       setSelectAllCampaingFlag(false)
+      setSuccessMsg("Campaign archived successfully.")
+        setSuccessModal(true)
       setConfirmBoxData({
         ...confirmBoxData,
         confirmModalFlag: false,
@@ -631,6 +717,8 @@ const CampaignManagement = ({ navigation }) => {
     };
     const succussCallBack = async (response) => {
       setSelectAllCampaingFlag(false)
+      setSuccessMsg("Campaign unarchived successfully.")
+        setSuccessModal(true)
       setConfirmBoxData({
         ...confirmBoxData,
         confirmModalFlag: false,
@@ -665,6 +753,9 @@ const CampaignManagement = ({ navigation }) => {
     };
     const succussCallBack = async (response) => {
       // if (response?.code == 200) {
+        setSuccessMsg("Campaign cloned successfully.")
+        setSuccessModal(true)
+
       setConfirmBoxData({
         ...confirmBoxData,
         confirmModalFlag: false,
@@ -693,7 +784,6 @@ const CampaignManagement = ({ navigation }) => {
   };
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-
   
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -853,7 +943,7 @@ const CampaignManagement = ({ navigation }) => {
             </View>
             <View style={{ flex: 1, paddingHorizontal: 15 }}>
               {/* ratio============= */}
-              <View style={{ width: "100%" }}>
+              <View style={{ width: "100%",backgroundColor:'white' }}>
                 <AppText style={Styles.aspectText}>Aspect Ratio</AppText>
                 <CampaignDropDown
                   dataList={resolutionDropdownData}
@@ -997,7 +1087,7 @@ const CampaignManagement = ({ navigation }) => {
                 <TouchableOpacity
                   onPress={() => {
                     resetFormApi();
-                    setVisible(false) 
+                    // setVisible(false) 
                   }}
                   style={Styles.resetBox}
                 >
@@ -1022,7 +1112,7 @@ const CampaignManagement = ({ navigation }) => {
 
   useEffect(() => {
     makeUrlData();
-  }, [searchData.isUsedForUseEffect]);
+  }, [searchData.isUsedForUseEffect,searchData.campaignName,searchData.createdBy,searchData.tags]);
 
   const onChangeTab = (type) => {
     setTabName(type);
@@ -1136,7 +1226,7 @@ const CampaignManagement = ({ navigation }) => {
                 marginVertical: moderateScale(5),
               }}
               onClickSearch={() => {
-                resetFormApi();
+                // resetFormApi();
                
                 setVisible(true);
               }}
@@ -1170,14 +1260,14 @@ const CampaignManagement = ({ navigation }) => {
                   }}
                   activeOpacity={0.7}
                   key={item.name}
-                  style={Styles.campaignActiveHeaderContainer(item.status)}
+                  style={[Styles.campaignActiveHeaderContainer(item.status),{width:width/2.15}]}
                 >
                   <AppText style={Styles.headerItemContainer}>
                     {item.name}
                   </AppText>
                   <ThemedText
                     title={item.count.toString()}
-                    containerStyle={Styles.themedText(item.color)}
+                    containerStyle={Styles.themedText(themeColor.themeColor)}
                     textStyles={{
                       color: themeColor.white,
                     }}
@@ -1189,6 +1279,7 @@ const CampaignManagement = ({ navigation }) => {
             <CampaignBody
               campaignForm={campaignForm}
               setIsLoading={setIsLoading}
+              isListDataLoading={isListDataLoading}
               searchData={searchData}
               setSearchData={setSearchData}
               makeUrlData={makeUrlData}

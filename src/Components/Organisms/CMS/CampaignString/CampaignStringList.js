@@ -440,12 +440,13 @@ const CampaignStringList = ({
             width: returnwidth(),
             flexDirection: "row",
             justifyContent: "space-between",
+            
           },
         ]}
       >
         <View style={Styles.durationCell}></View>
-        <View style={Styles.durationCell}>
-          <AppText style={Styles.commonText}>
+        <View style={[Styles.durationCell,{padding:0,}]}>
+          <AppText style={[Styles.commonText,{textAlign:"center",margin:0,width:"100%"}]}>
             {`${minutes}m:${seconds}s` || "-"}
           </AppText>
         </View>
@@ -454,16 +455,18 @@ const CampaignStringList = ({
   };
   const ListEmptyComponent = ({ item }) => {
     return (
-      <Text
+      <View style={{backgroundColor:themeColor.white}}>
+        <Text
         style={{
           padding: 10,
-          fontSize: 18,
-          marginLeft: width / 2 - 80,
+          fontSize: 16,
+          marginLeft: width / 3 - 80,
           color: "black",
-        }}
+          }}
       >
         No Data Found
       </Text>
+      </View>
     );
   };
   const [toolTipStatus, setToolTipStatus] = useState(false);

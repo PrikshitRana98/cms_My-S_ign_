@@ -1,5 +1,6 @@
 import {
-    GET_SCHEDULAR_DATA
+    GET_SCHEDULAR_DATA,
+    RESET
     } from '../ActionTypes/commonActionTypes';
     
     const initialState = {
@@ -11,6 +12,7 @@ import {
   
     const schedulerReducer = (state = initialState, action) => {
       switch (action.type) {
+        case RESET:()=>initialState;
         case GET_SCHEDULAR_DATA:
           return {
             ...state,

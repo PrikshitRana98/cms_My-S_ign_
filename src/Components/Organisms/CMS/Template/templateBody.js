@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
-import {FlatList, ScrollView, StyleSheet, View, Image, Pressable} from 'react-native';
+import {FlatList, ScrollView, StyleSheet, View, Image, Pressable, Text} from 'react-native';
 import Foundation from 'react-native-vector-icons/Foundation';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import EditIcon from '../../../../Assets/Images/PNG/edit.png';
 import DeleteIcon from '../../../../Assets/Images/PNG/delete.png';
-import {moderateScale} from '../../../../Helper/scaling';
+import {moderateScale, width} from '../../../../Helper/scaling';
 import {useThemeContext} from '../../../../appConfig/AppContext/themeContext';
 import AppText from '../../../Atoms/CustomText';
 import ThemedText from '../../../Atoms/ThemedText';
@@ -160,12 +160,12 @@ const TemplateBody = ({
     const isDelete=item.templateName?item.templateName.search("Default Template"):""
     return (
       <View style={Styles.actionView}>
-        {userData.customerType=="ADVANCED"&&(isDelete==-1) && authorization.includes(PREVILAGES.TEMPLATE.DELETE_TEMPLATE) && isApprover ?<TouchableOpacity onPress={()=>handleDeletePress(item)}>
+        {userData?.customerType=="ADVANCED"&&(isDelete==-1) && authorization.includes(PREVILAGES.TEMPLATE.DELETE_TEMPLATE) && isApprover ?<TouchableOpacity onPress={()=>handleDeletePress(item)}>
           <View style={Styles.iconBackView}>
             <Image source={DeleteIcon} style={Styles.actionIcons} />
           </View>
         </TouchableOpacity>
-        :<AppText style={{color:"#888",fontSize:14}}>Default</AppText>
+        :<AppText style={{color:"#888",fontSize:14}}>{item.defaultTemplate?"Default":""}</AppText>
         }
       </View>
     );
@@ -173,11 +173,11 @@ const TemplateBody = ({
 
   const renderTemplateItems = ({item, index}) => {
     // const isDelete=item.templateName?item.templateName.search("Default Template"):""
-    console.log("template===>",item.templateName,item.defaultTemplate)
+    
     return (
       <View style={Styles.renderContainer}>
          <View style={Styles.iconView}>
-         {userData.customerType=="ADVANCED"&&item.defaultTemplate==false?<Pressable
+         {userData?.customerType=="ADVANCED"&&item.defaultTemplate==false?<Pressable
             onPress={() => {
               multielectCompaign(index);
             }}
@@ -212,6 +212,23 @@ const TemplateBody = ({
     );
   };
 
+  const ListEmptyComponent = ({ item }) => {
+    return (
+      <View style={{backgroundColor:themeColor.white}}>
+        <Text
+        style={{
+          padding: 10,
+          fontSize: 16,
+          marginLeft: width / 3 - 80,
+          color: "black",
+          }}
+      >
+        No Data Found
+      </Text>
+      </View>
+    );
+  };
+
   return (
     <ScrollView
       horizontal={true}
@@ -222,6 +239,7 @@ const TemplateBody = ({
         scrollEnabled={false}
         data={templateList}
         renderItem={renderTemplateItems}
+        ListEmptyComponent={ListEmptyComponent}
         ListHeaderComponent={<TemplateHeader
             checkboxAll={checkboxAll}
             setCheckboxAll={setCheckboxAll}
@@ -267,6 +285,8 @@ const scheduleStyles = COLORS =>
       paddingHorizontal: moderateScale(15),
       paddingVertical: moderateScale(10),
       marginEnd: moderateScale(0.5),
+      borderWidth:0.5,
+      borderColor:COLORS.appBackground
     },
     commonView: {
       width: '20%',
@@ -315,7 +335,7 @@ const scheduleStyles = COLORS =>
     },
     stateView: {alignItems: 'center', width: '18%', flexDirection: 'row'},
     textView: {width: '12%'},
-    numberView: {width: '12%',},
+    numberView: {width: '11%',},
     createdBy: {width: '18%'},
     iconBackView: {
       height: moderateScale(35),

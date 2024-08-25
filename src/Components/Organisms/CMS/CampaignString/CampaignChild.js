@@ -15,7 +15,7 @@ const CampaignChildList = ({data,deleteCampaign,itemData,workFlow}) => {
   const renderTextView = (value, index) => {
     return (
       <View style={[Styles.commonView, {width:returnwidth()}]}>
-        <AppText style={Styles.commonText}>{value}</AppText>
+        <AppText style={[Styles.commonText,{textAlign:"center",}]}>{value}</AppText>
       </View>
     );
   };
@@ -103,7 +103,8 @@ const CampaignChildList = ({data,deleteCampaign,itemData,workFlow}) => {
     <View style={Styles.renderCampaignContainer}>
        
       <View style={[Styles.campaignNameView,{width:returnwidth()}]}>
-        <AppText style={Styles.campaignNameText}>{item.campaignName}</AppText>
+        <View style={{width:50,backgroundColor:themeColor.appBackground}}></View>
+        <AppText style={[Styles.campaignNameText]}>{item.campaignName}</AppText>
       </View>
       {workFlow &&
             workFlow?.approverWorkFlow == "CAMPAIGN_STRING" && renderTextView(' ', index)}

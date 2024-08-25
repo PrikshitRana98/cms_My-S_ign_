@@ -168,12 +168,10 @@ export const CONTENT_TYPE=[
   { label: 'Audio', value: 'AUDIO' },
   { label: 'Pdf', value: 'PDF' },
   { label: 'Doc', value: 'DOC' },
-  { label: 'Stream Url', value: 'Stream Url' },
+  { label: 'Stream Url', value: 'STREAM_URL' },
   { label: 'Html', value: 'HTML' },
   { label: 'RSS', value: 'RSS' },
   { label: 'Ppt', value: 'PPT' },
-  { label: 'Facebook', value: 'FACEBOOK' },
-  { label: 'Twitter', value: 'TWITTER' },
   { label: 'Url', value: 'URL' },
 ]
 

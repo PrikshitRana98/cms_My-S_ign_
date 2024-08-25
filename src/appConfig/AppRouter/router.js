@@ -5,6 +5,7 @@ import { View } from "react-native";
 import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
 import Login from "../../screens/Login";
 import DrawerStack from "./drawer";
+import Template from "../../screens/Template";
 import { CommonHeader } from "./CommonHeader";
 import RegisterDevice from "../../screens/RegisterDevice";
 import CalenderView from "../../screens/Device/CalenderView";
@@ -33,6 +34,9 @@ import SchedulerIndexView from "../../screens/Scheduler/SchedulerIndexView";
 import PlanogramIndexView from "../../screens/Planogram/PlanogramIndexView";
 import CampaignStringDetails from "../../screens/CampaignString/CampaignStringDetails";
 import CmpPreviwe from "../../screens/Campaign/cmpPreview2";
+import TermCond from "../../screens/Settings/TermCond";
+import Policy from "../../screens/Settings/Policy";
+import ThirdParty from "../../screens/Settings/ThirdParty";
 
 const AppRouter = ({ initialScreen }) => {
   const Stack = createStackNavigator();
@@ -81,10 +85,15 @@ const AppRouter = ({ initialScreen }) => {
           name={"CampaignPreviwPage"}
           component={CampaignPreviwPage}
         />
-         <Stack.Screen
+          <Stack.Screen
+        name={NAVIGATION_CONSTANTS.TEMPLATE}
+        component={Template}
+        options={{header:CommonHeader}}
+      />
+         {/* <Stack.Screen
         name={NAVIGATION_CONSTANTS.ADD_NEW_CAMPAIGN}
         component={AddCampaign}
-      />
+      /> */}
        
       <Stack.Screen
         name={"CampStrApproval"}
@@ -119,10 +128,10 @@ const AppRouter = ({ initialScreen }) => {
         name={NAVIGATION_CONSTANTS.SCHEDULER}
         component={Scheduler}
       /> 
-      <Stack.Screen
+      {/* <Stack.Screen
         name={NAVIGATION_CONSTANTS.ADD_SCHEDULER}
         component={AddScheduler}
-      /> 
+      />  */}
       <Stack.Screen
           name={NAVIGATION_CONSTANTS.SCHEDULER_VIEW}
           component={SchedulerIndexView}
@@ -157,6 +166,19 @@ const AppRouter = ({ initialScreen }) => {
         name={NAVIGATION_CONSTANTS.REPLACE_DEVICE}
         component={ReplaceDevice}
       />
+
+        {/* <Stack.Screen 
+          name={NAVIGATION_CONSTANTS.TERMCOND}
+          component={TermCond}
+        />
+        <Stack.Screen 
+          name={NAVIGATION_CONSTANTS.POLICY}
+          component={Policy}
+        />
+        <Stack.Screen 
+          name={NAVIGATION_CONSTANTS.THIRDPARTY}
+          component={ThirdParty}
+        /> */}
         
        
       </Stack.Navigator>

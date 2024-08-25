@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Alert, LogBox, SafeAreaView, StatusBar} from 'react-native';
+import {Alert, LogBox, SafeAreaView, StatusBar,PermissionsAndroid} from 'react-native';
 import {Provider, useSelector} from 'react-redux';
 import AppRouter from './src/appConfig/AppRouter/router';
 import Store from './src/appConfig/Redux/store';
@@ -24,10 +24,13 @@ const App = () => {
   const [initialScreen, setInitialScreen] = useState();
   const [isShow, setIsShow] = useState(false);
   const handleStack = async () => {
+    
     const logged = await getStorageForKey('logged');
     const checkid=await getStorageForKey("slugId");
+    const authToken=await getStorageForKey('authToken');
+
     
-    if (logged == 'true'||logged==true) {
+    if ((logged == 'true'||logged==true)&&authToken!=null) {
       setInitialScreen(NAVIGATION_CONSTANTS.DRAWER_STACK);
       setIsShow(true);
       getvaluess();
@@ -36,22 +39,51 @@ const App = () => {
       setIsShow(true);
     }
   };
+
   useEffect(() => {
     handleStack();
-  });
+  },[1]);
+
+
+  useEffect(() => {
+    if(Platform.OS=="android"){
+      
+       requestNotifPermission()
+     }
+   
+   }, []);
+ 
+   const requestNotifPermission = async () => {    
+     try {
+         const granted = await PermissionsAndroid.request(
+           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,         
+         );      
+       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        
+       } else {
+        
+       }
+     } catch (err) {
+       console.warn(err);
+     }
+   };
+
+   
 
   const getvaluess = async() =>
   {
+    
     const logged = await getStorageForKey('authorities');
     const token=await getStorageForKey("authToken");
 
     const decodedHeader = jwtDecode(token);
     dispatch(setUserAuthorizations(decodedHeader?.authorities));
-   
+    
     setInitialScreen(NAVIGATION_CONSTANTS.DRAWER_STACK);
     setIsShow(true);
          
   }
+  
   return (
     <ThemeContext.Provider value={Color.lightThemeColors}>
       <PaperProvider>

@@ -28,20 +28,26 @@ const ColorModalPicker = ({ setModal, modal_flag, setBgColor }) => {
     >
       <View
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: themeColor.appBackground,
           height: moderateScale(250),
           paddingVertical: 10,
           paddingHorizontal: 8,
         }}
       >
         <ColorPicker
-          color={"#ffffff"}
+          color={"#fffffa"}
+          shadeWheelThumb={false}
+          
+          palette={["#fffAfA",'#888888','#1a0000','#ed1c24','#d11cd5','#1633e6','#00aeef','#00c85d','#57ff0a','#ffde17','#f26522']}
           onColorChange={(color) => {
+            console.log("color change-->",color)
             setBgColor(color)
           }}
-        //   onColorChangeComplete={(color) => {
-        //     setBgColor(color)
-        //   }}
+          
+          onColorChangeComplete={(color) => {
+            console.log("color change oncomplete-->",color)
+            // setBgColor(color)
+          }}
           thumbSize={40}
           sliderSize={40}
           noSnap={true}

@@ -122,7 +122,7 @@ const CampaignStringSubmit = ({ navigation, route }) => {
         !reg.test(selCampaigns[index].numberOfLoops) ||
         selCampaigns[index].numberOfLoops > 10
       ) {
-        haserror = `No of loops accept between 1 to 10 only for ${element}`;
+        haserror = `No of loops accept between 1 to 10`;
         break;
       }
     }
@@ -201,7 +201,7 @@ const CampaignStringSubmit = ({ navigation, route }) => {
       setResponseValue(response);
       
       if (response.code == 20) {  
-        setSuccessModal(true);
+          setSuccessModal(true);
           setSuccessMsg("Campaign String Created Successfully");
           setTimeout(()=>{
             navigation.navigate(NAVIGATION_CONSTANTS.CAMPAIGN_STRING);
@@ -215,14 +215,22 @@ const CampaignStringSubmit = ({ navigation, route }) => {
         //   },
         // ]);
       }else if(response.code == 21){
-        Alert.alert("Error!", response?.message, [
-          {
-            text: "Ok",
-            onPress: () => {
-              navigation.navigate(NAVIGATION_CONSTANTS.CAMPAIGN_STRING);
+        if(response.name=="SuccessFullySaved"){
+          setSuccessModal(true);
+          setSuccessMsg("Campaign String Created Successfully");
+          setTimeout(()=>{
+            navigation.navigate(NAVIGATION_CONSTANTS.CAMPAIGN_STRING);
+          },900)
+        }else{
+          Alert.alert("Error!", response?.message, [
+            {
+              text: "Ok",
+              onPress: () => {
+                navigation.navigate(NAVIGATION_CONSTANTS.CAMPAIGN_STRING);
+              },
             },
-          },
-        ]);
+          ]);
+        }
       } else {
         if (response?.data?.length > 0) {
           alert(response?.data[0]?.message);
@@ -298,7 +306,7 @@ const CampaignStringSubmit = ({ navigation, route }) => {
         <View style={Styles.subContainer}>
           <View style={Styles.headerContainer}>
             <CreateNewHeader
-              title="Create Campaign String "
+              title="Create Campaign Strings"
               onClickIcon={() => navigation.goBack()}
             />
           </View>

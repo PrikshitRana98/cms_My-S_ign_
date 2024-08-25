@@ -102,7 +102,7 @@ const BulkActionMedia = ({
           // header == "Archived" ? ["Delete", "Unarchive"] : ["Delete", "Archive"]
         }
         isFullWidth
-        popupHeight={120}
+        popupHeight={90}
         ref={dropdownCategoryref}
         onClose={() => setShowFeather(false)}
         keySearchObject="name"

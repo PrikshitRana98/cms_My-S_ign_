@@ -28,7 +28,7 @@ import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
 import { moderateScale } from "../../Helper/scaling";
 import { useThemeContext } from "../../appConfig/AppContext/themeContext";
 import RegisterStyles from "./style";
-import { getUserData } from "../Dashboard/DashboardApi";
+import { getUserData, userManagerService } from "../Dashboard/DashboardApi";
 import { useDispatch, useSelector } from "react-redux";
 import { getStorageForKey } from "../../Services/Storage/asyncStorage";
 import CampaignDropDown from "../../Components/Organisms/CMS/Campaign/CampaignDropDown";
@@ -106,6 +106,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
   const [locationSelected, setLocationSelected] = useState(null);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [name, setname] = useState([]);
+  const [licenceDetails,setLicenseDetails]=useState({})
   const [state, setState] = useState({
     mpIdentity: null,
     mpName: null,
@@ -149,8 +150,6 @@ const EditRegisterDevice = ({ navigation,route }) => {
   useEffect(()=>{
     const deviceData  = route.params.deviceData;
     let {deviceName,licenceCode, deviceWifiMacAddress,deviceGroupId,clientGeneratedDeviceIdentifier,deviceOs,panels,location,aspectRatioId} = deviceData;
-
-    console.log("meghay27y73y733",location)
     let pData=panels?.map((panel)=>{
       return {
         panelId: panel.panelId,
@@ -181,7 +180,36 @@ const EditRegisterDevice = ({ navigation,route }) => {
     userDetail();
     getResolutionData()
     getDevicePlanogram();
+    getLicenseDetails()
   }, []);
+
+  const getLicenseDetails=async()=>{
+    let slugId = await getStorageForKey("slugId");
+
+    const params = {
+      slugId: slugId,
+    };
+    const succussCallBack = async (response) => {
+     console.log("rrereer license--->",JSON.stringify(response))
+     if(response?.data){
+      setLicenseDetails(response.data)
+     }
+    };
+
+    const failureCallBack = (error) => {
+      Alert.alert("Error",error.message)
+      
+    };
+    if (true) {
+      userManagerService.fetchUserDetails(
+        params,
+        succussCallBack,
+        failureCallBack
+      );
+    }
+
+
+  }
 
   const userDetail = async () => {
     let slugId = await getStorageForKey("slugId");
@@ -334,7 +362,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
     let hasError = false;
     if (!mpIdentity) {
       setError((prev) => {
-        return { ...prev, mpIdentity: "Please enter media player identity" };
+        return { ...prev, mpIdentity: "Please Enter Media Player Identifier" };
       });
       hasError = true;
     }
@@ -575,7 +603,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
           {currentSection === 0 && (
             <View style={Styles.bodyContainer}>
               <AppText style={Styles.bodyHeaderText}>
-                Add Device Details
+                Edit Device Details
               </AppText>
               <View
                 style={{
@@ -586,8 +614,8 @@ const EditRegisterDevice = ({ navigation,route }) => {
               >
                 <AppText style={Styles.numLicenseText}>
                   No. of Licenses :{" "}
-                  {userInfo
-                    ? userInfo?.usedLicense + userInfo?.availableLicense
+                  {userInfo&&licenceDetails?.availableLicense
+                    ? licenceDetails?.usedLicense + licenceDetails?.availableLicense
                     : 0}
                 </AppText>
                 <ThemedText
@@ -598,7 +626,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
                   textStyles={{
                     color: themeColor.draftYellow,
                   }}
-                  title={`Used: ${userInfo ? userInfo?.usedLicense : 0}`}
+                  title={`Used: ${userInfo&&licenceDetails?.usedLicense ? licenceDetails?.usedLicense : 0}`}
                 />
                 <ThemedText
                   containerStyle={{
@@ -609,7 +637,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
                     color: themeColor.pubGreen,
                   }}
                   title={`Available: ${
-                    userInfo ? userInfo?.availableLicense : 0
+                    userInfo&&licenceDetails?.availableLicense ? licenceDetails?.availableLicense : 0
                   }`}
                 />
               </View>
@@ -749,7 +777,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
                 <AppText style={Styles.numLicenseText}>
                   No. of Licenses :{" "}
                   {userInfo
-                    ? userInfo?.usedLicense + userInfo?.availableLicense
+                    ? licenceDetails?.usedLicense + licenceDetails?.availableLicense
                     : 0}
                 </AppText>
                 <ThemedText
@@ -760,7 +788,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
                   textStyles={{
                     color: themeColor.draftYellow,
                   }}
-                  title={`Used: ${userInfo ? userInfo?.usedLicense : 0}`}
+                  title={`Used: ${userInfo ? licenceDetails?.usedLicense : 0}`}
                 />
                 <ThemedText
                   containerStyle={{
@@ -771,7 +799,7 @@ const EditRegisterDevice = ({ navigation,route }) => {
                     color: themeColor.pubGreen,
                   }}
                   title={`Available: ${
-                    userInfo ? userInfo?.availableLicense : 0
+                    userInfo ? licenceDetails?.availableLicense : 0
                   }`}
                 />
               </View>

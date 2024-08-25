@@ -174,7 +174,7 @@ const Styles = COLORS =>
     campaignStrContainer:{
       margin: moderateScale(5),
       width: '47%',
-      height: moderateScale(110),
+      height: moderateScale(50),
       borderRadius: moderateScale(10),
       borderWidth:1,
       borderColor: COLORS.border ,
@@ -184,21 +184,21 @@ const Styles = COLORS =>
     campaignStrContainerActive:{
       margin: moderateScale(5),
       width: '47%',
-      height: moderateScale(110),
-      borderRadius: moderateScale(10),
+      height: moderateScale(50),
+      borderRadius: moderateScale(5),
       borderWidth:1,
       borderColor: COLORS.themeColor ,
-      paddingHorizontal:10,
+      paddingHorizontal:5,
       justifyContent: 'center'
     },
     campaignContainer:status=>({
       margin: moderateScale(5),
       width: '47%',
-      height: moderateScale(110),
-      borderRadius: moderateScale(10),
+      height: moderateScale(50),
+      borderRadius: moderateScale(5),
       borderWidth:1,
       borderColor: !status ? COLORS.border : COLORS.barGreen,
-      paddingHorizontal:10,
+      paddingHorizontal:5,
       justifyContent: 'center'
     }),
     videoName: {

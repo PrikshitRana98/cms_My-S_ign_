@@ -9,6 +9,10 @@ import {Content} from './Contents';
 import DeviceStack from './DeviceStack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import AboutPage from '../../screens/About/AboutPage';
+import SettingStack from './SettingsStack';
+import TermCond from '../../screens/Settings/TermCond';
+import Policy from '../../screens/Settings/Policy';
+import ThirdParty from '../../screens/Settings/ThirdParty';
 
 const DrawerStack = ({navigation}) => {
   const Drawer = createDrawerNavigator();
@@ -36,10 +40,26 @@ const DrawerStack = ({navigation}) => {
           name={NAVIGATION_CONSTANTS.DEVICE}
           component={DeviceStack}
         />
-        <Drawer.Screen
+         <Drawer.Screen
+          name={NAVIGATION_CONSTANTS.SETTINGS}
+          component={SettingStack}
+        />
+        {/* <Drawer.Screen
           name={NAVIGATION_CONSTANTS.ABOUT_PAGE}
           component={AboutPage}
         />
+       <Drawer.Screen
+          name={NAVIGATION_CONSTANTS.TERMCOND}
+          component={TermCond}
+        />
+        <Drawer.Screen
+          name={NAVIGATION_CONSTANTS.POLICY}
+          component={Policy}
+        />
+        <Drawer.Screen
+          name={NAVIGATION_CONSTANTS.THIRDPARTY}
+          component={ThirdParty}
+        /> */}
       </Drawer.Navigator>
     </>
   );

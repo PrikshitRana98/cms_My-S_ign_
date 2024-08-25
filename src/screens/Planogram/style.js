@@ -30,6 +30,9 @@ const Styles = COLORS =>
         paddingHorizontal: moderateScale(10),
         paddingVertical: moderateScale(5)
       },
+      ratioContainer:{
+        marginVertical:5
+      },
       scheduleText: {
         fontSize: moderateScale(16),
         fontWeight: '500',
@@ -248,8 +251,10 @@ const Styles = COLORS =>
     },
     campaignStrContainer:{
       margin: moderateScale(5),
+      minWidth:'46%',
       width: '47%',
-      height: moderateScale(110),
+      maxWidth:"47.5%",
+      height: moderateScale(50),
       borderRadius: moderateScale(10),
       borderWidth:1,
       borderColor: COLORS.border ,
@@ -258,8 +263,10 @@ const Styles = COLORS =>
     },
     campaignStrContainerActive:{
       margin: moderateScale(5),
+      minWidth:'46%',
       width: '47%',
-      height: moderateScale(110),
+      maxWidth:"47.5%",
+      height: moderateScale(50),
       borderRadius: moderateScale(10),
       borderWidth:1,
       borderColor: COLORS.themeColor ,

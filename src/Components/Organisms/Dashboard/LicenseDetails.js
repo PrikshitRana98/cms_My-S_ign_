@@ -5,7 +5,7 @@ import {moderateScale} from '../../../Helper/scaling';
 import {useThemeContext} from '../../../appConfig/AppContext/themeContext';
 import AppText from '../../Atoms/CustomText';
 
-const LicenseDetails = ({userList,userActive,activeSideCount}) => {
+const LicenseDetails = ({licenseDetails={},userList,userActive,activeSideCount}) => {
   const themeColor = useThemeContext();
   const Styles = licensesStyles(themeColor);
   // console.log(userList,"abcd")
@@ -43,19 +43,19 @@ const LicenseDetails = ({userList,userActive,activeSideCount}) => {
         color: themeColor.lavenderBackground,
         path: require('../../../Assets/Images/PNG/blu_doc.png'),
         text: 'Total Licenses',
-        value:   (userList?.availableLicense + userList?.usedLicense) || 0,
+        value:   (licenseDetails?.availableLicense + licenseDetails?.usedLicense) || 0,
       },
       {
         color: themeColor.greenBackground,
         path: require('../../../Assets/Images/PNG/green_doc.png'),
         text: 'Available Licenses',
-        value: userList?.availableLicense ||  0,
+        value: licenseDetails?.availableLicense ||  0,
       },
       {
         color: themeColor.redBackground,
         path: require('../../../Assets/Images/PNG/red_doc.png'),
         text: 'Consumed Licenses',
-        value:  userList?.usedLicense || 0,
+        value:  licenseDetails?.usedLicense || 0,
       },
       {
         color: themeColor.yellowBackground,

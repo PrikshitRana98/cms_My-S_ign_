@@ -1,5 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
-import { moderateScale } from '../../Helper/scaling';
+import { moderateScale, width } from '../../Helper/scaling';
 import { FONT_FAMILY } from '../../Assets/Fonts/fontNames';
 
 const Styles = COLORS =>

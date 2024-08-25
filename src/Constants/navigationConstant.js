@@ -4,6 +4,7 @@ export const NAVIGATION_CONSTANTS = {
   ABOUT_PAGE:"aboutPage",
   CMS: "cms",
   DEVICE: "device",
+  SETTINGS:"settings",
   DRAWER_STACK: "DrawerStack",
   WHITE_SCREEN:"whiteScreen",
   SCHEDULER: "scheduler",
@@ -57,5 +58,9 @@ export const NAVIGATION_CONSTANTS = {
   REPLACE_UN_REG_DEVICE_FORM:"ReplaceUnregDeviceForm",
   REPLACE_DEVICE_FORM:"ReplaceDeviceForm",
   CHANGE_PASSWORD:'ChangePassword',
-  APPROVAL_FLOW:'approvalflow'
+  APPROVAL_FLOW:'approvalflow',
+
+  TERMCOND:"Termcond",
+  POLICY:"Policy",
+  THIRDPARTY:'thirdparty'
 };

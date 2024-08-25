@@ -1,11 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  FlatList,Dimensions,
+  FlatList,
+  Dimensions,
   Image,
   ImageBackground,
-  ScrollView,Platform,Sliders,
-  ActivityIndicator,KeyboardAvoidingView,Keyboard,
+  ScrollView,
+  Platform,
+  Sliders,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Keyboard,
   Text,
   TouchableOpacity,
   View,
@@ -58,21 +63,21 @@ import RailSelected from "../../Components/HelperComp/RailSelected";
 import Label from "../../Components/HelperComp/Label";
 import Notch from "../../Components/HelperComp/Notch";
 import RnRangeSlider from "rn-range-slider";
+import { jwtDecode } from "jwt-decode";
 
 const AddCampaign = ({ navigation }) => {
   const themeColor = useThemeContext();
   const Styles = CommonStyles(themeColor);
 
-  const renderThumb = useCallback(() => <Thumb/>, []);
-const renderRail = useCallback(() => <Raill/>, []);
-const renderRailSelected = useCallback(() => <RailSelected/>, []);
-const renderLabel = useCallback(value => <Label text={value}/>, []);
-const renderNotch = useCallback(() => <Notch/>, []);
-const handleValueChange = useCallback((low, high) => {
-
-  setusermaxtime(high);
-  setusermintime(low);
-}, []);
+  const renderThumb = useCallback(() => <Thumb />, []);
+  const renderRail = useCallback(() => <Raill />, []);
+  const renderRailSelected = useCallback(() => <RailSelected />, []);
+  const renderLabel = useCallback((value) => <Label text={value} />, []);
+  const renderNotch = useCallback(() => <Notch />, []);
+  const handleValueChange = useCallback((low, high) => {
+    setusermaxtime(high);
+    setusermintime(low);
+  }, []);
 
   const [currentSection, setCurrentSection] = useState(0);
   const [colorModal, setColorModal] = useState(false);
@@ -93,7 +98,7 @@ const handleValueChange = useCallback((low, high) => {
   const [campaignName, setCampaignName] = useState("");
   const [templateTag, setTempletTag] = useState("");
   const [templateTagArr, setTempletTagArr] = useState([]);
-  const [transparency, setTransparency] = useState(0);
+  const [transparency, setTransparency] = useState(1);
 
   const [modal, setModal] = useState();
   const [arrangeModal, setArrangeModal] = useState(false);
@@ -108,13 +113,12 @@ const handleValueChange = useCallback((low, high) => {
   const [locationName, setLocationName] = useState(null);
   const [locationSS, setLocationSS] = useState([]);
 
-  const [audioTime,setAudioTime]=useState({});
-  const [mintime,setmintime]=useState(0);
-  const [maxtime,setmaxtime]=useState(audiotiming);
-  const [usermintime,setusermintime]=useState(0);
-  const [usermaxtime,setusermaxtime]=useState(0);
-  const [audiotiming,setaudiotiming]=useState(0);
-
+  const [audioTime, setAudioTime] = useState({});
+  const [mintime, setmintime] = useState(0);
+  const [maxtime, setmaxtime] = useState(audiotiming);
+  const [usermintime, setusermintime] = useState(0);
+  const [usermaxtime, setusermaxtime] = useState(0);
+  const [audiotiming, setaudiotiming] = useState(0);
 
   const [cmpArrangeModal, setCmpArrangeModal] = useState(false);
   const [duration, setDuration] = useState({
@@ -125,8 +129,11 @@ const handleValueChange = useCallback((low, high) => {
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
-  const [successModal,setSuccessModal]=useState(false);
-  const [successMsg,setSuccessMsg]=useState("")
+  const [successModal, setSuccessModal] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [cmpgnType,setcmpgnType]=useState([
+    { label: "NORMAL", value: "normal" },
+  ])
 
   const onComplete = () => {
     setSuccessModal(false);
@@ -134,14 +141,14 @@ const handleValueChange = useCallback((low, high) => {
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
+      "keyboardDidShow",
       () => {
         setIsKeyboardOpen(true);
       }
     );
 
     const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+      "keyboardDidHide",
       () => {
         setIsKeyboardOpen(false);
       }
@@ -155,14 +162,13 @@ const handleValueChange = useCallback((low, high) => {
   }, []);
 
   React.useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', async() => {
-     
-      navigation.goBack();
-
-  })
-    
-  }, [navigation])
-
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      async () => {
+        navigation.goBack();
+      }
+    );
+  }, [navigation]);
 
   const [ratioList, setRatioList] = useState([]);
   // get media data
@@ -174,8 +180,33 @@ const handleValueChange = useCallback((low, high) => {
   }, []);
   // // get template data
   const workFlow = useSelector((state) => state.userReducer.workFlow);
+  const [tokenDecode,setTokenDecode]=useState({})
+  const getvaluess = async() =>
+    {
+      console.log("\n getting values \n")
+      
+      const token=await getStorageForKey("authToken");  
+      const decodedHeader = jwtDecode(token);
+      setTokenDecode({...decodedHeader})
+
+      console.log("valyess-->",decodedHeader.is_moving_walls_enabled,decodedHeader.is_advertisement_enabled)
+      let cmptypeArr=[]
+      if(decodedHeader.is_advertisement_enabled){
+        cmptypeArr.push({ label: "LEMMA", value: "ADVERTISEMENT"})
+      }
+      if(decodedHeader.is_moving_walls_enabled){
+        cmptypeArr.push({ label: "MOVING WALL", value: "MOVING_WALL" })
+      }
+      setcmpgnType([...cmpgnType,...cmptypeArr])
+
+      console.log(cmptypeArr)
+
+    }
+
+  
   React.useEffect(() => {
     getWorkFlow(navigation);
+    getvaluess()
     getTempleteDataForCampAdd(setIsLoading);
   }, []);
 
@@ -200,49 +231,51 @@ const handleValueChange = useCallback((low, high) => {
         imageMediaData123.push({ ...item, statusFlag: false });
       }
     });
-   
+
     setImageMediaData([...imageMediaData1]);
     setMediaData([...imageMediaData12]);
     setAudioData([...imageMediaData123]);
   }, [MediaList]);
 
-
-  const audioWithregion=(region,time)=>{
-    let name={};
-    name[region]=time;
-    setAudioTime((prev)=>({...prev,...name}));
-  }
-
+  const audioWithregion = (region, time) => {
+    let name = {};
+    name[region] = time;
+    setAudioTime((prev) => ({ ...prev, ...name }));
+  };
 
   useEffect(() => {
-    let timingggg = 0
+    let timingggg = 0;
     for (let index = 0; index < selectedTemplet?.regions.length; index++) {
-      for (let index1 = 0; index1 < selectedTemplet?.regions[index].regionData.length; index1++) {
-        timingggg = timingggg + selectedTemplet?.regions[index].regionData[index1].defaultDurationInSeconds
+      for (
+        let index1 = 0;
+        index1 < selectedTemplet?.regions[index].regionData.length;
+        index1++
+      ) {
+        timingggg =
+          timingggg +
+          selectedTemplet?.regions[index].regionData[index1]
+            .defaultDurationInSeconds;
       }
     }
-    setaudiotiming(timingggg)
-    if(timingggg >0)
-    {
-      setmaxtime(timingggg)
-      setusermaxtime(timingggg)
+    setaudiotiming(timingggg);
+    if (timingggg > 0) {
+      setmaxtime(timingggg);
+      setusermaxtime(timingggg);
     }
   }, [selectedTemplet]);
-
 
   const getResolutionData = async (setIsLoading = () => {}) => {
     const slugId = await getStorageForKey("slugId");
     setIsLoading(true);
 
     const successCallBack = async (response) => {
-     
       if (response?.data && response?.data?.length > 0) {
         const modifyData = response?.data;
         let resolutionDropdownData = modifyData.map((resolution) => ({
           label: `${resolution.aspectRatio} (${resolution.defaultWidthInPixel} x ${resolution.defaultHeightInPixel})`,
           value: resolution.aspectRatioId,
         }));
-      
+
         setRatioList(resolutionDropdownData);
       }
       setTimeout(() => {
@@ -314,18 +347,16 @@ const handleValueChange = useCallback((low, high) => {
   };
 
   const fnPlayningMedia = (item) => {
-  
     if (mediaModalType == "image") {
       setSelectedBgImg(item[0]);
-    } 
-    else if (mediaModalType == "regionMedia") {
+    } else if (mediaModalType == "regionMedia") {
       selectedTemplet.regions[activateRegion].contentToDisplay = item[0];
-      let timing=0;
-      item.map((region, rIndex)=>{
-        timing=timing+region?.defaultDurationInSeconds
-      })
-      
-      audioWithregion(activateRegion,timing);
+      let timing = 0;
+      item.map((region, rIndex) => {
+        timing = timing + region?.defaultDurationInSeconds;
+      });
+
+      audioWithregion(activateRegion, timing);
       let rData = item.map((region, rIndex) => {
         return {
           contentId: region?.mediaDetailId,
@@ -348,9 +379,7 @@ const handleValueChange = useCallback((low, high) => {
         activateRegion
       ].globalRegionContentPlaylistContents = rData;
       setSelectedTemplet({ ...selectedTemplet });
-     
-    }
-     else {
+    } else {
       setSelAudioData([...item]);
     }
   };
@@ -389,18 +418,20 @@ const handleValueChange = useCallback((low, high) => {
         imageMediaData12.push({ ...item, statusFlag: false });
       }
     });
-    if(item.backgroundImageContentId&&imageMediaData.length>0){
-    const bgEle=  imageMediaData.filter(ele=>ele.mediaDetailId==item.backgroundImageContentId)
+    if (item.backgroundImageContentId && imageMediaData.length > 0) {
+      const bgEle = imageMediaData.filter(
+        (ele) => ele.mediaDetailId == item.backgroundImageContentId
+      );
 
-      setSelectedBgImg({...bgEle[0]})
-    }else{
+      setSelectedBgImg({ ...bgEle[0] });
+    } else {
       setSelectedBgImg("");
     }
     setMediaData([...imageMediaData12]);
     setSelectetRegionForEdit(-1);
     setValue(item.value);
     btnMakePostData(item);
-    
+
     setSelAudioData([]);
     setBgColor("#000000");
   };
@@ -410,9 +441,9 @@ const handleValueChange = useCallback((low, high) => {
       Alert.alert("Please enter campaign type");
       return false;
     }
-    campaignType != "advertisement"
-      ? btnAddCampaignData(btnType)
-      : btnAddAdvertiseData(btnType);
+    campaignType == "ADVERTISEMENT"||campaignType=="MOVING_WALL"
+      ?btnAddAdvertiseData (btnType)
+      : btnAddCampaignData(btnType);
   };
 
   const btnAddCampaignData = async (btnType) => {
@@ -420,15 +451,22 @@ const handleValueChange = useCallback((low, high) => {
       alert("Please enter campaign name");
       return false;
     }
+    if (campaignName.trim().length > 15) {
+      console.log(
+        "Please enter a valid campaign name between 3 and 15 characters"
+      );
+      alert("Please enter a valid campaign name between 3 and 15 characters");
+      return false;
+    }
     if (selectedTemplet == null) {
       Alert.alert("Please select a template");
       return false;
     }
+    
 
     let returntype = true;
     if (selectedTemplet.regions.length > 0) {
       for (let index = 0; index < selectedTemplet.regions.length; index++) {
-        
         if (
           selectedTemplet?.regions[index]?.regionData &&
           selectedTemplet?.regions[index]?.regionData?.length <= 0
@@ -471,16 +509,13 @@ const handleValueChange = useCallback((low, high) => {
         selectedBgImg.version;
     }
 
-    selectedTemplet
+    selectedTemplet;
 
-
-    if(seleAudioData.length>0)
-    {
-      selectedTemplet["audioEndBasedOnCampaignDurationInSeconds"]= usermaxtime
-      selectedTemplet["audioStartBasedOnCampaignDurationInSeconds"]= usermintime
+    if (seleAudioData.length > 0) {
+      selectedTemplet["audioEndBasedOnCampaignDurationInSeconds"] = usermaxtime;
+      selectedTemplet["audioStartBasedOnCampaignDurationInSeconds"] =
+        usermintime;
     }
-
-
 
     selectedTemplet["campaignName"] = campaignName;
     selectedTemplet["campaignDescription"] = campaignName;
@@ -489,9 +524,9 @@ const handleValueChange = useCallback((low, high) => {
       selectedTemplet["backgroundColor"] = bgColor;
     }
 
-    if(selectedBgImg==""){
+    if (selectedBgImg == "") {
       selectedTemplet["transparencyInPercentage"] = transparency ;
-    }else{
+    } else {
       if (transparency != "") {
         selectedTemplet["transparencyInPercentage"] = transparency;
       }
@@ -503,9 +538,23 @@ const handleValueChange = useCallback((low, high) => {
     }
     const slugId = await getStorageForKey("slugId");
     const succussCallBack = async (response) => {
+      console.log("add campignm", JSON.stringify(response));
+
       setIsLoading(false);
       if (response.code == 200) {
-        btnSubmittedStatus(response?.data?.campaignId, btnType);
+        if (response.name == "SuccessfullySaved") {
+          setSuccessModal(true);
+          setSuccessMsg("Campaign save successfully");
+          setTimeout(() => {
+            btnSubmittedStatus(response?.data?.campaignId, btnType);
+          }, 1000);
+
+          // Alert.alert("Success",response.message,[
+          //   {text: 'OK', onPress: () => btnSubmittedStatus(response?.data?.campaignId, btnType)}
+          // ])
+        } else {
+          btnSubmittedStatus(response?.data?.campaignId, btnType);
+        }
       } else {
         if (response?.data?.length > 0) {
           alert(response?.data[0]?.message);
@@ -528,8 +577,8 @@ const handleValueChange = useCallback((low, high) => {
       data: selectedTemplet,
       slugId,
     };
-    
-    
+
+    console.log("add cmp-->", JSON.stringify(params.data));
     setIsLoading(true);
     CampaignManagerService.addCampaign(
       params,
@@ -538,26 +587,34 @@ const handleValueChange = useCallback((low, high) => {
     );
   };
 
-
-  
   const onChangeDuration = (value, type) => {
     const re = /^[0-9\b]+$/;
     if (value === "" || re.test(value)) {
-      if (type === "HH" && value <= 23) {
+      
+      if (type === "HH" && value ) {
+        
         setDuration({ ...duration, hh: value });
       }
-      if (type === "MM" && value <= 59) {
+      if (type === "MM" && value ) {
         setDuration({ ...duration, mm: value });
       }
-      if (type === "SS" && value <= 59) {
+      if (type === "SS" && value ) {
         setDuration({ ...duration, ss: value });
       }
     }
   };
 
   const btnAddAdvertiseData = async (btnType) => {
+    
     if (campaignName.trim().length <= 0) {
       alert("Please enter campaign name");
+      return false;
+    }
+    if (campaignName.trim().length > 15) {
+      console.log(
+        "Please enter a valid campaign name between 3 and 15 characters"
+      );
+      alert("Please enter a valid campaign name between 3 and 15 characters");
       return false;
     }
 
@@ -569,13 +626,35 @@ const handleValueChange = useCallback((low, high) => {
     if (duration.hh == 0 && duration.mm == 0 && duration.ss == 0) {
       alert("Please enter duration");
       return false;
+    }else if (parseInt(duration.hh)>=24 && parseInt(duration.mm)>=60 && parseInt(duration.ss)>=60 ) {
+      alert("Please enter duration hours not more than 23, minutes not more than 59, seconds not more than 59  ",);
+      return false;
+    }else if (parseInt(duration.hh)>=24 && parseInt(duration.mm)>=60 && parseInt(duration.ss) <=59 ) {
+      alert("Please enter duration hours not more than 23, minutes not more than 59.",);
+      return false;
+    }else if (parseInt(duration.hh)>=24 && duration.mm <=59 && parseInt(duration.ss) <=59 ) {
+      alert("Please enter duration hours not more than 23.",);
+      return false;
+    }else if (parseInt(duration.hh)>=24 && duration.mm <=59 && parseInt(duration.ss) >=60 ) {
+      alert("Please enter duration hours not more than 23 and secons not more than 59.",);
+      return false;
+    }
+    else if (duration.hh <= 23 && parseInt(duration.mm)>=60 && parseInt(duration.ss)>=60 ) {
+      alert("Please enter duration minutes not more than 59, seconds not more than 59  ",);
+      return false;
+    }else if (duration.hh <= 23 && parseInt(duration.mm)<=59 && parseInt(duration.ss)>=60 ) {
+      alert("Please enter duration seconds not more than 59  ",);
+      return false;
+    }else if (duration.hh <= 23 && parseInt(duration.mm)>=60 && parseInt(duration.ss)<=59 ) {
+      alert("Please enter duration minuts not more than 59  ",);
+      return false;
     }
 
     let total_seconds =
       parseFloat(duration.hh) * 3600 +
       parseFloat(duration.mm) * 60 +
       parseFloat(duration.ss);
-   
+
     let postData = {
       aspectRatioId: ratioId,
       campaignName: campaignName,
@@ -590,10 +669,10 @@ const handleValueChange = useCallback((low, high) => {
       setIsLoading(false);
       if (response.code == 200) {
         setSuccessMsg("Campaign saved successfully");
-        setSuccessModal(true)
-        setTimeout(()=>{
+        setSuccessModal(true);
+        setTimeout(() => {
           navigation.goBack();
-        },1000)
+        }, 1000);
         // Alert.alert("Info!", "Campaign saved successfully", [
         //   {
         //     text: "Ok",
@@ -622,10 +701,15 @@ const handleValueChange = useCallback((low, high) => {
       }
       setIsLoading(false);
     };
+    let lastUrl=campaignType=="ADVERTISEMENT"?"campaign-advertisement":"movingwall-advertisement"
+    let endPoint=`service-gateway/cms/${slugId}/v1/${lastUrl}`
     let params = {
       data: postData,
       slugId,
+      endPoint:endPoint
     };
+    
+    console.log("camapignType",campaignType,typeof duration.hh)
     setIsLoading(true);
     CampaignManagerService.addAdvertisement(
       params,
@@ -637,10 +721,10 @@ const handleValueChange = useCallback((low, high) => {
   const btnSubmittedStatus = async (campaignId, btnType) => {
     if (btnType == "DRAFT") {
       setSuccessMsg("Campaign saved successfully");
-        setSuccessModal(true)
-        setTimeout(()=>{
-          navigation.goBack();
-        },1000)
+      setSuccessModal(true);
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1000);
       // Alert.alert("Info!", "Campaign saved successfully", [
       //   {
       //     text: "Ok",
@@ -658,14 +742,13 @@ const handleValueChange = useCallback((low, high) => {
       campaignId: campaignId,
     };
     const succussCallBack = async (response) => {
-      
       setIsLoading(false);
       if (response.code == 20) {
         setSuccessMsg("Campaign saved successfully");
-        setSuccessModal(true)
-        setTimeout(()=>{
+        setSuccessModal(true);
+        setTimeout(() => {
           navigation.goBack();
-        },1000)
+        }, 1000);
         // Alert.alert("Info!", "Campaign saved successfully", [
         //   {
         //     text: "Ok",
@@ -694,7 +777,6 @@ const handleValueChange = useCallback((low, high) => {
       }
     };
     const failureCallBack = (error) => {
-      
       if (error?.response?.data?.data?.length > 0) {
         alert(error?.response?.data?.data[0].message);
       } else if (error?.data?.length > 0) {
@@ -714,7 +796,6 @@ const handleValueChange = useCallback((low, high) => {
   };
 
   const removeRegionData = (index) => {
-  
     selectedTemplet.regions[index].regionData = [];
     setSelectedTemplet({ ...selectedTemplet });
   };
@@ -724,9 +805,11 @@ const handleValueChange = useCallback((low, high) => {
     selectedTemplet.regions[
       activateRegion
     ].globalRegionContentPlaylistContents = gData;
-    let timing=0;
-    gData.map(region=>{timing=timing+region?.defaultDurationInSeconds})
-    audioWithregion(activateRegion,timing);
+    let timing = 0;
+    gData.map((region) => {
+      timing = timing + region?.defaultDurationInSeconds;
+    });
+    audioWithregion(activateRegion, timing);
     setSelectedTemplet({ ...selectedTemplet });
   };
   const locationData1 = useSelector(
@@ -736,32 +819,39 @@ const handleValueChange = useCallback((low, high) => {
     // setLocationSelected(locationData1);
   }, [locationData1]);
 
-
-
-
   const [locationModal, setLocationModal] = useState(false);
   const [locationSelected, setLocationSelected] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
 
+  const onLocationCancel=()=>{
+      selectedTemplet.regions[selectRegionForEdit]["locationIds"] = [];
+      selectedTemplet.regions[selectRegionForEdit]["customizCheck"] = false;
+      setSelectedTemplet({ ...selectedTemplet });
+      setLocationSelected([]);
+  }
+
   const onChangeLocatioValue = (lData, ljsonData) => {
-   
     selectedTemplet.regions[selectRegionForEdit]["locationIds"] = lData;
     setSelectedTemplet({ ...selectedTemplet });
     setLocationName(ljsonData?.locationName);
-    locationSS[selectRegionForEdit]=ljsonData
-    console.log("onChangeLocatioValue===>",locationSS)
+    locationSS[selectRegionForEdit] = ljsonData;
+    console.log("onChangeLocatioValue===>", locationSS);
     // locationSS[selectRegionForEdit].append(ljsonData?.locationName)
-    setLocationSS([...locationSS])
+    setLocationSS([...locationSS]);
   };
 
   const customization = function () {
-    console.log("opopopo12345678--->",selectedTemplet.regions[selectRegionForEdit]["customizCheck"],selectRegionForEdit)
+    
     if (!selectedTemplet.regions[selectRegionForEdit]["customizCheck"]) {
-      setSelectedLocations([]); 
-      console.log("locationSS[selectRegionForEdit]",selectRegionForEdit,locationSS[selectRegionForEdit])
-      locationSS[selectRegionForEdit]=[];
+      setSelectedLocations([]);
+      console.log(
+        "locationSS[selectRegionForEdit]",
+        selectRegionForEdit,
+        locationSS[selectRegionForEdit]
+      );
+      locationSS[selectRegionForEdit] = [];
       setLocationSS([...locationSS]);
-      setLocationSelected([])
+      setLocationSelected([]);
       setLocationModal(true);
       selectedTemplet.regions[selectRegionForEdit]["customizCheck"] = true;
       setSelectedTemplet({ ...selectedTemplet });
@@ -769,365 +859,375 @@ const handleValueChange = useCallback((low, high) => {
       selectedTemplet.regions[selectRegionForEdit]["locationIds"] = [];
       selectedTemplet.regions[selectRegionForEdit]["customizCheck"] = false;
       setSelectedTemplet({ ...selectedTemplet });
-      setLocationSelected([])
-      
+      setLocationSelected([]);
     }
   };
 
-  const handleSliderChange = values => {
-    alert(values)
+  const handleSliderChange = (values) => {
+    alert(values);
     //setRange(values);
   };
   return (
     <View style={Styles.mainContainer}>
       <ClockHeader />
       <Loader visible={isLoading} />
-      {successModal && <SuccessModal Msg={successMsg} onComplete={onComplete} />}
+      {successModal && (
+        <SuccessModal Msg={successMsg} onComplete={onComplete} />
+      )}
       <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{flex: 1,marginBottom:(Platform.OS === 'ios' && isKeyboardOpen) ? 100 : 0 ,}}
-    >
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        {modal && (
-          <SelectMediaModal
-            data={
-              mediaModalType == "regionMedia"
-                ? mediaData
-                : mediaModalType == "image"
-                ? imageMediaData
-                : audioData
-            }
-            regionData={
-              selectedTemplet?.regions
-                ? selectedTemplet?.regions[activateRegion]?.regionData
-                : []
-            }
-            selectedBgImg={selectedBgImg}
-            seleAudioData={seleAudioData}
-            mediaModalType={mediaModalType}
-            onClick={fnPlayningMedia}
-            setArrangeModal={setArrangeModal}
-            setModal={setModal}
-          />
-        )}
-
-        {cmpArrangeModal && (
-          <CampaignArrangeMedia
-            data={selectedTemplet?.regions}
-            removeItemFromRegion={removeItemFromRegion}
-            setArrangeModal={setArrangeModal}
-            activateRegion={activateRegion}
-            setCmpArrangeModal={setCmpArrangeModal}
-            onSubmitArrangeData={onSubmitArrangeData}
-          />
-        )}
-
-        <View style={Styles.subContainer}>
-          <View style={Styles.headerContainer}>
-            <CreateNewHeader
-              title="Create New Campaign"
-              onClickIcon={() => navigation.goBack()}
+        behavior={Platform.OS === "ios" ? "padding" : "margin"}
+        style={{
+          flex: 1,
+          marginBottom: Platform.OS === "ios" && isKeyboardOpen ? 100 : 0,
+          // backgroundColor:"red"
+        }}
+      >
+        <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+          {modal && (
+            <SelectMediaModal
+              data={
+                mediaModalType == "regionMedia"
+                  ? mediaData
+                  : mediaModalType == "image"
+                  ? imageMediaData
+                  : audioData
+              }
+              regionData={
+                selectedTemplet?.regions
+                  ? selectedTemplet?.regions[activateRegion]?.regionData
+                  : []
+              }
+              selectedBgImg={selectedBgImg}
+              seleAudioData={seleAudioData}
+              mediaModalType={mediaModalType}
+              onClick={fnPlayningMedia}
+              setArrangeModal={setArrangeModal}
+              setModal={setModal}
             />
-          </View>
-          <Separator />
-          <View style={Styles.bodyContainer}>
-            <AppText style={Styles.bodyHeaderText}>
-              ADD CAMPAIGN DETAILS
-            </AppText>
+          )}
+
+          {cmpArrangeModal && (
+            <CampaignArrangeMedia
+              data={selectedTemplet?.regions}
+              removeItemFromRegion={removeItemFromRegion}
+              setArrangeModal={setArrangeModal}
+              activateRegion={activateRegion}
+              setCmpArrangeModal={setCmpArrangeModal}
+              onSubmitArrangeData={onSubmitArrangeData}
+            />
+          )}
+
+          <View style={Styles.subContainer}>
+            <View style={Styles.headerContainer}>
+              <CreateNewHeader
+                title="Create New Campaign"
+                onClickIcon={() => navigation.goBack()}
+              />
+            </View>
             <Separator />
-            <View style={Styles.bodyRowsContainer}>
-              <AppText style={Styles.labeltext}>Campaign Type</AppText>
-              <CampaignDropDown
-                dataList={[
-                  { label: "Advertisement", value: "advertisement" },
-                  { label: "Normal", value: "normal" },
-                ]}
-                placeHolderText="Select Campaign Type*"
-                onChange={(item) => {
-                  setCampaignType(item.value);
-                }}
-                value={campaignType}
-              />
+            <View style={Styles.bodyContainer}>
+              <AppText style={Styles.bodyHeaderText}>
+                ADD CAMPAIGN DETAILS
+              </AppText>
+              <Separator />
+              <View style={Styles.bodyRowsContainer}>
+                <AppText style={Styles.labeltext}>Campaign Type</AppText>
+                <CampaignDropDown
+                  dataList={cmpgnType}
+                  placeHolderText="Select Campaign Type*"
+                  onChange={(item) => {
+                    setCampaignType(item.value);
+                  }}
+                  value={campaignType}
+                />
 
-              <AppText style={Styles.labeltext}>Campaign Name</AppText>
-              <AppTextInput
-                containerStyle={Styles.eventTitleInput}
-                placeHolderText="Campaign Name *"
-                placeholderTextColor={themeColor.placeHolder}
-                value={campaignName}
-                onChangeText={(text) => {
-                  setCampaignName(text);
-                }}
-                textInputStyle={{
-                  fontSize: moderateScale(15),
-                }}
-              />
-              {campaignType == "advertisement" && (
-                <View style={{ marginBottom: 5 }}>
-                  <AppText style={Styles.labeltext}>Aspect ratio</AppText>
+                <AppText style={Styles.labeltext}>Campaign Name</AppText>
+                <AppTextInput
+                  containerStyle={Styles.eventTitleInput}
+                  placeHolderText="Campaign Name *"
+                  placeholderTextColor={themeColor.placeHolder}
+                  value={campaignName}
+                  onChangeText={(text) => {
+                    setCampaignName(text);
+                  }}
+                  textInputStyle={{
+                    fontSize: moderateScale(15),
+                  }}
+                />
+                {campaignType.toUpperCase() != "NORMAL" && (
+                  <View style={{ marginBottom: 5 }}>
+                    <AppText style={Styles.labeltext}>Aspect ratio</AppText>
 
-                  <CampaignDropDown
-                    dataList={ratioList}
-                    placeHolderText="Select aspect ratio*"
-                    onChange={(item) => {
-                      setRatioId(item.value);
-                    }}
-                    value={ratioId}
-                  />
-                </View>
-              )}
-              {campaignType == "advertisement" && (
-                <>
-                  <AppText style={Styles.labeltext}>Duration*</AppText>
-
-                  <View style={Styles.durartionContainer}>
-                    <AppTextInput
-                      containerStyle={Styles.durationTitleInput}
-                      placeHolderText="HH"
-                      placeholderTextColor={themeColor.placeHolder}
-                      value={duration.hh}
-                      keyboardType="numeric"
-                      onChangeText={(text) => {
-                        onChangeDuration(text, "HH");
+                    <CampaignDropDown
+                      dataList={ratioList}
+                      placeHolderText="Select aspect ratio*"
+                      onChange={(item) => {
+                        setRatioId(item.value);
                       }}
-                      textInputStyle={{
-                        fontSize: moderateScale(15),
-                      }}
-                    />
-                    <AppTextInput
-                      containerStyle={Styles.durationTitleInput}
-                      placeHolderText="MM"
-                      placeholderTextColor={themeColor.placeHolder}
-                      value={duration.mm}
-                      keyboardType="numeric"
-                      onChangeText={(text) => {
-                        onChangeDuration(text, "MM");
-                      }}
-                      textInputStyle={{
-                        fontSize: moderateScale(15),
-                      }}
-                    />
-                    <AppTextInput
-                      containerStyle={Styles.durationTitleInput}
-                      placeHolderText="SS"
-                      placeholderTextColor={themeColor.placeHolder}
-                      value={duration.ss}
-                      keyboardType="numeric"
-                      onChangeText={(text) => {
-                        onChangeDuration(text, "SS");
-                      }}
-                      textInputStyle={{
-                        fontSize: moderateScale(15),
-                      }}
+                      value={ratioId}
                     />
                   </View>
-                </>
-              )}
+                )}
+                {campaignType.toUpperCase() != "NORMAL" && (
+                  <>
+                    <AppText style={Styles.labeltext}>Duration*</AppText>
 
-              {campaignType != "advertisement" && (
-                <>
-                  <AppText style={Styles.labeltext}>Templates *</AppText>
-
-                  <CampaignDropDown
-                    dataList={templateShowList}
-                    Styles={Styles}
-                    onChange={(item) => {
-                      onRegionChange(item);
-                    }}
-                    value={value}
-                  />
-
-                  {selectedTemplet && (
-                    <>
-                      <AppText style={Styles.labeltext}>Tags </AppText>
-
-                      <CampaignAddTag
-                        data={templateTagArr}
-                        templateTag={templateTag}
-                        removeTag={removeTag}
-                        setTempletTag={setTempletTag}
-                        setTempletTagArr={setTempletTagArr}
-                        templateTagArr={templateTagArr}
-                      />
-                      <AppText style={Styles.labeltext}>Audio </AppText>
-                      <SelectAudio
-                        data={seleAudioData}
-                        isDisabled={!selectedTemplet ? true : false}
-                        setMediaModalType={(i) => setMediaModalType(i)}
-                        setModal={setModal}
-                        removeAudio={(i) => removeAudio(i)}
-                      />
-                      {seleAudioData.length>0 && maxtime > 0 && (
-                        <>
-                          <AppText
-                            style={[[Styles.titleStyle, { marginVertical: 10,marginLeft:5 }]]}
-                          >
-                            {"Set Audio Duration"}
-                          </AppText>
-                          <RnRangeSlider
-                            style={{width:Dimensions.get("window").width - 70,marginHorizontal:16,marginVertical:10}}
-                            min={mintime}
-                            max={maxtime}
-                            step={1}
-                            floatingLabel
-                            renderThumb={renderThumb}
-                            renderRail={renderRail}
-                            renderRailSelected={renderRailSelected}
-                            renderLabel={renderLabel}
-                            renderNotch={renderNotch}
-                            onValueChanged={handleValueChange}
-                          />
-                         
-                          <View 
-                            style={{ 
-                              flexDirection: "row", 
-                              justifyContent: 
-                              "space-between",
-                              marginHorizontal:10  
-                            }}
-                          >
-                          <View
-                            style={{
-                              width: 45,
-                              height: 45,
-                              backgroundColor: "#0056a8",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              borderRadius: 25,
-                            }}
-                          >
-                            <Text style={{ color: "#fff" }}>{parseInt(usermintime)}</Text>
-                          </View>
-                          <View style={{
-                              width: 45,
-                              height: 45,
-                              backgroundColor: "#0056a8",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              borderRadius: 25,
-                            }}
-                          >
-                            <Text style={{ color: "#fff" }}>
-                              {usermaxtime}
-                            </Text>
-                          </View>
-                         </View>
-                        </>
-                      )}
-
-                      
-                      <AppText style={Styles.labeltext}>
-                        Background Image
-                      </AppText>
-
-                      <TouchableOpacity
-                        disabled={!selectedTemplet ? true : false}
-                        style={Styles.mainSelectImageContainer}
-                        onPress={() => {
-                          setMediaModalType("image");
-                          setModal(true);
-                         
+                    <View style={Styles.durartionContainer}>
+                      <AppTextInput
+                        containerStyle={Styles.durationTitleInput}
+                        placeHolderText="HH"
+                        placeholderTextColor={themeColor.placeHolder}
+                        value={duration.hh}
+                        keyboardType="numeric"
+                        onChangeText={(text) => {
+                          onChangeDuration(text, "HH");
                         }}
-                      >
-                        {selectedBgImg && (
-                          <Pressable
-                            onPress={() => {
-                              setSelectedBgImg("");
-                              
-                            }}
-                            style={{
-                              height: 30,
-                              width: 30,
-                              position: "absolute",
-                              right: 7,
-                              top: 7,
-                            }}
-                          >
-                            <Image
-                              style={{ height: 30, width: 30 }}
-                              source={CrossImage}
-                            />
-                          </Pressable>
-                        )}
-                        {selectedBgImg ? (
-                          <Image
-                            source={{
-                              uri: selectedBgImg?.imageUrl,
-                            }}
-                            style={{ width: 90, height: 90 }}
-                          />
-                        ) : (
+                        textInputStyle={{
+                          fontSize: moderateScale(15),
+                        }}
+                      />
+                      <AppTextInput
+                        containerStyle={Styles.durationTitleInput}
+                        placeHolderText="MM"
+                        placeholderTextColor={themeColor.placeHolder}
+                        value={duration.mm}
+                        keyboardType="numeric"
+                        onChangeText={(text) => {
+                          onChangeDuration(text, "MM");
+                        }}
+                        textInputStyle={{
+                          fontSize: moderateScale(15),
+                        }}
+                      />
+                      <AppTextInput
+                        containerStyle={Styles.durationTitleInput}
+                        placeHolderText="SS"
+                        placeholderTextColor={themeColor.placeHolder}
+                        value={duration.ss}
+                        keyboardType="numeric"
+                        onChangeText={(text) => {
+                          onChangeDuration(text, "SS");
+                        }}
+                        textInputStyle={{
+                          fontSize: moderateScale(15),
+                        }}
+                      />
+                    </View>
+                  </>
+                )}
+
+                {campaignType.toLocaleUpperCase() == "NORMAL" && (
+                  <>
+                    <AppText style={Styles.labeltext}>Templates *</AppText>
+
+                    <CampaignDropDown
+                      dataList={templateShowList}
+                      Styles={Styles}
+                      onChange={(item) => {
+                        onRegionChange(item);
+                      }}
+                      value={value}
+                    />
+
+                    {selectedTemplet && (
+                      <>
+                        <AppText style={Styles.labeltext}>Tags </AppText>
+
+                        <CampaignAddTag
+                          data={templateTagArr}
+                          templateTag={templateTag}
+                          removeTag={removeTag}
+                          setTempletTag={setTempletTag}
+                          setTempletTagArr={setTempletTagArr}
+                          templateTagArr={templateTagArr}
+                        />
+                        <AppText style={Styles.labeltext}>Audio </AppText>
+                        <SelectAudio
+                          data={seleAudioData}
+                          isDisabled={!selectedTemplet ? true : false}
+                          setMediaModalType={(i) => setMediaModalType(i)}
+                          setModal={setModal}
+                          removeAudio={(i) => removeAudio(i)}
+                        />
+                        {seleAudioData.length > 0 && maxtime > 0 && (
                           <>
-                            <Image
-                              source={require("../../Assets/Images/PNG/select.png")}
-                              style={{ width: 90, height: 90 }}
+                            <AppText
+                              style={[
+                                [
+                                  Styles.titleStyle,
+                                  { marginVertical: 10, marginLeft: 5 },
+                                ],
+                              ]}
+                            >
+                              {"Set Audio Duration"}
+                            </AppText>
+                            <RnRangeSlider
+                              style={{
+                                width: Dimensions.get("window").width - 70,
+                                marginHorizontal: 16,
+                                marginVertical: 10,
+                              }}
+                              min={mintime}
+                              max={maxtime}
+                              step={1}
+                              floatingLabel
+                              renderThumb={renderThumb}
+                              renderRail={renderRail}
+                              renderRailSelected={renderRailSelected}
+                              renderLabel={renderLabel}
+                              renderNotch={renderNotch}
+                              onValueChanged={handleValueChange}
                             />
-                            <Text style={{ color: "#ADB2C3" }}>
-                              Upload background image
-                            </Text>
+
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                marginHorizontal: 10,
+                              }}
+                            >
+                              <View
+                                style={{
+                                  width: 45,
+                                  height: 45,
+                                  backgroundColor: "#0056a8",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  borderRadius: 25,
+                                }}
+                              >
+                                <Text style={{ color: "#fff" }}>
+                                  {parseInt(usermintime)}
+                                </Text>
+                              </View>
+                              <View
+                                style={{
+                                  width: 45,
+                                  height: 45,
+                                  backgroundColor: "#0056a8",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  borderRadius: 25,
+                                }}
+                              >
+                                <Text style={{ color: "#fff" }}>
+                                  {usermaxtime}
+                                </Text>
+                              </View>
+                            </View>
                           </>
                         )}
-                      </TouchableOpacity>
-                      <AppText style={Styles.labeltext}>
-                        Background Color
-                      </AppText>
-                      <ColorModalPicker
-                        setModal={setColorModal}
-                        modal_flag={colorModal}
-                        setBgColor={setBgColor}
-                      />
-                      <TouchableOpacity
-                        disabled={!selectedTemplet ? true : false}
-                        onPress={() => setColorModal(true)}
-                      >
-                        <View style={Styles.colorPickerBox}>
-                          <AppText style={{ color: "#ADB2C3" }}>
-                            Select background color
-                          </AppText>
-                          <View
-                            style={[
-                              Styles.colorPickerSeleBox,
-                              { backgroundColor: bgColor },
-                            ]}
-                          />
-                        </View>
-                      </TouchableOpacity>
-                      {selectedBgImg && (
-                        <>
-                          <AppText
-                            style={[[Styles.titleStyle, { marginTop: 10 }]]}
-                          >
-                            {"Set Background Media Transparency"}
-                          </AppText>
-                          <Slider
-                            style={{
-                              width:width*0.9,
-                              height: 40,
-                              marginLeft: -7,
-                            }}
-                            minimumValue={0}
-                            disabled={!selectedTemplet ? true : false}
-                            value={transparency?1-transparency:0}
-                            maximumValue={1}
-                            onValueChange={(value) => {
-                            
-                              setTransparency(1-value);
-                            }}
-                            minimumTrackTintColor="#223577"
-                            maximumTrackTintColor="#000000"
-                          />
-                        </>
-                      )}
-                      
-                    </>
-                  )}
-                </>
-              )}
-            </View>
-            {campaignType != "advertisement" && (
-              <>
-                {/*Region===============================regions====== */}
-                {selectedTemplet?.regions && (
+
+                        <AppText style={Styles.labeltext}>
+                          Background Image
+                        </AppText>
+
+                        <TouchableOpacity
+                          disabled={!selectedTemplet ? true : false}
+                          style={Styles.mainSelectImageContainer}
+                          onPress={() => {
+                            setMediaModalType("image");
+                            setModal(true);
+                          }}
+                        >
+                          {selectedBgImg && (
+                            <Pressable
+                              onPress={() => {
+                                setSelectedBgImg("");
+                              }}
+                              style={{
+                                height: 30,
+                                width: 30,
+                                position: "absolute",
+                                right: 7,
+                                top: 7,
+                              }}
+                            >
+                              <Image
+                                style={{ height: 30, width: 30 }}
+                                source={CrossImage}
+                              />
+                            </Pressable>
+                          )}
+                          {selectedBgImg ? (
+                            <Image
+                              source={{
+                                uri: selectedBgImg?.imageUrl,
+                              }}
+                              style={{ width: 90, height: 90 }}
+                            />
+                          ) : (
+                            <>
+                              <Image
+                                source={require("../../Assets/Images/PNG/select.png")}
+                                style={{ width: 90, height: 90 }}
+                              />
+                              <Text style={{ color: "#ADB2C3" }}>
+                                Upload background image
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                        <AppText style={Styles.labeltext}>
+                          Background Color
+                        </AppText>
+                        <ColorModalPicker
+                          setModal={setColorModal}
+                          modal_flag={colorModal}
+                          setBgColor={setBgColor}
+                        />
+                        <TouchableOpacity
+                          disabled={!selectedTemplet ? true : false}
+                          onPress={() => setColorModal(true)}
+                        >
+                          <View style={Styles.colorPickerBox}>
+                            <AppText style={{ color: "#ADB2C3" }}>
+                              Select background color
+                            </AppText>
+                            <View
+                              style={[
+                                Styles.colorPickerSeleBox,
+                                { backgroundColor: bgColor },
+                              ]}
+                            />
+                          </View>
+                        </TouchableOpacity>
+                        {selectedBgImg && (
+                          <>
+                            <AppText
+                              style={[[Styles.titleStyle, { marginTop: 10 }]]}
+                            >
+                              {"Set Background Media Transparency"}
+                            </AppText>
+                            <Slider
+                              style={{
+                                width: width * 0.9,
+                                height: 40,
+                                marginLeft: -7,
+                              }}
+                              minimumValue={0}
+                              disabled={!selectedTemplet ? true : false}
+                              value={transparency ? transparency : 0}
+                              maximumValue={1}
+                              onValueChange={(value) => {
+                                console.log("bg t===>", value);
+                                setTransparency(value);
+                              }}
+                              minimumTrackTintColor="#223577"
+                              maximumTrackTintColor="#000000"
+                            />
+                          </>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </View>
+              
+              {campaignType.toUpperCase() == "NORMAL" && (
+                <>
+                  {/*Region===============================regions====== */}
+                  {selectedTemplet?.regions && (
                   <View
                     style={{
                       height: 400,
@@ -1137,24 +1237,27 @@ const handleValueChange = useCallback((low, high) => {
                       padding: 5,
                     }}
                   >
-                    <ImageBackground
+
+                 
+              <ImageBackground
                       imageStyle={{
                         borderRadius: 5,
                         height: "100%",
                         width: "100%",
                         position: "relative",
                         backgroundColor: bgColor,
-                        opacity: selectedBgImg&&transparency ?transparency:1 ,
+                        opacity: !selectedBgImg ? 1 : 1-transparency ,
                       }}
                       source={
                         selectedBgImg ? { uri: selectedBgImg.imageUrl } : null
                       }
                     >
-                      <CampaignRegion
+                     <CampaignRegion
                         setLocationName={setLocationName}
                         selectedBgImg={mediaModalType}
                         removeRegionData={removeRegionData}
                         regions={selectedTemplet?.regions}
+                        muteAudio={selectedTemplet?.regions[selectRegionForEdit]}
                         setActiveRegion={setActiveRegion}
                         setSelectetRegionForEdit={setSelectetRegionForEdit}
                         setCmpArrangeModal={setCmpArrangeModal}
@@ -1162,20 +1265,21 @@ const handleValueChange = useCallback((low, high) => {
                           openArrangeModal(index);
                         }}
                       />
-                    </ImageBackground>
-                  </View>
-                )}
 
-                {selectedTemplet?.regions && selectRegionForEdit > -1 && (
-                  <View style={{ padding: 5 }}>
-                    <AppText style={[Styles.regionSubTitleStyle]}>
-                      {
-                        selectedTemplet.regions[selectRegionForEdit][
-                          "templateRegionName"
-                        ]
-                      }
-                    </AppText>
-                    {/* <View style={{ marginTop: 10 }}>
+                      </ImageBackground>
+                    </View>
+                  )}
+
+                  {selectedTemplet?.regions && selectRegionForEdit > -1 && (
+                    <View style={{ padding: 5 }}>
+                      <AppText style={[Styles.regionSubTitleStyle]}>
+                        {
+                          selectedTemplet.regions[selectRegionForEdit][
+                            "templateRegionName"
+                          ]
+                        }
+                      </AppText>
+                      {/* <View style={{ marginTop: 10 }}>
                       <AppText style={[Styles.titleStyle]}>{"zIndex"}</AppText>
                       <AppTextInput
                         containerStyle={Styles.eventTitleInput}
@@ -1199,184 +1303,217 @@ const handleValueChange = useCallback((low, high) => {
                       />
                     </View> */}
 
-                    <View style={{ marginTop: 8 }}>
-                      <AppText style={[Styles.titleStyle]}>
-                        {"Set Media Transparency"}
-                      </AppText>
-                      <Slider
-                        style={{
-                          width:width*0.9,
-                          height: 40,
-                          marginLeft: -7,
-                        }}
-                        inverted={false}
-                        minimumValue={0}
-                        value={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "regionTransparencyInPercentage"
-                          ]?1-selectedTemplet.regions[selectRegionForEdit][
-                            "regionTransparencyInPercentage"
-                          ] : 0
-                        }
-                        maximumValue={1}
-                        onValueChange={(value) => {
-                         
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "regionTransparencyInPercentage"
-                          ] = 1-value;
-
-                          setSelectedTemplet({ ...selectedTemplet });
-                       
-                        }}
-                        minimumTrackTintColor="#223577"
-                        maximumTrackTintColor="#000000"
-                      />
-                    </View>
-                    <View style={Styles.audioBox}>
-                      <AppText style={[Styles.titleStyle]}>
-                        {"Audio (ON/Off)"}
-                      </AppText>
-                      <Switch
-                        color={"#253D91"}
-                        disabled={false}
-                        value={seleAudioData.length==0 ?
-                          selectedTemplet?.regions[selectRegionForEdit]
-                            ?.isAudioEnabled || false : false
-                        }
-                       
-                        onValueChange={(txt) => {
-                          if(seleAudioData.length==0){
+                      <View style={{ marginTop: 8 }}>
+                        <AppText style={[Styles.titleStyle]}>
+                          {"Set Media Transparency"}
+                        </AppText>
+                        <Slider
+                          style={{
+                            width: width * 0.9,
+                            height: 40,
+                            marginLeft: -7,
+                          }}
+                          inverted={false}
+                          minimumValue={1}
+                          value={
                             selectedTemplet.regions[selectRegionForEdit][
-                              "isAudioEnabled"
-                            ] = txt;
+                              "regionTransparencyInPercentage"
+                            ]
+                              ? selectedTemplet.regions[selectRegionForEdit][
+                                  "regionTransparencyInPercentage"
+                                ] + 1
+                              : 0
+                          }
+                          maximumValue={1.99}
+                          onValueChange={(value) => {
+                            selectedTemplet.regions[selectRegionForEdit][
+                              "regionTransparencyInPercentage"
+                            ] = value - 1;
+
                             setSelectedTemplet({ ...selectedTemplet });
-                        }
-
-                        }}
-                      />
-                    </View>
-                    <Text
-                      style={{ color: "#000000", fontSize: 14, marginTop: 15 }}
-                    >
-                      Offset
-                    </Text>
-
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <CommonTitleAndText
-                        title="Width"
-                        text={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "widthInPixel"
-                          ]
-                        }
-                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
-                      />
-                      <CommonTitleAndText
-                        title="Height"
-                        text={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "heightInPixel"
-                          ]
-                        }
-                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
-                      />
-                      <CommonTitleAndText
-                        title="Top"
-                        text={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "topLeftCoordinateYInPixel"
-                          ]
-                        }
-                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
-                      />
-                      <CommonTitleAndText
-                        title="Left"
-                        text={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "topLeftCoordinateXInPixel"
-                          ]
-                        }
-                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
-                      />
-                    </View>
-                      <CommonTitleAndText
-                        title="Zindex"
-                        text={
-                          selectedTemplet.regions[selectRegionForEdit][
-                            "zIndex"
-                          ]
-                        }
-                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
-                      />
-                    {/*=============cutomize checkbox======== */}
-                    <Pressable
-                      style={{
-                        flexDirection: "row",
-                        // justifyContent: "center",
-                        marginTop: 20,
-                      }}
-                      onPress={() => {
-                        customization();
-                      }}
-                    >
-                      <View>
-                        {!selectedTemplet?.regions[selectRegionForEdit]
-                          .customizCheck ? (
-                          <MaterialIcons
-                            name="check-box-outline-blank"
+                          }}
+                          minimumTrackTintColor="#223577"
+                          maximumTrackTintColor="#000000"
+                        />
+                      </View>
+                      <View style={Styles.audioBox}>
+                        <AppText style={[Styles.titleStyle]}>
+                          {"Audio (ON/OFF)"}
+                        </AppText>
+                        {seleAudioData.length == 0 ? (
+                          <Switch
                             color={"#253D91"}
-                            size={25}
+                            disabled={false}
+                            value={
+                              seleAudioData.length == 0
+                                ? selectedTemplet?.regions[selectRegionForEdit]
+                                    ?.isAudioEnabled || false
+                                : false
+                            }
+                            onValueChange={(txt) => {
+                              if (seleAudioData.length == 0) {
+                                selectedTemplet.regions[selectRegionForEdit][
+                                  "isAudioEnabled"
+                                ] = txt;
+                                setSelectedTemplet({ ...selectedTemplet });
+                              }
+                            }}
                           />
                         ) : (
-                          <MaterialIcons
-                            name="check-box"
-                            color={themeColor.themeColor}
-                            size={25}
+                          <Switch
+                            color={"black"}
+                            value={false}
+                            onValueChange={(txt) => {
+                              if (seleAudioData.length == 0) {
+                                selectedTemplet.regions[selectRegionForEdit][
+                                  "isAudioEnabled"
+                                ] = false;
+                                setSelectedTemplet({ ...selectedTemplet });
+                              }
+                            }}
                           />
                         )}
                       </View>
-                      {/*  */}
-                      <AppText>Do you want to allow customization?</AppText>
-                    </Pressable>
-                    {selectedTemplet.regions[selectRegionForEdit]["locationIds"]
-                      .length > 0 && (
-                      <View
+                      <Text
                         style={{
-                          paddingHorizontal:20
+                          color: "#000000",
+                          fontSize: 14,
+                          marginTop: 15,
                         }}
                       >
-                        {locationName && <Text style={{color:"red"}}>{JSON.stringify(locationSS[selectRegionForEdit])}</Text>}
-                        {selectedTemplet?.regions[selectRegionForEdit].customizCheck&&<View >
-                          {locationSS[selectRegionForEdit]?.map((ele,i)=>{
-                            return<>
-                            <AppText key={i} style={{
-                          marginTop: 2,
-                          fontSize: moderateScale(14),
-                          color: "#000000",
-                        }}>{ele.locationName}
-                        </AppText>
-                            </>
-                          })}
-                          </View>}
+                        Offset
+                      </Text>
+
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <CommonTitleAndText
+                          title="Width"
+                          text={
+                            selectedTemplet.regions[selectRegionForEdit][
+                              "widthInPixel"
+                            ]
+                          }
+                          containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
+                        />
+                        <CommonTitleAndText
+                          title="Height"
+                          text={
+                            selectedTemplet.regions[selectRegionForEdit][
+                              "heightInPixel"
+                            ]
+                          }
+                          containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
+                        />
+                        <CommonTitleAndText
+                          title="Top"
+                          text={
+                            selectedTemplet.regions[selectRegionForEdit][
+                              "topLeftCoordinateYInPixel"
+                            ]
+                          }
+                          containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
+                        />
+                        <CommonTitleAndText
+                          title="Left"
+                          text={
+                            selectedTemplet.regions[selectRegionForEdit][
+                              "topLeftCoordinateXInPixel"
+                            ]
+                          }
+                          containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
+                        />
                       </View>
-                    )}
-                  </View>
-                )}
-              </>
-            )}
+                      <CommonTitleAndText
+                        title="Zindex"
+                        text={
+                          selectedTemplet.regions[selectRegionForEdit]["zIndex"]
+                        }
+                        containerStyle={{ borderWidth: 0, paddingLeft: 0 }}
+                      />
+                      {/*=============cutomize checkbox======== */}
+                      <Pressable
+                        style={{
+                          flexDirection: "row",
+                          // justifyContent: "center",
+                          marginTop: 20,
+                        }}
+                        onPress={() => {
+                          customization();
+                        }}
+                      >
+                        <View>
+                          {!selectedTemplet?.regions[selectRegionForEdit]
+                            .customizCheck ? (
+                            <MaterialIcons
+                              name="check-box-outline-blank"
+                              color={"#253D91"}
+                              size={25}
+                            />
+                          ) : (
+                            <MaterialIcons
+                              name="check-box"
+                              color={themeColor.themeColor}
+                              size={25}
+                            />
+                          )}
+                        </View>
+                        {/*  */}
+                        <AppText>Do you want to allow customization?</AppText>
+                      </Pressable>
+                      {selectedTemplet.regions[selectRegionForEdit][
+                        "locationIds"
+                      ].length > 0 && (
+                        <View
+                          style={{
+                            paddingHorizontal: 20,
+                          }}
+                        >
+                          {locationName && (
+                            <Text style={{ color: "red" }}>
+                              {JSON.stringify(locationSS[selectRegionForEdit])}
+                            </Text>
+                          )}
+                          {selectedTemplet?.regions[selectRegionForEdit]
+                            .customizCheck && (
+                            <View>
+                              {locationSS[selectRegionForEdit]?.map(
+                                (ele, i) => {
+                                  return (
+                                    <>
+                                      <AppText
+                                        key={i}
+                                        style={{
+                                          marginTop: 2,
+                                          fontSize: moderateScale(14),
+                                          color: "#000000",
+                                        }}
+                                      >
+                                        {ele.locationName}
+                                      </AppText>
+                                    </>
+                                  );
+                                }
+                              )}
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <ActionContainer
-        isContinue={campaignType == "advertisement" && true}
-        continueText={campaignType == "advertisement" && "Save & Next"}
+        isContinue={campaignType.toUpperCase() != "NORMAL" && true}
+        continueText={campaignType.toUpperCase() != "NORMAL" && "Save & Next"}
         saveText={
           workFlow &&
           (workFlow?.approverWorkFlow === "CAMPAIGN" ||
@@ -1404,6 +1541,7 @@ const handleValueChange = useCallback((low, high) => {
         selectedLocations={selectedLocations}
         setSelectedLocations={setSelectedLocations}
         locationData1={locationData1}
+        onLocationCancel={onLocationCancel}
         onChangeLocatioValue={onChangeLocatioValue}
       />
     </View>

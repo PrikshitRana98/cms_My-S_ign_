@@ -7,9 +7,12 @@ import { CampaignManagerService } from "../../../../screens/Campaign/CompainApi"
 import { getStorageForKey } from "../../../../Services/Storage/asyncStorage";
 import { NAVIGATION_CONSTANTS } from "../../../../Constants/navigationConstant";
 import SuccessModal from "../../../Molecules/SuccessModal";
+import {useDispatch} from 'react-redux'
+import { resetUserReducer } from "../../../../appConfig/Redux/Action/userAction";
 
 export default function CampaignPrewiewActions({ campaignItem, navigation,setIsLoading,onCancelPressed=()=>{} }) {
   const [reasonModal, seReasonModal] = useState(false);
+  const dispatch=useDispatch()
   const [reason, setReason] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [successModal,setSuccessModal]=useState(false)
@@ -57,7 +60,7 @@ export default function CampaignPrewiewActions({ campaignItem, navigation,setIsL
 
     const succussCallBack = async (response) => {
     setIsLoading(false)
-      console.log(response);
+      console.log("camap Previer Line 60",JSON.stringify(response));
       seReasonModal(false);
       if (response.name == "SuccessFullySaved") {
         setMsg("Campaign rejected successfully");
@@ -72,6 +75,7 @@ export default function CampaignPrewiewActions({ campaignItem, navigation,setIsL
           {
             text: "Ok",
             onPress: () => {
+              dispatch(resetUserReducer())
               navigation.navigate(NAVIGATION_CONSTANTS.LOGIN);
             },
           },
@@ -83,7 +87,7 @@ export default function CampaignPrewiewActions({ campaignItem, navigation,setIsL
     const failureCallBack = (error) => {
     setIsLoading(false)
       seReasonModal(false);
-      console.log("error----------", error);
+      console.log("error------line 86----", error);
     };
     CampaignManagerService.onCancelApprove(
       params,
@@ -101,7 +105,6 @@ export default function CampaignPrewiewActions({ campaignItem, navigation,setIsL
     setIsLoading(true)
     const succussCallBack = async (response) => {
     setIsLoading(false)
-
       if (response.name == "SuccessFullySaved") {
         setMsg("Campaign approved successfully");
         setSuccessModal(true)
@@ -118,6 +121,7 @@ export default function CampaignPrewiewActions({ campaignItem, navigation,setIsL
         //   },
         // ]);
       }else if(response.name && response.name == "UnAuthorized"){
+        console.log("onSubmitApprove line120");
         Alert.alert("Unauthorized", response?.message, [
           {
             text: "Ok",
@@ -134,7 +138,7 @@ export default function CampaignPrewiewActions({ campaignItem, navigation,setIsL
     };
     const failureCallBack = (error) => {
       setIsLoading(false)
-      console.log("error----------", error);
+      console.log("error-------line137---", error);
     };
     CampaignManagerService.onApprove(params, succussCallBack, failureCallBack);
   };

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Image, Pressable, Alert, Platform, BackHandler } from "react-native";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import { View, Text, StyleSheet, Image, Pressable, Alert, Platform, BackHandler, ActivityIndicator } from "react-native";
 import { useThemeContext } from "../../appConfig/AppContext/themeContext";
 
 import { moderateScale, width } from "../../Helper/scaling";
@@ -9,6 +9,7 @@ import Pdf from "react-native-pdf";
 import FastImage from 'react-native-fast-image';
 import VideoComponent from "../../Components/Molecules/VideoComponent";
 import WebView from "react-native-webview";
+import SvgIcons from "../../Assets/Images/SvgIcons";
 
 export default function CmpDetailMediaApproval({
   mediaArray,
@@ -23,10 +24,17 @@ export default function CmpDetailMediaApproval({
   const themeColor = useThemeContext();
   const Styles = CampaignStyles(themeColor);
 
+  // console.log("123232--mediaAudios>",JSON.stringify(mediaAudios))
+
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isMuted, setIsMuted] = React.useState(isAudioEnabled);
   const [currentIndex, setCurrentIndex] = React.useState(0);
 // console.log('isAudioEnabledisAudioEnabled===>',isAudioEnabled)
+const [seekposition, setseekposition] = React.useState(0);
+const videoPlayer = React.useRef()
+
+const [videoInd, setvideoInd] = React.useState({ opacity: 0 });
+
   let intervalId;
   useEffect(() => {
     let interValTime = 0;
@@ -42,6 +50,21 @@ export default function CmpDetailMediaApproval({
     return () => clearInterval(intervalId);
   }, [currentIndex,resetPreviewAgain]);
 
+  const onBuffer = ({ isBuffering }) => {
+    setvideoInd({ opacity: isBuffering ? 1 : 0 });
+  };
+
+  const onEnd = () => {
+    setIsPlaying(false);
+  };
+
+  const onLoad = () => {
+    setvideoInd({ opacity: 0 });
+  };
+  onLoadStart = () => {
+    setvideoInd({ opacity: 1 });
+  };
+
   // useEffect(() => {
   //   const backHandler = BackHandler.addEventListener('hardwareBackPress', async() => {
   //     navigation.goBack();
@@ -49,14 +72,26 @@ export default function CmpDetailMediaApproval({
   // })
   // }, [navigation])
 
+  useLayoutEffect(() => {
+    if (videoPlayer.current) {
+      console.log(seekposition)
+      videoPlayer.current.seek(seekposition);
+    }},[seekposition]);
+
   let CalculateFunction = () => {
     let tot = 0;
     let mArray = mediaArray;
+    let vval = sliderValue;
+
     for (let index = 0; index < mArray.length; index++) {
       const element = mArray[index];
       tot = tot + element?.durationInSeconds;
       if (tot >= sliderValue) {
         setCurrentIndex(index);
+        for (let innn = 0; innn < index; innn++) { 
+          vval = vval - mArray[innn].defaultDurationInSeconds;
+        }
+        setseekposition(vval)
         break;
       }
     }
@@ -71,9 +106,8 @@ export default function CmpDetailMediaApproval({
   }, [sliderValue]);
 
   const returnMediaView = () => {
-    let item = mediaArray[currentIndex];
-    console.log('mediaURL--',item?.type)
-    // console.log('itemitemitem--',item)
+    let item = mediaArray[currentIndex];    
+    
     if (!item) {
       return (
         <Text style={{ width: "100%", height: "100%" }}>Content not found</Text>
@@ -81,11 +115,59 @@ export default function CmpDetailMediaApproval({
     }
     if (item?.mediaType == "VIDEO") {
       return (
-
-        <VideoComponent
-          videoUrl={`${item?.url}`}
-          isMuted={!isMuted}
+        // <VideoComponent
+        //   ref={videoPlayer}
+        //   videoUrl={`${item?.url}`}
+        //   isMuted={!isMuted}
+        // />
+        <Pressable
+        onPress={() => {
+          setIsPlaying(!isPlaying);
+        }}
+        style={[{ height: "100%", width: "100%", justifyContent: "center" }]}
+      >
+        <Video
+          ref={videoPlayer}
+          source={{ uri: item?.url }}
+          controls={false}
+          resizeMode={"contain"}
+          paused={isPlaying}
+          style={{flex: 1,
+            backgroundColor: "#00000"}}
+          muted={!isMuted}
+          fullScreen={false}
+          onBuffer={onBuffer}
+          onLoad={onLoad}
+          onEnd={onEnd}
+          onLoadStart={onLoadStart}
         />
+        <ActivityIndicator
+          animating
+          size="large"
+          color={themeColor.themeColor}
+          style={[
+            { position: "absolute", alignSelf: "center" },
+            { opacity: videoInd.opacity },
+          ]}
+        />
+      </Pressable>
+      );
+    }else if (item.hasOwnProperty("widgetType")) {      
+      return (
+        <View
+        style={{ backgroundColor: "#00000",height:"100%",justifyContent:"center",alignItems:"center", }}
+      >
+        <Image
+          source={SvgIcons[item.widgetType.toLowerCase()]}
+          style={{width:"50%",tintColor:themeColor.themeColor,resizeMode:"contain",}}
+          resizeMode="contain"
+        />
+        {/* <FastImage 
+            source={SvgIcons[item.widgetType]}
+            resizeMode={true?FastImage.resizeMode.stretch:FastImage.resizeMode.contain}
+            style={{ width: "100%", height: "100%" }}
+          /> */}
+      </View>
       );
     } else if (item?.mediaType == "IMAGE") {
       const istrue=item.displayMode=="STRETCH_TO_FIT"?true:false;
@@ -94,7 +176,7 @@ export default function CmpDetailMediaApproval({
            <FastImage 
             source={{ uri: item.url }}
             resizeMode={istrue?FastImage.resizeMode.stretch:FastImage.resizeMode.contain}
-            style={{ width: "100%", height: "100%" ,borderColor:themeColor.themeColor,borderWidth:2}}
+            style={{ width: "100%", height: "100%" ,}}
            />
          
         </View>
@@ -130,11 +212,6 @@ export default function CmpDetailMediaApproval({
       );
     }else if (item?.type == "HTML") {
       return (
-        // <Text style={{ width: "100%", height: "100%" }}>
-        //   {" "}
-        //   {item.htmlForMobile}
-        // </Text>
-
         <WebView
           source={{html: item.htmlForMobile}}
           minimumFontSize={15}

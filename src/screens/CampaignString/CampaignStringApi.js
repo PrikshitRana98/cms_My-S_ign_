@@ -20,21 +20,21 @@ export const CampaignStringManagerService = {
    let data = {
     ids:params.ids
    }
-    AxiosService('DELETE', `content-management/cms/${params.slugId}/campaignString`,data, {}, success, failure, 'Loading');
+    AxiosService('DELETE', `service-gateway/cms/${params.slugId}/campaignString`,data, {}, success, failure, 'Loading');
   },
   cloneCampaignString: (params = {}, success = () => {}, failure = () => {}) => { 
     let data = params.ids
-    AxiosService('POST', `content-management/cms/${params.slugId}/campaignString/clone/${data}`, {}, {}, success, failure, 'Loading');
+    AxiosService('POST', `service-gateway/cms/${params.slugId}/campaignString/clone/${data}`, {}, {}, success, failure, 'Loading');
   },
   deleteCampaign: (params = {}, success = () => {}, failure = () => {}) => { 
     console.log('params',params)
     // return false;
-     AxiosService('PUT', `content-management/cms/${params.slugId}/campaignString/${params.data.campaignStringId}`,params.data, {}, success, failure, 'Loading');
+     AxiosService('PUT', `service-gateway/cms/${params.slugId}/campaignString/${params.data.campaignStringId}`,params.data, {}, success, failure, 'Loading');
    },
    addCampaignString: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService(
       "POST",
-      `content-management/cms/${params.slugId}/campaignString`,
+      `service-gateway/cms/${params.slugId}/campaignString`,
       params,
       {},
       success,
@@ -43,19 +43,19 @@ export const CampaignStringManagerService = {
     );
   },
   editCampaignString: (layoutStringId = {},params = {},success = () => {},failure = () => {}) => {
-    AxiosService("PUT",`content-management/cms/${params.slugId}/campaignString/${layoutStringId}`,params,{},success,failure,"Loading");
+    AxiosService("PUT",`service-gateway/cms/${params.slugId}/campaignString/${layoutStringId}`,params,{},success,failure,"Loading");
   },
-  // http://k8s-neuro-ingressp-74011e45bf-569147679.ap-southeast-1.elb.amazonaws.com/content-management/cms/protons/campaign_string/60/submit
+  // http://k8s-neuro-ingressp-74011e45bf-569147679.ap-southeast-1.elb.amazonaws.com/service-gateway/cms/protons/campaign_string/60/submit
   submitCampaignString:(params = {},success = () => {},failure = () => {}) => {
     console.log('testtest',params)
-    AxiosService("POST",`content-management/cms/${params.slugId}/campaign_string/${params.data.campaignStringId}/submit`,{},{},success,failure,"Loading");
+    AxiosService("POST",`service-gateway/cms/${params.slugId}/campaign_string/${params.data.campaignStringId}/submit`,{},{},success,failure,"Loading");
   },
   fetchCampaignRatioList: (params = {}, success = () => {}, failure = () => {}) => {
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/search?aspectRatioId=${params.aspect_ratio}&state=SUBMITTED,PUBLISHED,APPROVED`, {}, {}, success, failure, 'Loading');
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/search?aspectRatioId=${params.aspect_ratio}&state=SUBMITTED,PUBLISHED,APPROVED`, {}, {}, success, failure, 'Loading');
   },
   fetchCampaignDetails:(params = {}, success = () => {}, failure = () => {}) => {
-    console.log('paramsparams=',params)
-    AxiosService('GET', `content-management/cms/${params.slugId}/v1/campaign/${params.ids}`, {}, {}, success, failure, 'Loading');
+    console.log('paramsparams=fetchCampaignDetails-->',params)
+    AxiosService('GET', `service-gateway/cms/${params.slugId}/v1/campaign/${params.ids}`, {}, {}, success, failure, 'Loading');
   },
   onApprove: (params = {}, success = () => {}, failure = () => {}) => {
     AxiosService('POST', `service-gateway/cms/${params.slugId}/campaign_string/${params.campaignString}/approve`, {}, {}, success, failure, 'Loading');
@@ -77,7 +77,7 @@ export const getCampaignStringData = async (endPoint,setIsLoading = () => {}) =>
   const slugId = await getStorageForKey("slugId");
   setIsLoading(true); 
   const successCallBack = async (response) => {
-    console.log('getCampaignStringDataresponseSuccess',response)
+    
     if(response?.code === 200){
       dispatch(updateCampaingnStringList(response))
     }

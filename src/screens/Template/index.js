@@ -24,6 +24,8 @@ import SuccessModal from '../../Components/Molecules/SuccessModal';
 import ConfirmBox from '../../Components/Organisms/CMS/ConfirmBox';
 import { PREVILAGES } from '../../Constants/privilages';
 import PaginationComp from '../../Components/Atoms/PaginationComp';
+import { resetRedux } from '../../appConfig/AppRouter/Contents';
+import { resetUserReducer } from '../../appConfig/Redux/Action/userAction';
 
 const {dispatch} = Store;
 
@@ -32,11 +34,13 @@ const Template = props => {
   const themeColor = useThemeContext();
   const Styles = TemplateStyles(themeColor);
   const [isLoading, setIsLoading] = React.useState(false);
+  const[msg,setMsg]=useState("")
   const [isSuccess,setIsSuccess]=useState(false)
   const templateList1 = useSelector(state => state.TemplateReducer.templateList)
   const userData = useSelector((state) => state.userReducer.userDetails.data);
   const [templateList,settemplateList]=useState([])
   const { authorization } = useSelector((state) => state.userReducer);
+
 
   const [checkboxAll, setCheckboxAll] = React.useState(false);
 
@@ -78,7 +82,7 @@ const Template = props => {
   React.useEffect(() => {
    getData(1)
   
-  },[])
+  },[1])
 
   const getData=async(data)=>{
     const params = {
@@ -143,6 +147,7 @@ const Template = props => {
 
     const successCallBack = async (response) => {
       setIsSuccess(true)
+      setMsg("Template deleted successfully.")
       setCheckboxAll(false)
       dispatch(removeTemplates([data?.success]));
       getData(1);
@@ -152,7 +157,21 @@ const Template = props => {
     const failureCallBack = (error) => {
       setIsLoading(false)
       console.log(error)
-      Alert.alert("Error","Error occured")
+      if(error.status==401||error.status=="401"){
+        
+        Alert.alert("Unauthorized", 'Please login', [
+          {
+            text: "Ok",
+            onPress: () => {
+              resetRedux()
+              dispatch(resetUserReducer())
+              navigation.navigate(NAVIGATION_CONSTANTS.LOGIN);
+              
+            },
+          },
+        ]);
+      }
+      
     }
 
     TemplateService.DeleteTemplate(params, successCallBack, failureCallBack)
@@ -169,6 +188,7 @@ const Template = props => {
         const successCallBack = async (response) => {
           setIsLoading(false)
           setIsSuccess(true)
+          setMsg("Template deleted successfully.")
           setTimeout(()=>{
             // dispatch(removeTemplates([data?.success]));
             getData(1);
@@ -225,6 +245,9 @@ const Template = props => {
     //   }},
     // ]);
   }
+useEffect(()=>{
+  btnSchedularData()
+},[filterData.tag,filterData.createdBy,filterData.templateName,filterData.noOfRegions,filterData.desc])
 
   const btnSchedularData = async () => {
     const params = {
@@ -234,7 +257,7 @@ const Template = props => {
     let slugId = await getStorageForKey("slugId");
     //currentPage=1&noPerPage=10&isAdvanceSearch=false
     // let endPoint = `capsuling-service/api/capsuling/getPlanogramByFilter`;
-    let endPoint=`content-management/cms/${slugId}/v1/template/filter?currentPage=${params.currentPage}&numPerPage=${params.numPerPage}`
+    let endPoint=`service-gateway/cms/${slugId}/v1/template/filter?currentPage=${params.currentPage}&numPerPage=${params.numPerPage}`
     
     // const queryParams = [];
     // if(filterData.noOfRegions.trim()!=""){
@@ -287,7 +310,7 @@ const Template = props => {
     
     console.log("template end poibt",endPoint)
     
-    getTemplateData2(()=>{},endPoint)
+    getTemplateData2(()=>{},endPoint,navigation)
   };
 
   const btnFerPormfaction = () => {
@@ -348,11 +371,11 @@ const Template = props => {
       />
       <ClockHeader />
       {isSuccess && (
-        <SuccessModal Msg={"Done"} onComplete={() => setIsSuccess(false)} />
+        <SuccessModal Msg={msg} onComplete={() => setIsSuccess(false)} />
       )}
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <View style={Styles.mainContainer}>
-          {userData.customerType=="BASIC"?<View style={{marginVertical:15,paddingHorizontal:10}}>
+          {userData?.customerType=="BASIC"?<View style={{marginVertical:15,paddingHorizontal:10}}>
             <AppText style={Styles.titleStyle}> Template Management </AppText>
           </View>:
           <CommonHeaderTitleAction title="Template Management" 

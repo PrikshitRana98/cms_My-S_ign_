@@ -4,7 +4,7 @@ import {
   FlatList,
   Image,
   ImageBackground,Dimensions,
-  ScrollView,
+  ScrollView,Platform,Keyboard,  KeyboardAvoidingView,
   ActivityIndicator,
   Text,
   TouchableOpacity,
@@ -58,6 +58,9 @@ import RailSelected from "../../Components/HelperComp/RailSelected";
 import Label from "../../Components/HelperComp/Label";
 import Notch from "../../Components/HelperComp/Notch";
 import RnRangeSlider from "rn-range-slider";
+import { jwtDecode } from "jwt-decode";
+import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
+import { resetRedux } from "../../appConfig/AppRouter/Contents";
 
 
 const EditCampaign = ({ navigation, route }) => {
@@ -77,7 +80,7 @@ const EditCampaign = ({ navigation, route }) => {
   const [seleAudioData, setSelAudioData] = useState([]);
   const [mediaData, setMediaData] = useState([]);
   const MediaList = useSelector((state) => state.MediaLibReducer.MediaLibList);
-
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [campaignName, setCampaignName] = useState("");
   const [templateTag, setTempletTag] = useState("");
@@ -93,7 +96,7 @@ const EditCampaign = ({ navigation, route }) => {
   const [mediaModalType, setMediaModalType] = useState(null);
   const [activateRegion, setActiveRegion] = useState(0);
   const [selectRegionForEdit, setSelectetRegionForEdit] = useState(-1);
-  const [campaignType, setCampaignType] = useState(null);
+  const [campaignType, setCampaignType] = useState('');
   const [cmpArrangeModal, setCmpArrangeModal] = useState(false);
   const [ratioId, setRatioId] = useState(null);
   const [duration, setDuration] = useState({
@@ -112,6 +115,32 @@ const EditCampaign = ({ navigation, route }) => {
   const [usermintime,setusermintime]=useState(0);
   const [usermaxtime,setusermaxtime]=useState(0);
   const [audiotiming,setaudiotiming]=useState(0);
+  const [cmpgnType,setcmpgnType]=useState([
+    { label: "NORMAL", value: "NORMAL" },
+  ])
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setIsKeyboardOpen(true);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setIsKeyboardOpen(false);
+      }
+    );
+
+    // Cleanup listeners when the component unmounts
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
 
   const renderThumb = useCallback(() => <Thumb/>, []);
   const renderRail = useCallback(() => <Raill/>, []);
@@ -187,7 +216,7 @@ const EditCampaign = ({ navigation, route }) => {
     };
     return new Promise((resolve, reject) => {
       axios
-        .get(`${baseUrl}content-management/cms/${slugId}/v1/media/${mediaId}`, {
+        .get(`${baseUrl}service-gateway/cms/${slugId}/v1/media/${mediaId}`, {
           headers: authHeader,
         })
         .then((response) => {
@@ -199,6 +228,7 @@ const EditCampaign = ({ navigation, route }) => {
     });
   };
   const btnSetCamapaignEditValues = (campaignData) => {
+    console.log("campaignData",JSON.stringify(campaignData))
     if (campaignData) {
       let mData = MediaList?.data?.mediaDetails;
 
@@ -265,7 +295,7 @@ const EditCampaign = ({ navigation, route }) => {
       }
 
       
-      if (campaignData?.campaignType?.toLowerCase() == "advertisement") {
+      if (campaignData?.campaignType?.toLowerCase() !== "normal") {
         let du = secondsToHMS(campaignData?.totalDurationOfCampaignInSeconds);
         
         let camDu = {
@@ -275,7 +305,8 @@ const EditCampaign = ({ navigation, route }) => {
         };
         setDuration(camDu);
       }
-      setCampaignType(campaignData?.campaignType?.toLowerCase());
+      console.log("campaignData?.campaignType",campaignData?.campaignType)
+      setCampaignType(campaignData.campaignType.toUpperCase());
       setRatioId(campaignData?.aspectRatio?.aspectRatioId);
       setSelAudioData([...audio]);
       setTempletTagArr([...tags]);
@@ -336,7 +367,22 @@ const EditCampaign = ({ navigation, route }) => {
       if(error.response.data){
         Alert.alert("Error",error.response.data.data)
       }else{
+        if(error.message=="Request failed with status code 401"){
+          Alert.alert("Unauthorized!", 'Please login.', [
+            {
+              text: "Ok",
+              onPress: () => {
+                resetRedux()
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: NAVIGATION_CONSTANTS.LOGIN }],
+                });
+              },
+            },
+          ]);
+        }else{
         Alert.alert("Error","Error in getting of camapign details.")
+        }
       }
       
     };
@@ -350,9 +396,31 @@ const EditCampaign = ({ navigation, route }) => {
 
   //end for edit
   const workFlow = useSelector((state) => state.userReducer.workFlow);
+  const getvaluess = async() =>
+    {
+      console.log("\n getting values \n")
+      
+      const token=await getStorageForKey("authToken");  
+      const decodedHeader = jwtDecode(token);
+      
+
+      console.log("valyess-->",decodedHeader.is_moving_walls_enabled,decodedHeader.is_advertisement_enabled)
+      let cmptypeArr=[]
+      if(decodedHeader.is_advertisement_enabled){
+        cmptypeArr.push({ label: "LEMMA", value: "ADVERTISEMENT"})
+      }
+      if(decodedHeader.is_moving_walls_enabled){
+        cmptypeArr.push({ label: "MOVING WALL", value: "MOVING_WALL" })
+      }
+      setcmpgnType([...cmpgnType,...cmptypeArr])
+
+      console.log(cmptypeArr)
+
+    }
   // get media data
   React.useEffect(() => {
     getWorkFlow(navigation);
+    getvaluess()
     getMediaDataForCampAdd(setIsLoading);
     getResolutionData(setIsLoading);
   }, [1]);
@@ -514,7 +582,7 @@ const EditCampaign = ({ navigation, route }) => {
       Alert.alert("Please enter campaign type");
       return false;
     }
-    campaignType != "advertisement"
+    campaignType.toLowerCase() == "normal"
       ? btnAddCampaignData(btnType)
       : btnAddAdvertiseData(btnType);
   };
@@ -540,7 +608,11 @@ const EditCampaign = ({ navigation, route }) => {
       alert("Please enter campaign name");
       return false;
     }
-
+    if (campaignName.trim().length > 15) {
+      console.log("Please enter a valid campaign name between 3 and 15 characters")
+      alert("Please enter a valid campaign name between 3 and 15 characters");
+      return false;
+    }
     if (!ratioId) {
       alert("Please select aspect ratio");
       return false;
@@ -548,6 +620,9 @@ const EditCampaign = ({ navigation, route }) => {
 
     if (duration.hh == 0 && duration.mm == 0 && duration.ss == 0) {
       alert("Please enter duration");
+      return false;
+    }else if (duration.hh >= 23 || duration.mm >=60 && duration.ss >=60) {
+      alert("Please enter duration horus not more than 23, minutes not more than 59 and second not more than 59");
       return false;
     }
 
@@ -593,17 +668,37 @@ const EditCampaign = ({ navigation, route }) => {
       }
     };
     const failureCallBack = (error) => {
+
+      console.log("er 63".error)
       if (error?.response?.data?.data?.length > 0) {
-        alert(error?.response?.data?.data[0].message);
+        Alert.alert('Error',error?.response?.data?.data[0].message);
       } else if (error?.data?.length > 0) {
-        alert(error?.data[0]?.message);
+        Alert.alert('Error',error?.data[0]?.message);
       } else {
-        alert(error?.message);
+        // Alert.alert('677',error?.message);
+        if(error.message=="Request failed with status code 401"){
+          Alert.alert("Unauthorized!", 'Please login.', [
+            {
+              text: "Ok",
+              onPress: () => {
+                resetRedux()
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: NAVIGATION_CONSTANTS.LOGIN }],
+                });
+              },
+            },
+          ]);
+        }
+
       }
       setIsLoading(false);
     };
+    let lastUrl=campaignType=="ADVERTISEMENT"?"campaign-advertisement":"movingwall-advertisement"
+    let endPoint=`service-gateway/cms/${slugId}/v1/${lastUrl}/${campaignItem?.campaignId}`
     let params = {
       data: postData,
+      endPoint:endPoint,
       slugId,
       campaignId: campaignItem?.campaignId,
     };
@@ -618,6 +713,11 @@ const EditCampaign = ({ navigation, route }) => {
   const btnAddCampaignData = async (btnType) => {
     if (campaignName.trim().length <= 0) {
       alert("Please enter campaign name");
+      return false;
+    }
+    if (campaignName.trim().length > 15) {
+      console.log("Please enter a valid campaign name between 3 and 15 characters")
+      alert("Please enter a valid campaign name between 3 and 15 characters");
       return false;
     }
     if (selectedTemplet == null) {
@@ -820,10 +920,10 @@ const EditCampaign = ({ navigation, route }) => {
   const onChangeDuration = (value, type) => {
     const re = /^[0-9\b]+$/;
     if (value === "" || re.test(value)) {
-      if (type === "HH" && value <= 23) {
+      if (type === "HH" && value ) {
         setDuration({ ...duration, hh: value });
       }
-      if (type === "MM" && value <= 59) {
+      if (type === "MM" && value ) {
         setDuration({ ...duration, mm: value });
       }
       if (type === "SS" && value <= 59) {
@@ -843,10 +943,12 @@ const EditCampaign = ({ navigation, route }) => {
   const [locationSelected, setLocationSelected] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
 
-  // const onChangeLocatioValue = (lData) => {
-  //   selectedTemplet.regions[selectRegionForEdit]["locationIds"] = lData;
-  //   setSelectedTemplet({ ...selectedTemplet });
-  // };
+  const onLocationCancel=()=>{
+    selectedTemplet.regions[selectRegionForEdit]["locationIds"] = [];
+    selectedTemplet.regions[selectRegionForEdit]["customizCheck"] = false;
+    setSelectedTemplet({ ...selectedTemplet });
+    setLocationSelected([]);
+}
   const onChangeLocatioValue = (lData, ljsonData) => {
     selectedTemplet.regions[selectRegionForEdit]["locationIds"] = lData;
     setSelectedTemplet({ ...selectedTemplet });
@@ -876,6 +978,14 @@ const EditCampaign = ({ navigation, route }) => {
       <ClockHeader />
       <Loader visible={isLoading} />
       {successModal && <SuccessModal Msg={successMsg} onComplete={onComplete} />}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "margin"}
+        style={{
+          flex: 1,
+          marginBottom: Platform.OS === "ios" && isKeyboardOpen ? 100 : 0,
+          // backgroundColor:"red"
+        }}
+      >
       <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         {modal && (
           <SelectMediaModal
@@ -925,20 +1035,18 @@ const EditCampaign = ({ navigation, route }) => {
             </AppText>
             <Separator />
             <View style={Styles.bodyRowsContainer}>
-              <AppText style={Styles.labeltext}>Campaign Type</AppText>
+              <AppText style={Styles.labeltext}>Campaign Type*</AppText>
 
               <CampaignDropDown
-                dataList={[
-                  { label: "Normal", value: "normal" },
-                  { label: "Advertisement", value: "advertisement" },
-                ]}
+                isDisabled={true}
+                dataList={cmpgnType}
                 placeHolderText="Select Campaign Type*"
                 onChange={(item) => {
                   setCampaignType(item.value);
                 }}
                 value={campaignType}
               />
-              <AppText style={Styles.labeltext}>Campaign Name</AppText>
+              <AppText style={Styles.labeltext}>Campaign Name*</AppText>
 
               <AppTextInput
                 containerStyle={Styles.eventTitleInput}
@@ -952,9 +1060,9 @@ const EditCampaign = ({ navigation, route }) => {
                   fontSize: moderateScale(15),
                 }}
               />
-              {campaignType?.toLowerCase() == "advertisement" && (
+              {campaignType.toUpperCase() != "NORMAL" && (
                 <View style={{ marginBottom: 5 }}>
-                  <AppText style={Styles.labeltext}>Aspect ratio</AppText>
+                  <AppText style={Styles.labeltext}>Aspect ratio*</AppText>
 
                   <CampaignDropDown
                     dataList={ratioList}
@@ -966,7 +1074,7 @@ const EditCampaign = ({ navigation, route }) => {
                   />
                 </View>
               )}
-              {campaignType?.toLowerCase() == "advertisement" && (
+              {campaignType.toUpperCase() != "NORMAL" && (
                 <>
                   <AppText style={Styles.labeltext}>Duration*</AppText>
                   <View style={Styles.durartionContainer}>
@@ -1013,18 +1121,18 @@ const EditCampaign = ({ navigation, route }) => {
                 </>
               )}
 
-              {campaignType?.toLowerCase() != "advertisement" && (
+              {campaignType?.toUpperCase() == "NORMAL" && (
                 <>
-                  <AppText style={Styles.labeltext}>Templates *</AppText>
+                  {/* <AppText style={Styles.labeltext}>Templates *</AppText>
                   <CampaignDropDown
                     dataList={templateShowList}
                     Styles={Styles}
-                    isDisabled={true}
+                    isDisabled={!true}
                     onChange={(item) => {
                       onRegionChange(item);
                     }}
                     value={value}
-                  />
+                  /> */}
                   <AppText style={Styles.labeltext}>Audio </AppText>
 
                   <SelectAudio
@@ -1185,10 +1293,10 @@ const EditCampaign = ({ navigation, route }) => {
                           marginLeft: -7,
                         }}
                         minimumValue={0}
-                        value={transparency?1-transparency:1}
+                        value={transparency?transparency:1}
                         maximumValue={1}
                         onValueChange={(value) => {
-                          setTransparency(1-value);
+                          setTransparency(value);
                         }}
                         minimumTrackTintColor="#223577"
                         maximumTrackTintColor="#000000"
@@ -1198,7 +1306,7 @@ const EditCampaign = ({ navigation, route }) => {
                 </>
               )}
             </View>
-            {campaignType?.toLowerCase() != "advertisement" && (
+            {campaignType?.toUpperCase() == "NORMAL" && (
               <>
                 {/*Region===============================regions====== */}
                 {selectedTemplet?.regions && (
@@ -1219,7 +1327,7 @@ const EditCampaign = ({ navigation, route }) => {
                         position: "relative",
                         backgroundColor: bgColor,
                         // opacity: transparency,
-                        opacity: !selectedBgImg ? 1 : transparency ,
+                        opacity: !selectedBgImg ? 1 : 1-transparency ,
                       }}
                       source={
                         selectedBgImg ? { uri: selectedBgImg.imageUrl } : null
@@ -1289,16 +1397,16 @@ const EditCampaign = ({ navigation, route }) => {
                         value={
                           selectedTemplet.regions[selectRegionForEdit][
                             "regionTransparencyInPercentage"
-                          ]?1-selectedTemplet.regions[selectRegionForEdit][
+                          ]?selectedTemplet.regions[selectRegionForEdit][
                             "regionTransparencyInPercentage"
                           ] : 0
                         }
-                        maximumValue={0.9}
+                        maximumValue={0.99}
                         onValueChange={(value) => {
                           console.log("regionTransparencyInPercentage",value)
                           selectedTemplet.regions[selectRegionForEdit][
                             "regionTransparencyInPercentage"
-                          ] = 1-value ;
+                          ] = value ;
                           setSelectedTemplet({ ...selectedTemplet });
                         }}
                         minimumTrackTintColor="#223577"
@@ -1307,26 +1415,39 @@ const EditCampaign = ({ navigation, route }) => {
                     </View>
                     <View style={Styles.audioBox}>
                       <AppText style={[Styles.titleStyle]}>
-                        {"Audio (ON/Off)"}
+                        {"Audio (ON/OFF)"}
                       </AppText>
-                      <Switch
-                        color={"#253D91"}
+                      {seleAudioData.length==0?<Switch
+                        color={"black"}
                         value={seleAudioData.length==0 ?
-                          selectedTemplet?.regions[selectRegionForEdit]
-                            ?.isAudioEnabled || false : false
+                          selectedTemplet?.regions[selectRegionForEdit]?.isAudioEnabled || false : false
                         }
-                       
-
                         onValueChange={(txt) => {
-                          
+                          console.log("adui chang121e-->",selectRegionForEdit,txt)
                           if(seleAudioData.length==0){
+                            console.log("adui change-->",selectRegionForEdit,txt)
                             selectedTemplet.regions[selectRegionForEdit][
                               "isAudioEnabled"
                             ] = txt;
                             setSelectedTemplet({ ...selectedTemplet });
                         }
                         }}
+                      />:
+                      <Switch
+                        color={"black"}
+                        value={false}
+                        onValueChange={(txt) => {
+                          console.log("adui chang121e-1342->",selectRegionForEdit,txt)
+                          if(seleAudioData.length==0){
+                            console.log("adui change-->",selectRegionForEdit,txt)
+                            selectedTemplet.regions[selectRegionForEdit][
+                              "isAudioEnabled"
+                            ] = false;
+                            setSelectedTemplet({ ...selectedTemplet });
+                          }}
+                        }
                       />
+                    }
                     </View>
                     <Text
                       style={{ color: "#000000", fontSize: 14, marginTop: 15 }}
@@ -1438,10 +1559,11 @@ const EditCampaign = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <ActionContainer
-        isContinue={campaignType == "advertisement" && true}
-        continueText={campaignType == "advertisement" && "Save & Next"}
+        isContinue={campaignType.toUpperCase() != "NORMAL" && true}
+        continueText={campaignType.toUpperCase() != "NORMAL" && "Save & Next"}
         saveText={
           workFlow &&
           (workFlow?.approverWorkFlow === "CAMPAIGN" ||
@@ -1469,6 +1591,7 @@ const EditCampaign = ({ navigation, route }) => {
         selectedLocations={selectedLocations}
         setSelectedLocations={setSelectedLocations}
         locationData1={locationData1}
+        onLocationCancel={onLocationCancel}
         onChangeLocatioValue={onChangeLocatioValue}
       />
     </View>

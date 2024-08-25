@@ -1,4 +1,5 @@
 import {
+  RESET,
   UPDATE_REGISTER_DEVICE_LIST
     } from '../ActionTypes/commonActionTypes';
     
@@ -8,6 +9,7 @@ import {
   
     const deviceReducer = (state = initialState, action) => {
       switch (action.type) {
+        case RESET:()=>initialState;
         case UPDATE_REGISTER_DEVICE_LIST:
           return {
             ...state,

@@ -191,7 +191,7 @@ export default function CampaignStringPrewiewActions({ campaignItem, navigation,
             onClick={() => {
               btnConfirmPopup("approve");
             }}
-            title={"Approve"}ƒ
+            title={"Approve"}
             containerStyle={{ width: "30%", backgroundColor: "#ffc107" }}
           />
           <ThemedButton

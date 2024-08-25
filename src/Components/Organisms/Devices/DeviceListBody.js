@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
+  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -56,7 +57,7 @@ const DeviceListBody = ({
   };
   const renderTextLocation= (value, index) => {
     return (
-      <View style={[Styles.commonView,{width:"14%"}]}>
+      <View style={[Styles.commonView,{width:"13%"}]}>
         <AppText style={Styles.commonText}>{value || '--'}</AppText>
       </View>
     );
@@ -129,7 +130,7 @@ const DeviceListBody = ({
             >
               <MaterialCommunityIcons
                 name="calendar"
-                size={25}
+                size={20}
                 color={themeColor.themeColor}
               />
             </Pressable>
@@ -211,7 +212,7 @@ const DeviceListBody = ({
 
   const renderConnection = (value, index) => {
     return (
-      <View style={[Styles.commonView, Styles.centeredView]}>
+      <View style={[Styles.commonView, Styles.centeredView,{width:"9.5%"}]}>
         {value ? (
           <ThemedButton
             title={value[0].toUpperCase() + value.slice(1).toLowerCase()}
@@ -223,6 +224,7 @@ const DeviceListBody = ({
               borderRadius: moderateScale(20),
             }}
             textStyle={{
+              fontSize:moderateScale(12),
               color:
                 value.toLowerCase() === "connected"
                   ? themeColor.activeGreen
@@ -230,7 +232,7 @@ const DeviceListBody = ({
             }}
           />
         ) : (
-          <Text style={{ color: "#000" }}> -</Text>
+          <Text style={{ color: "#000" }}>-</Text>
         )}
       </View>
     );
@@ -238,7 +240,7 @@ const DeviceListBody = ({
 
   const renderDateTime = (value) => {
     return (
-      <View style={[Styles.commonView]}>
+      <View style={[Styles.commonView,{width:"8.5%"}]}>
         <AppText style={[Styles.commonText, { textAlign: "center" }]}>
           {value && moment(value).format('DD-MM-YYYY hh:mm:ss A') || '--'}
         </AppText>
@@ -273,6 +275,7 @@ const DeviceListBody = ({
         <TouchableOpacity
           onPress={() =>{
             navigation.navigate(NAVIGATION_CONSTANTS.DEVICE_CONSOLIDATE,{deviceDetail:item})
+            btnOpenModelType("Redownload", item.deviceId);
           }}
           style={Styles.nameView}
         >
@@ -286,8 +289,8 @@ const DeviceListBody = ({
         {renderDateTime(item?.lastSyncTime, index)}
         {renderConnection(item?.deviceConnectivity, index)}
         {renderDateTime(item?.timeOfDeviceStatus, index)}
-        <View style={[Styles.commonView, Styles.actionContainer]}>
-          {renderActionView(item)}
+        <View style={{backgroundColor:"white",paddingHorizontal:moderateScale(1),justifyContent:"center",marginRight:30,width:"100%"}}>
+        {renderActionView(item)}
         </View>
       </View>
     );
@@ -402,8 +405,8 @@ const scheduleStyles = (COLORS) =>
       width: "100%",
     },
     nameView: {
-      width: "13%",
-      margin: 0,
+      width: "14%",
+      margin: 1,
       backgroundColor: COLORS.white,
       justifyContent: "center",
       paddingHorizontal: moderateScale(15),
@@ -433,11 +436,12 @@ const scheduleStyles = (COLORS) =>
     iconView: {
       backgroundColor: COLORS.white,
       justifyContent: "center",
-      paddingHorizontal: moderateScale(10),
+      paddingLeft: moderateScale(5),
     },
     renderContainer: {
       flexDirection: "row",
       width: "100%",
+      // backgroundColor:"red",
       margin: moderateScale(0.5),
       paddingRight:25,
     },
@@ -465,7 +469,6 @@ const scheduleStyles = (COLORS) =>
       height: moderateScale(35),
       width: moderateScale(25),
     },
-    actionContainer: { width: "20%" },
     iconBackView: {
       height: moderateScale(32),
       width: moderateScale(32),
@@ -474,7 +477,7 @@ const scheduleStyles = (COLORS) =>
       justifyContent: "center",
       alignItems: "center",
       padding: moderateScale(5),
-      marginHorizontal:5,
+      marginHorizontal:2,
     },
     actionIcons: {
       height: moderateScale(20),

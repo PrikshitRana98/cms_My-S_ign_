@@ -27,7 +27,8 @@ import AppText from "../../Components/Atoms/CustomText";
 import moment from "moment";
 import ViewImageModal from "../../Components/Atoms/ViewImageModal";
 import SuccessModal from "../../Components/Molecules/SuccessModal";
-const SchedulerIndexView1 = ({ navigation }) => {
+import { useSelector } from "react-redux";
+const SchedulerIndexView1 = ({ navigation, }) => {
   const route = useRoute();
   const [successModal,setSuccessModal]=useState(false);
   const [successMsg,setSuccessMsg]=useState("")
@@ -40,24 +41,47 @@ const SchedulerIndexView1 = ({ navigation }) => {
   const themeColor = useThemeContext();
   const Styles = SedulerStyles(themeColor);
   const planogramList = route.params?.item || [];
+  const campvaluess = route.params?.campvalue || [];
   const [isLoading, setIsLoading] = useState(false);
   const [aspectRatioList, setAspectRatioList] = useState({});
   const [deviceData, setDeviceData] = useState(null);
   const [deviceGroupData1, setDeviceGroupData1] = useState([]);
   const [deviceData1, setDeviceData1] = useState([]);
   const [locationData1, setLocationData1] = useState([]);
-  const [campName, setCampName] = useState([]);
+  // const [campName, setCampName] = useState([]);
   const [selcampName, setselCampName] = useState({});
   const [openFlag, setOpenFlag] = useState("");
   const [dataType, setDateType] = useState("");
   const [isapproval, setisapproval] = useState(false);
+  const workFlow = useSelector((state) => state.userReducer.workFlow);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+        getDashboardDetails();
+    });
+    return unsubscribe;
+}, []);
+const [isSchedulerEnabled, setisSchedulerEnabled] = useState(null);
+
+const getDashboardDetails = () => {
+    getStorageForKey("is_scheduler_enabled").then((is_scheduler_enabled) => {
+        let is_scheduler_enabled1 = "";
+        if (is_scheduler_enabled == "true" || is_scheduler_enabled == true) {
+            is_scheduler_enabled1 = true;
+            setisSchedulerEnabled(true);
+        } else if (is_scheduler_enabled == "false" || is_scheduler_enabled == false) {
+            is_scheduler_enabled1 = false;
+            setisSchedulerEnabled(false);
+        }
+    });
+};
 
   const onPressSave = async () => {
     let slugId = await getStorageForKey("slugId");
 
     const indexedObject = Object.fromEntries(
-      campName.map((item, index) => [index, item.slotId])
+      campvaluess.map((item, index) => [index, item.slotId])
     );
+
     const params = {
       palamid: planogramList.planogramId,
       slugId: slugId,
@@ -66,7 +90,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
 
     const succussCallBack = async (response) => {
       if (response?.status == "SUCCESS") {
-        if (isapproval) {
+        if ((workFlow.approverWorkFlow=="PLANOGRAM"||workFlow.approverWorkFlow=="PLANOGRAM_AND_CAMPAIGN")&&isSchedulerEnabled) {
           Alert.alert(
             "Alert !",
             `Are you sure you want to send this Scheduler for Approval ?`,
@@ -77,7 +101,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
                 style: "cancel",
               },
               {
-                text: "Send for Approval",
+                text: "Yes",
                 onPress: () => {
                   publishcomp2();
                 },
@@ -94,7 +118,6 @@ const SchedulerIndexView1 = ({ navigation }) => {
       }
     };
     const failureCallBack = (error) => {
-      // publishcomp1();
     };
 
     SchedulerManagerService.publishcomp(
@@ -214,7 +237,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
     approvalcheck();
     if (planogramList?.planogramId) {
       getPlanogramDetails(planogramList?.planogramId);
-      getCampaigns(planogramList?.planogramId);
+     // getCampaigns(planogramList?.planogramId);
       aspectRatio();
     }
   }, [planogramList]);
@@ -313,6 +336,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
                     {
                       campaignId: item?.campaignId,
                       campaigName: item?.campaignTitle,
+                      approveState:""
                     },
                   ],
                   viewDetails: true,
@@ -360,48 +384,48 @@ const SchedulerIndexView1 = ({ navigation }) => {
     location: "",
   });
 
-  useEffect(() => {
-    if (deviceData) {
-      setSelectedCmpAndCmpStr();
-    }
-  }, [deviceData]);
+  // useEffect(() => {
+  //   if (deviceData) {
+  //     setSelectedCmpAndCmpStr();
+  //   }
+  // }, [deviceData]);
 
-  const setSelectedCmpAndCmpStr = () => {
-    let { layoutAndLayoutStrings } = deviceData;
-    let cmp = [];
-    if (layoutAndLayoutStrings && layoutAndLayoutStrings?.length > 0) {
-      layoutAndLayoutStrings.map((camp) => {
-        if (camp.hasOwnProperty("campaignId")) {
-          cmp.push(camp.campaignName);
-        }
-        if (camp.hasOwnProperty("campaignStringId")) {
-          cmp.push(camp.campaignStringName);
-        }
-      });
-      setCampName([...cmp]);
-    }
-  };
+  // const setSelectedCmpAndCmpStr = () => {
+  //   let { layoutAndLayoutStrings } = deviceData;
+  //   let cmp = [];
+  //   if (layoutAndLayoutStrings && layoutAndLayoutStrings?.length > 0) {
+  //     layoutAndLayoutStrings.map((camp) => {
+  //       if (camp.hasOwnProperty("campaignId")) {
+  //         cmp.push(camp.campaignName);
+  //       }
+  //       if (camp.hasOwnProperty("campaignStringId")) {
+  //         cmp.push(camp.campaignStringName);
+  //       }
+  //     });
+  //     setCampName([...cmp]);
+  //   }
+  // };
 
-  const getCampaigns = async (id) => {
-    let slugId = await getStorageForKey("slugId");
-    setIsLoading(true);
-    const params = {
-      palamid: id,
-    };
-    const succussCallBack = async (response) => {
-      if (response.status == "SUCCESS" && response?.result.length > 0) {
-        setCampName(response.result);
-      }
-      setIsLoading(false);
-    };
-    const failureCallBack = (error) => {};
+  // const getCampaigns = async (id) => {
+  //   let slugId = await getStorageForKey("slugId");
+  //   setIsLoading(true);
+  //   const params = {
+  //     palamid: id,
+  //   };
+  //   const succussCallBack = async (response) => {
+  //     if (response.status == "SUCCESS" && response?.result.length > 0) {
+  //       setCampName(response.result);
+  //     }
+  //     setIsLoading(false);
+  //   };
+  //   const failureCallBack = (error) => {};
 
-    SchedulerManagerService.getCampaigns(
-      params,
-      succussCallBack,
-      failureCallBack
-    );
-  };
+  //   SchedulerManagerService.getCampaigns(
+  //     params,
+  //     succussCallBack,
+  //     failureCallBack
+  //   );
+  // };
 
   const aspectRatio = async () => {
     setIsLoading(true);
@@ -569,7 +593,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
 
           <View style={Styles.bodyContainer}>
             <AppText style={Styles.bodyHeaderText}>
-              CAMPAIGN/CAMPAIGNSTRING LIST
+              CAMPAIGN / CAMPAIGN STRING LIST
             </AppText>
 
             <ScrollView
@@ -581,7 +605,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
               }}
             >
               <FlatList
-                data={campName}
+                data={campvaluess}
                 renderItem={renderCampaignList}
                 ListHeaderComponent={renderCampaignHeader}
               />
@@ -589,7 +613,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
           </View>
           <View style={Styles.bodyContainer}>
             <AppText style={Styles.bodyHeaderText}>
-              DEVICES/DEVICESGROUP LIST
+              DEVICES / DEVICES GROUP LIST
             </AppText>
 
             <ScrollView
@@ -640,7 +664,7 @@ const SchedulerIndexView1 = ({ navigation }) => {
               color: themeColor.white,
             }}
           >
-            {isapproval ? "Send for Approval" : "Publish"}
+            {(workFlow.approverWorkFlow=="PLANOGRAM"||workFlow.approverWorkFlow=="PLANOGRAM_AND_CAMPAIGN")&&isSchedulerEnabled ? "Send for Approval" : "Publish"}
           </AppText>
         </TouchableOpacity>
       </View>

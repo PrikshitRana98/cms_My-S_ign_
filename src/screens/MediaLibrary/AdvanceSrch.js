@@ -94,46 +94,9 @@ const AdvanceSrch = ({
 
 
 
-  // useEffect(() => {
-  //   console.log("trutrueuuueuu",srchObj)
-  //   setCreatedFrom("");
-  //   setCreatedTo("");
-  //   setFileSize("");
-  //   setFileDuration("");
-  //   setFileTag("");
-  //   setUplodedBy("");
-  //   setSizeSign("gt");
-  //   setDurationSign("gt");
-  //   setfileUnit("1");
-  //    setcontentType({
-  //     label: srchObj?.content_type?.eq,
-  //     value: "ALL",
-  //   });
-  //   setAdvurl("");
-  //   setDateError("")
-
-  //   // setCreatedFrom(srchObj.created_date.gte);
-  //   // setCreatedTo(srchObj.created_date.lte);
-  //   // setFileTag(srchObj?.tag?.eq);
-
-  //   // for (var key in srchObj.file_size) {
-  //   //   setSizeSign(key)
-  //   //   if(srchObj.file_size[key]){
-  //   //     setFileSize(srchObj.file_size[key])
-  //   //   }
-  //   // }
-  //   // for (var key in srchObj.duration_in_seconds) {
-  //   //   setDurationSign(key)
-  //   //   if(srchObj.duration_in_seconds[key]){
-  //   //     setFileDuration(srchObj.duration_in_seconds[key])
-  //   //   }
-  //   // }
-    
-  // }, []);
-
   useEffect(() => {
-    if (modalVisible) {
-      setCreatedFrom("");
+    console.log("trutrueuuueuu",srchObj)
+    setCreatedFrom("");
     setCreatedTo("");
     setFileSize("");
     setFileDuration("");
@@ -148,8 +111,46 @@ const AdvanceSrch = ({
     });
     setAdvurl("");
     setDateError("")
+
+    setCreatedFrom(srchObj.created_date.gte);
+    setCreatedTo(srchObj.created_date.lte);
+    setFileTag(srchObj?.tag?.eq);
+
+    for (var key in srchObj.file_size) {
+      setSizeSign(key)
+      if(srchObj.file_size[key]){
+        setFileSize(srchObj.file_size[key])
+      }
     }
-  }, [modalVisible]);
+    for (var key in srchObj.duration_in_seconds) {
+      setDurationSign(key)
+      if(srchObj.duration_in_seconds[key]){
+        setFileDuration(srchObj.duration_in_seconds[key])
+      }
+    }
+    
+  }, []);
+// ************** reset useeffet*************
+  // useEffect(() => {
+  //   if (modalVisible) {
+  //     setCreatedFrom("");
+  //   setCreatedTo("");
+  //   setFileSize("");
+  //   setFileDuration("");
+  //   setFileTag("");
+  //   setUplodedBy("");
+  //   setSizeSign("gt");
+  //   setDurationSign("gt");
+  //   setfileUnit("1");
+  //    setcontentType({
+  //     label: srchObj?.content_type?.eq,
+  //     value: "ALL",
+  //   });
+  //   setAdvurl("");
+  //   setDateError("")
+  //   }
+  // }, [modalVisible]);
+  /******************/ 
 
 
 
@@ -236,7 +237,7 @@ const AdvanceSrch = ({
     setAdvurl("");
     setDateError("")
     setTimeout(()=>{
-      setModalVisible(false)
+      //setModalVisible(false)//
     },600)
   };
   const keyboardVerticalOffset = Platform.OS === "ios" ? 40 : 0;
@@ -264,7 +265,8 @@ const AdvanceSrch = ({
                     onClickIcon={() =>  setModalVisible(!modalVisible)}
                   />
                 </View>
-                <ScrollView  contentContainerStyle={{ paddingBottom: (Platform.OS === 'ios' && isKeyboardOpen) ? 180 : 0 , }}>
+                <ScrollView  showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingBottom: (Platform.OS === 'ios' && isKeyboardOpen) ? 180 : 0 , }}>
                 <View>
                   <DateComp
                     title={"Created From"}

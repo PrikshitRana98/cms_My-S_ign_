@@ -1,16 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
-  FlatList,KeyboardAvoidingView,Platform,
-  Image,Keyboard,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Keyboard,
   Pressable,
   ScrollView,
-  Text,TextInput,
+  Text,
+  TextInput,
+  Modal,
   TouchableOpacity,
   View,
+  Dimensions,
 } from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
+import Entypo from "react-native-vector-icons/Entypo";
 import { FONT_FAMILY } from "../../Assets/Fonts/fontNames";
-import SelectCampaignModal from '../../Components/Organisms/CMS/Scheduler/selectCampaignModal';
+import SelectCampaignModal from "../../Components/Organisms/CMS/Scheduler/selectCampaignModal";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -26,7 +34,7 @@ import CustomIconText from "../../Components/Atoms/IconText";
 import SearchBox from "../../Components/Atoms/SearchBox";
 import Separator from "../../Components/Atoms/Separator";
 import SubHeaderText from "../../Components/Atoms/SubHeaderText";
-import { moderateScale, width } from "../../Helper/scaling";
+import { height, moderateScale, width } from "../../Helper/scaling";
 import { useThemeContext } from "../../appConfig/AppContext/themeContext";
 import CommonStyles from "./style";
 import DatePicker from "react-native-date-picker";
@@ -44,13 +52,16 @@ import {
 import { getStorageForKey } from "../../Services/Storage/asyncStorage";
 import { NAVIGATION_CONSTANTS } from "../../Constants/navigationConstant";
 import Loader from "../../Components/Organisms/CMS/Loader";
-import ViewImageModal from '../../Components/Atoms/ViewImageModal';
+import ViewImageModal from "../../Components/Atoms/ViewImageModal";
 import LocationsListForPlanogram from "../../Components/Organisms/Dashboard/LocationsListForPlanogram";
 import moment from "moment";
 import SuccessModal from "../../Components/Molecules/SuccessModal";
 import { all } from "axios";
+import { convertSecondsToMinutes } from "../../Constants/asyncConstants";
+import { err } from "react-native-svg/lib/typescript/xml";
+import { stringify } from "querystring";
 const SchedulerEdit = ({ navigation, route }) => {
-  const [searchLocation,setSearchLocation]=useState("")
+  const [searchLocation, setSearchLocation] = useState("");
   const themeColor = useThemeContext();
   const Styles = CommonStyles(themeColor);
   const { planogramItem } = route.params;
@@ -63,7 +74,7 @@ const SchedulerEdit = ({ navigation, route }) => {
   const [startDate, setStartDate] = useState(
     planogramItem.startDate ? new Date(planogramItem.startDate) : null
   );
- 
+
   const [isDatePickerVisible1, setDatePickerVisible1] = useState(false);
   const [endDate, setEndDate] = useState(
     planogramItem.endDate ? new Date(planogramItem.endDate) : null
@@ -90,23 +101,26 @@ const SchedulerEdit = ({ navigation, route }) => {
   const [selectedCampaign, setSelectedCampaign] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [dl_min_date, setDLMinDate] = useState(new Date());
-  const [successModal,setSuccessModal]=useState(false);
-  const [successMsg,setSuccessMsg]=useState("");
+  const [successModal, setSuccessModal] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
-  const onComplete=()=>{
-    setSuccessModal(false)
-  }
+  const [chooseDataTimePick, setchooseDataTimePick] = useState(false);
+  const [chooseDataTimePickEnd, setchooseDataTimePickEnd] = useState(false);
+
+  const onComplete = () => {
+    setSuccessModal(false);
+  };
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
+      "keyboardDidShow",
       () => {
         setIsKeyboardOpen(true);
       }
     );
 
     const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+      "keyboardDidHide",
       () => {
         setIsKeyboardOpen(false);
       }
@@ -132,17 +146,20 @@ const SchedulerEdit = ({ navigation, route }) => {
     selectedCampaignString: [],
     pCamp: [],
     pCampStr: [],
-    planogramPriorityList:[],
+    planogramPriorityList: [],
   });
   // const [filterData, setFilterData] = useState({
   //   times: "",
   //   proirity: "",
   // });
   const [modal, setModal] = useState();
+  const [showcampmodal, setshowcampmodal] = useState(false);
+  const [choosedata, setchoosedata] = useState({});
+
   const locationData1 = useSelector(
     (state) => state.CommonReducer.locationData
   );
-  const [locationData,setLocationData]=useState(locationData1)
+  const [locationData, setLocationData] = useState(locationData1);
   const deviceGroupData1 = useSelector(
     (state) => state.CommonReducer.deviceGroupData
   );
@@ -151,32 +168,32 @@ const SchedulerEdit = ({ navigation, route }) => {
 
   const deviceData1 = useSelector((state) => state.CommonReducer.deviceData);
   const [deviceData, setdeviceData] = useState(deviceData1);
- const scrollRef = useRef(null);
+  const scrollRef = useRef(null);
 
-  const searchLocationApi=async(searchLoc)=>{
-      const slugId = await getStorageForKey("slugId");
-      setIsLoading(true);
+  const searchLocationApi = async (searchLoc) => {
+    const slugId = await getStorageForKey("slugId");
+    // setIsLoading(true);
 
-      const successCallBack = async (response) => {
-        setIsLoading(false);
-        setLocationData(response.data)
-      };
+    const successCallBack = async (response) => {
+      setIsLoading(false);
+      setLocationData(response.data[0]);
+    };
 
-      const errorCallBack = (error) => {
-        setIsLoading(false);
-        if(error?.message){
-          Alert.alert(error.message);
-        }
-      };
+    const errorCallBack = (error) => {
+      setIsLoading(false);
+      if (error?.message) {
+        Alert.alert(error.message);
+      }
+    };
 
     SchedulerManagerService.fetchLocationListSearch(
-      { slugId,searchLoc },
+      { slugId, searchLoc },
       successCallBack,
       errorCallBack
     );
-}
- 
- const [addcampvalue, setaddcampvalue] = useState([]);
+  };
+
+  const [addcampvalue, setaddcampvalue] = useState([]);
   useEffect(() => {
     scrollRef.current._listRef._scrollRef.scrollTo({
       x: 200 * currentSection,
@@ -196,7 +213,6 @@ const SchedulerEdit = ({ navigation, route }) => {
     setdeviceGroupData(deviceGroupData1);
   }, [deviceGroupData1]);
 
-
   useEffect(() => {
     if (planogramItem.startTime != null && planogramItem.endTime != null) {
       const stime = planogramItem.startDate + " " + planogramItem.startTime;
@@ -207,7 +223,7 @@ const SchedulerEdit = ({ navigation, route }) => {
     getLocationList();
     if (planogramItem?.planogramId) {
       getPlanogramDetails(planogramItem?.planogramId);
-      getCampaigns((planogramItem?.planogramId));
+      getCampaigns(planogramItem?.planogramId);
     }
   }, [planogramItem]);
 
@@ -223,7 +239,7 @@ const SchedulerEdit = ({ navigation, route }) => {
     getDeviceGroupByLocation(params, setIsLoading);
     getDeviceByLocation(params, setIsLoading);
   };
-  const [searchtext, setsearchtext] = useState('');
+  const [searchtext, setsearchtext] = useState("");
 
   const resolutionDropdownData = resolutionList.map((resolution) => ({
     label: resolution.resolutions,
@@ -233,11 +249,9 @@ const SchedulerEdit = ({ navigation, route }) => {
     id: resolution.campaignId,
   }));
 
-  
-
   const handleDropdownChange = (item) => {
     setRatioId(item.value);
-    setRatiovalue(item.label)
+    setRatiovalue(item.label);
   };
 
   const handleDateChange = (date) => {
@@ -251,41 +265,40 @@ const SchedulerEdit = ({ navigation, route }) => {
   };
 
   const handleTimeChange = (date) => {
-
     setStartTime(date);
     setTimePickerVisible(false);
   };
 
   const getDateFormat = (date, format) => {
-    let formated_date = '';
-    if (format == 'DD-MM-YYYY') {
+    let formated_date = "";
+    if (format == "DD-MM-YYYY") {
       formated_date = (
         (date.getDate().toString().length <= 1
-          ? '0' + date.getDate()
+          ? "0" + date.getDate()
           : date.getDate()) +
-        '-' +
+        "-" +
         ((date.getMonth() + 1).toString().length <= 1
-          ? '0' + (date.getMonth() + 1)
+          ? "0" + (date.getMonth() + 1)
           : date.getMonth() + 1) +
-        '-' +
+        "-" +
         date.getFullYear()
       ).toString();
-    } else if (format == 'YYYY-MM-DD') {
+    } else if (format == "YYYY-MM-DD") {
       formated_date = (
         date.getFullYear() +
-        '-' +
+        "-" +
         ((date.getMonth() + 1).toString().length <= 1
-          ? '0' + (date.getMonth() + 1)
+          ? "0" + (date.getMonth() + 1)
           : date.getMonth() + 1) +
-        '-' +
+        "-" +
         (date.getDate().toString().length <= 1
-          ? '0' + date.getDate()
+          ? "0" + date.getDate()
           : date.getDate())
       ).toString();
     }
     return formated_date;
   };
-  
+
   const handleTimeChange1 = (date) => {
     setEndTime(date);
     setTimePickerVisible1(false);
@@ -347,7 +360,7 @@ const SchedulerEdit = ({ navigation, route }) => {
     setIsLoading(true);
     const succussCallBack = async (response) => {
       setIsLoading(false);
-      console.log('---device logic---',response)
+      console.log("---device logic---", response);
       if (response.code == 200) {
         setState({
           ...state,
@@ -418,10 +431,12 @@ const SchedulerEdit = ({ navigation, route }) => {
   };
 
   const handlePlonogram = (satus) => {
-    console.log(satus)
-    const formattedTime1 = moment(startTime.toLocaleTimeString(), 'hh:mm:ss A');
-    const formattedTime2 = moment(new Date().toLocaleTimeString(), 'hh:mm:ss A');
-   
+    console.log(satus);
+    const formattedTime1 = moment(startTime.toLocaleTimeString(), "hh:mm:ss A");
+    const formattedTime2 = moment(
+      new Date().toLocaleTimeString(),
+      "hh:mm:ss A"
+    );
 
     if (
       !title ||
@@ -432,21 +447,28 @@ const SchedulerEdit = ({ navigation, route }) => {
       !endTime
     ) {
       Alert.alert("Validation Error", "Please fill in all fields.");
-    }
-
-      
-    else if(startDate.toLocaleDateString() == new Date().toLocaleDateString() && formattedTime1.isBefore(formattedTime2))
-    {
-        Alert.alert( "Validation Error","Start Time should be greater than current time");
-    }
-    else if (startDate.toLocaleDateString() == endDate.toLocaleDateString() && startTime >= endTime) {
-        Alert.alert( "Validation Error","Start time should be earlier than end time");
-    }
-   
-    else if (startDate.toLocaleDateString() > endDate.toLocaleDateString()) {
-      Alert.alert( "Validation Error","Start date should be earlier than end date");
-    }
-   else {
+    } else if (
+      startDate.toLocaleDateString() == new Date().toLocaleDateString() &&
+      formattedTime1.isBefore(formattedTime2)
+    ) {
+      Alert.alert(
+        "Validation Error",
+        "Start Time should be greater than current time"
+      );
+    } else if (
+      startDate.toLocaleDateString() == endDate.toLocaleDateString() &&
+      startTime >= endTime
+    ) {
+      Alert.alert(
+        "Validation Error",
+        "Start time should be earlier than end time"
+      );
+    } else if (startDate.toLocaleDateString() > endDate.toLocaleDateString()) {
+      Alert.alert(
+        "Validation Error",
+        "Start date should be earlier than end date"
+      );
+    } else {
       EditSubmitPress(satus);
     }
   };
@@ -457,7 +479,7 @@ const SchedulerEdit = ({ navigation, route }) => {
       slugId: slugId,
       planogramId: planogramItem.planogramId,
       data: {
-        state: 'DRAFT',
+        state: "DRAFT",
         title: title,
         aspectRatioId: ratioId,
         startTime: startTime
@@ -470,61 +492,52 @@ const SchedulerEdit = ({ navigation, route }) => {
           .trim(),
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
-       
       },
     };
 
     setIsLoading(true);
     const succussCallBack = async (response) => {
       setIsLoading(false);
-      if(response?.status == 'SUCCESS')
-      {
-       Alert.alert('Success!', response.message, [
-         {text: 'Okay', onPress: () => {
-           if(satus == 'DRAFT')
-           {
-              navigation.goBack();
-           }
-           else
-           {
-             setState((prev) => {
-               return { ...prev, planogramId: response?.result?.planogramId };
-             });
-             setState((prev) => {
-               return { ...prev, planogramData: response?.result };
-             }); 
+      if (response?.status == "SUCCESS") {
+        if (satus == "DRAFT") {
+          navigation.goBack();
+        } else {
+          setState((prev) => {
+            return {
+              ...prev,
+              planogramId: response?.result?.planogramId,
+            };
+          });
+          setState((prev) => {
+            return { ...prev, planogramData: response?.result };
+          });
 
-             setavailablesss(response?.result?.availableSlots)
-            // getDeviceLogic(response?.data?.planogramId);
-           }
-           setCurrentSection(1);
-         }},
-       ]);
-      }
-      else if(response?.status == 'ERROR')
-      {
-        
-       Alert.alert('Error!', response.message, [
-         {text: 'Okay', onPress: () => {
-           
-         }},
-       ]);
+          setavailablesss(response?.result?.availableSlots);
+          // getDeviceLogic(response?.data?.planogramId);
+        }
+        setCurrentSection(1);
+        setSuccessMsg(response.message);
+        setSuccessModal(true);
+      } else if (response?.status == "ERROR") {
+        Alert.alert("Error!", response.message, [
+          { text: "Okay", onPress: () => {} },
+        ]);
       }
     };
     const failureCallBack = (error) => {
       setIsLoading(false);
-      
+
       setIsLoading(false);
-      if(error.response.data.message=="Campaign added! Can't modified."){
-        console.log("prkerr",error.response.data)
-        setCurrentSection(2)
+      if (error.response.data.message == "Campaign added! Can't modified.") {
+        console.log("prkerr", error.response.data);
+        setCurrentSection(2);
         planogramCampaignStringList();
       }
       if (error?.data?.length > 0) {
-        alert("Error","Campaign added! Can't modified.");
+        alert("Error", "Campaign added! Can't modified.");
       } else {
         // alert(error?.message);
-        Alert.alert("Error","Campaign added! Can't modified.");
+        Alert.alert("Error", "Campaign added! Can't modified.");
       }
     };
     SchedulerManagerService.editschedduler(
@@ -535,22 +548,20 @@ const SchedulerEdit = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-   
     getResolutionData(setIsLoading);
   }, []);
 
   useEffect(() => {
-    const foundItem = resolutionDropdownData.find(item => item.ratioId === ratioId);
-    setRatiovalue(foundItem?.label)
+    const foundItem = resolutionDropdownData.find(
+      (item) => item.ratioId === ratioId
+    );
+    setRatiovalue(foundItem?.label);
   }, [resolutionDropdownData]);
 
-
-
-  
   const setSelectedCmpAndCmpStr = (layoutAndLayoutStrings) => {
     let cmp = [];
     let cmpStr = [];
-    
+
     if (layoutAndLayoutStrings && layoutAndLayoutStrings.length > 0) {
       layoutAndLayoutStrings.map((camp) => {
         if (camp.hasOwnProperty("campaignId")) {
@@ -576,33 +587,25 @@ const SchedulerEdit = ({ navigation, route }) => {
       planogramId: id,
     };
     const succussCallBack = async (response) => {
-     if (response && response.result) {
+      if (response && response.result) {
         setState({ ...state, planogramData: response.result });
 
-        setdeviceab(response?.result?.deviceIds?.length)
-        setavailablesss(response?.result?.availableSlots)
-        if(response?.result?.deviceIds.length > 0)
-        {
+        setdeviceab(response?.result?.deviceIds?.length);
+        setavailablesss(response?.result?.availableSlots);
+        if (response?.result?.deviceIds.length > 0) {
           setState({ ...state, selectedDevice: response.result.deviceIds });
-       }
-        if(response?.result?.locationIds?.length > 0)
-        {
-          setSelectedLocations(response.result.locationIds);
-         
         }
-        if(response?.result?.deviceGroupIds?.length > 0)
-        {
+        if (response?.result?.locationIds?.length > 0) {
+          setSelectedLocations(response.result.locationIds);
+        }
+        if (response?.result?.deviceGroupIds?.length > 0) {
           setState({ ...state, selectedDeviceGroups: deviceGroupIds });
-          
-        
         }
       }
     };
 
     const failureCallBack = (error) => {
-    
       alert(error?.message);
-      
     };
 
     SchedulerManagerService.getPlanogramDetail(
@@ -658,58 +661,67 @@ const SchedulerEdit = ({ navigation, route }) => {
   };
 
   const btnSubmitDeviceGroup = async () => {
-  if (state.selectedDeviceGroups.length <= 0  && state.selectedDevice.length<=0) {
+    if (
+      state.selectedDeviceGroups.length <= 0 &&
+      state.selectedDevice.length <= 0
+    ) {
       alert("Please Select Device or Device group.");
       return false;
     }
     let device_logic = "";
     let concatenatedString = "";
-      if(state.selectedDevice.length > 0){
-        concatenatedString = state.selectedDevice.map((item, index) => {
+    if (state.selectedDevice.length > 0) {
+      concatenatedString = state.selectedDevice
+        .map((item, index) => {
           if (index === state.selectedDevice.length - 1) {
             return `deviceIds=${item}`;
           } else {
             return `deviceIds=${item}&`;
           }
-        }).join("");
+        })
+        .join("");
 
-      device_logic = "DEVICES"
-    
-    }else if (state.selectedDeviceGroups.length > 0 && state.selectedDevice.length > 0) {
-      let concatenatedString2 = state.selectedDevice.map((item, index) => {
-        if (index === state.selectedDevice.length - 1) {
-          return `deviceIds=${item}`;
-        } else {
-          return `deviceIds=${item}&`;
-        }
-      }).join("");
-      let concatenatedString1 = state.selectedDeviceGroups.map((item, index) => {
-        if (index === state.selectedDeviceGroups.length - 1) {
-          return `deviceGroupIds=${item}`;
-        } else {
-          return `deviceGroupIds=${item}&`;
-        }
-      }).join("");
+      device_logic = "DEVICES";
+    } else if (
+      state.selectedDeviceGroups.length > 0 &&
+      state.selectedDevice.length > 0
+    ) {
+      let concatenatedString2 = state.selectedDevice
+        .map((item, index) => {
+          if (index === state.selectedDevice.length - 1) {
+            return `deviceIds=${item}`;
+          } else {
+            return `deviceIds=${item}&`;
+          }
+        })
+        .join("");
+      let concatenatedString1 = state.selectedDeviceGroups
+        .map((item, index) => {
+          if (index === state.selectedDeviceGroups.length - 1) {
+            return `deviceGroupIds=${item}`;
+          } else {
+            return `deviceGroupIds=${item}&`;
+          }
+        })
+        .join("");
       concatenatedString = concatenatedString2 + concatenatedString1;
-      device_logic = "LOCATIONS_AND_DEVICE_GROUPS"
-     
+      device_logic = "LOCATIONS_AND_DEVICE_GROUPS";
     } else if (state.selectedDeviceGroups.length > 0) {
-
-      concatenatedString = state.selectedDeviceGroups.map((item, index) => {
-        if (index === state.selectedDeviceGroups.length - 1) {
-          return `deviceGroupIds=${item}`;
-        } else {
-          return `deviceGroupIds=${item}&`;
-        }
-      }).join("");
-      device_logic = "DEVICE_GROUPS"
-    } 
-   
-    
+      concatenatedString = state.selectedDeviceGroups
+        .map((item, index) => {
+          if (index === state.selectedDeviceGroups.length - 1) {
+            return `deviceGroupIds=${item}`;
+          } else {
+            return `deviceGroupIds=${item}&`;
+          }
+        })
+        .join("");
+      device_logic = "DEVICE_GROUPS";
+    }
 
     let slugId = await getStorageForKey("slugId");
     let postData1 = {
-      slugId:slugId,
+      slugId: slugId,
       planogramId: state.planogramId,
       postData: concatenatedString,
     };
@@ -717,17 +729,15 @@ const SchedulerEdit = ({ navigation, route }) => {
     setIsLoading(true);
 
     const succussCallBack = async (response) => {
-     
       setIsLoading(false);
       if (response?.status == "SUCCESS") {
         setSelectedCmpAndCmpStr(state.planogramData?.layoutAndLayoutStrings);
         planogramCampaignStringList();
-       
         if (currentSection !== 3) {
           setCurrentSection(currentSection + 1);
         }
       } else {
-          alert(response?.message);
+        alert(response?.message);
       }
     };
     const failureCallBack = (error) => {
@@ -739,13 +749,12 @@ const SchedulerEdit = ({ navigation, route }) => {
       }
     };
 
-   SchedulerManagerService.updateDeviceLogicPlanogram(
+    SchedulerManagerService.updateDeviceLogicPlanogram(
       postData1,
       succussCallBack,
       failureCallBack
     );
   };
-
 
   const resetLocationAndGroupDevice = () => {
     setState({ ...state, selectedDeviceGroups: [] });
@@ -759,7 +768,11 @@ const SchedulerEdit = ({ navigation, route }) => {
           onPress={() => {
             addCampaign(item, index);
           }}
-          style={isCampaignCheckde(item.campaignId)? Styles.campaignStrContainerActive : Styles.campaignStrContainer}
+          style={
+            isCampaignCheckde(item.campaignId)
+              ? Styles.campaignStrContainerActive
+              : Styles.campaignStrContainer
+          }
         >
           <AppText style={Styles.dateText}>{item.campaignTitle}</AppText>
           <AppText style={Styles.dateText}>
@@ -773,7 +786,11 @@ const SchedulerEdit = ({ navigation, route }) => {
           onPress={() => {
             addCampaignString(item, index);
           }}
-          style={isCampaignStringCheckde(item.campaignStringId) ? Styles.campaignStrContainerActive : Styles.campaignStrContainer} 
+          style={
+            isCampaignStringCheckde(item.campaignStringId)
+              ? Styles.campaignStrContainerActive
+              : Styles.campaignStrContainer
+          }
         >
           <AppText style={Styles.dateText}>{item.campaignTitle}</AppText>
           <AppText style={Styles.dateText}>
@@ -824,10 +841,9 @@ const SchedulerEdit = ({ navigation, route }) => {
     };
     const succussCallBack = async (response) => {
       setIsLoading(false);
-    
+
       if (response && response.result) {
-        console.log("trt",JSON.stringify(response.result))
-        setState({...state,campaignString: response.result})
+        setState({ ...state, campaignString: response.result });
         setState((prev) => {
           return { ...prev, campaignString: response.result };
         });
@@ -836,7 +852,6 @@ const SchedulerEdit = ({ navigation, route }) => {
     };
 
     const failureCallBack = (error) => {
-    
       setIsLoading(false);
       if (error?.data?.length > 0) {
         alert(error?.data[0]?.message);
@@ -844,14 +859,13 @@ const SchedulerEdit = ({ navigation, route }) => {
         alert(error?.message);
       }
     };
-    console.log('CampaignStringList==>', params)
+    console.log("CampaignStringList==>", params);
     SchedulerManagerService.getCampaignStringByAspectRatio(
       params,
       succussCallBack,
       failureCallBack
     );
   };
-
 
   const getCampaigns = async (id) => {
     let slugId = await getStorageForKey("slugId");
@@ -860,18 +874,23 @@ const SchedulerEdit = ({ navigation, route }) => {
       palamid: id,
     };
     const succussCallBack = async (response) => {
-      if (response.status == 'SUCCESS' &&  response?.result.length > 0) {
-        setshowpublishbtn(true)
-        setCurrentSection(2)
+      console.log("getCampaigns--->", JSON.stringify(response));
+      if (response.status == "SUCCESS" && response?.result.length > 0) {
+        console.log(
+          "getCampaigns--->",
+          JSON.stringify(response?.result.length)
+        );
+        setshowpublishbtn(true);
+        setCurrentSection(2);
         planogramCampaignStringList();
-      
+        setaddcampvalue(response.result);
       }
       setIsLoading(false);
     };
     const failureCallBack = (error) => {
-      setIsLoading(false)
+      setIsLoading(false);
     };
-    setIsLoading(true)
+    setIsLoading(true);
     SchedulerManagerService.getCampaigns(
       params,
       succussCallBack,
@@ -892,7 +911,6 @@ const SchedulerEdit = ({ navigation, route }) => {
         ...state,
         selectedCampaign: [...state.selectedCampaign, item.campaignId],
       });
-      
     }
   };
   const addCampaignString = (item, index) => {
@@ -927,101 +945,180 @@ const SchedulerEdit = ({ navigation, route }) => {
     return false;
   };
 
+  const updateCamapign = async () => {
+    let slugId = await getStorageForKey("slugId");
+    let hasError = false;
+    if (choosedata.hasOwnProperty("occurance")) {
+      if (choosedata?.occurance <= 0) {
+        hasError = true;
+        Alert.alert("Alert", "Please enter occurence greater than 0");
+        return;
+      }
+    }
+    if (choosedata.hasOwnProperty("priority")) {
+      console.log("priority", choosedata?.priority);
+      if (choosedata?.priority === "" || choosedata?.priority == 0) {
+        Alert.alert("Alert", "Please enter priority greater than 0");
+        hasError = true;
+        return;
+      }
+    }
+
+    let postData = {
+      campaignId: choosedata.campaignId,
+      planogramId: choosedata.planogramId,
+      occurance: String(choosedata.occurance),
+      priority: choosedata.priority,
+      startTime: moment(startTime).add(1, "seconds").format("HH:mm:ss"),
+      endTime: endTime
+        .toLocaleString("en-US", { hour12: false })
+        .split(",")[1]
+        .trim(),
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+    };
+
+    var endPointurl = `capsuling-service/api/capsuling/updateCampaign/${choosedata.planogramId}`;
+
+    const params = {
+      data: postData,
+      id: choosedata.slotId,
+      slugId: slugId,
+    };
+
+    console.log("update camp params", JSON.stringify(params));
+    const succussCallBack = async (response) => {
+      console.log("updateCampaginById sucess", JSON.stringify(response));
+      if (response?.status == "SUCCESS") {
+        setIsLoading(false);
+        setSuccessMsg(response.message);
+        setSuccessModal(true);
+        setshowcampmodal(false);
+        setavailablesss(response.result.availableSlots);
+        planogramCampaignStringList();
+        if (planogramItem?.planogramId) {
+          getPlanogramDetails(planogramItem?.planogramId);
+          getCampaigns(planogramItem?.planogramId);
+        }
+      } else {
+        alert(response?.message);
+      }
+    };
+    const failureCallBack = (error) => {
+      console.log("updateCampaginById eror", error.response.data);
+      setIsLoading(false);
+      if (error?.data?.length > 0) {
+        alert(error?.data[0]?.message);
+      } else if (error.response.data.hasOwnProperty("message")) {
+        Alert.alert("Error", error.response.data.message);
+      } else {
+        alert(error?.message);
+      }
+    };
+
+    if (!hasError) {
+      console.log("passe");
+      setIsLoading(true);
+      SchedulerManagerService.updateCampaginById(
+        params,
+        succussCallBack,
+        failureCallBack
+      );
+    } else {
+      console.log("falised");
+      return false;
+    }
+  };
+
   const btnSubmitCampainPlanogram = async () => {
     let slugId = await getStorageForKey("slugId");
     let hasError = false;
-    if (occurance === ""||occurance<=0) {
-      
-      if(occurance<=0){
-        Alert.alert("Alert","Please enter occurance greater then 0")
-      }else{
+    if (occurance === "" || occurance <= 0) {
+      if (occurance <= 0) {
+        Alert.alert("Alert", "Please enter occurence greater than 0");
+      } else {
         alert("Please enter occurrence");
       }
       hasError = true;
-    }  
-    else if (priority === ""||priority<=0) {
-      if(priority<=0){
-        Alert.alert("Alert","Please enter priority greater then 0")
-       
-      }else if(priority === ""){
-        alert("Please enter priority");
-      console.log("Please enter priority");
-      selectedLocations
+    }
+    // else if (priority === "" || priority <= 0) {
+    //   if (priority <= 0) {
+    //     Alert.alert("Alert", "Please enter priority greater than 0");
+    //   } else if (priority === "") {
+    //     alert("Please enter priority");
+    //     console.log("Please enter priority");
+    //     selectedLocations;
+    //   }
 
-      }
-      
-      hasError = true;
-    } 
+    //   hasError = true;
+    // }
 
-    if(hasError) return false;
+    if (hasError) return false;
 
     let postData = {
-      campaignId:state.selectedCampaign.campaignId,
+      campaignId: state.selectedCampaign.campaignId,
       planogramId: state.planogramId,
       occurance: occurance,
-      startTime: moment(startTime).add(1,"seconds").format("HH:mm:ss"),
+      startTime: moment(startTime).add(1, "seconds").format("HH:mm:ss"),
       startDate: startDate.toISOString().split("T")[0],
       endTime: endTime
         .toLocaleString("en-US", { hour12: false })
         .split(",")[1]
         .trim(),
       endDate: endDate.toISOString().split("T")[0],
-      priority: priority,
+      priority: 1,
+      // priority: priority,
     };
 
     const params = {
       data: postData,
       slugId: slugId,
     };
-   
-    const succussCallBack = async (response) => {
-     console.log("response addcapm sch2",JSON.stringify(response))
-    
-     if(response?.status == 'SUCCESS')
-     {
-      setSelectedCampaign(false);
-      Alert.alert('Alert!', response.message, [
-        {text: 'Okay', onPress: () => {
-        
-          setaddcampvalue([...addcampvalue, response.result]);
-          setshowpublishbtn(true)
-          setState({ ...state, selectedCampaign: []});
-          setavailablesss(response?.result?.availableSlots)
-          setoccurance("");
-          setpriority("");
-        }},
-      ]);
 
-    // publishcomp(response?.result?.slotId);
-     }
-     else if(response?.status == 'ERROR')
-     {
-      Alert.alert('Error!', response.message, [
-        {text: 'Okay', onPress: () => {
-          
-        }},
-      ]);
-     }else if(response.hasOwnProperty("error"))
-     {
-      Alert.alert('Error!', response.error+","+response.status, [
-        {text: 'Okay', onPress: () => {
-          
-        }},
-      ]);
-     }
+    const succussCallBack = async (response) => {
+      console.log("response addcapm sch2", JSON.stringify(response));
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1500);
+
+      if (response?.status == "SUCCESS") {
+        setSelectedCampaign(false);
+        if (planogramItem?.planogramId) {
+          getPlanogramDetails(planogramItem?.planogramId);
+          getCampaigns(planogramItem?.planogramId);
+        }
+
+        setshowpublishbtn(true);
+        setState({ ...state, selectedCampaign: [] });
+        setavailablesss(response?.result?.availableSlots);
+        setoccurance("");
+        setpriority("");
+
+        setSuccessMsg(response.message);
+        setSuccessModal(true);
+      } else if (response?.status == "ERROR") {
+        Alert.alert("Error!", response.message, [
+          { text: "Okay", onPress: () => {} },
+        ]);
+      } else if (response.hasOwnProperty("error")) {
+        Alert.alert("Error!", response.error + "," + response.status, [
+          { text: "Okay", onPress: () => {} },
+        ]);
+      }
     };
     const failureCallBack = (error) => {
-      console.log("sch camp error",JSON.stringify(error))
-    Alert.alert("Error",error.response)
+      console.log("sch camp error", JSON.stringify(error));
+      Alert.alert("Error", error.response);
+      setIsLoading(false);
     };
 
-    console.log("params==>sche",JSON.stringify(params))
+    console.log("params==>sche", JSON.stringify(params));
+    setIsLoading(true);
     SchedulerManagerService.createcampiegn(
       params,
       succussCallBack,
       failureCallBack
     );
-
   };
 
   // 4th step==================
@@ -1042,7 +1139,7 @@ const SchedulerEdit = ({ navigation, route }) => {
         setState((prev) => {
           return { ...prev, planogramData: response?.data };
         });
-        getPlangogramPriority()
+        getPlangogramPriority();
         separatCampaigCampaignString(response?.data);
       } else {
         if (response?.data?.length > 0) {
@@ -1073,22 +1170,26 @@ const SchedulerEdit = ({ navigation, route }) => {
   };
   const renderCampaignList = ({ item, index }) => {
     // if (campaignType == 0) {
-      return (
-        <View style={Styles.renderContainer}>
-          <View style={[Styles.nameView,{ width: "25%" }]}>
-            <AppText style={Styles.nameText}>{item.title}</AppText>
-          </View>
-          <View style={[Styles.nameView, { width: "25%" }]}>
-            <AppText style={Styles.nameText}>{`${item.startDate} - ${item.endDate}`}</AppText>
-          </View>
-          <View style={[Styles.nameView, { width: "25%" }]}>
-            <AppText style={Styles.nameText}>{`${item.startTime} - ${item.endTime}`}</AppText>
-          </View>
-          <View style={[Styles.nameView, { width: "25%" }]}>
-            <AppText style={Styles.nameText}>{item.state}</AppText>
-          </View>
+    return (
+      <View style={Styles.renderContainer}>
+        <View style={[Styles.nameView, { width: "25%" }]}>
+          <AppText style={Styles.nameText}>{item.title}</AppText>
         </View>
-      );
+        <View style={[Styles.nameView, { width: "25%" }]}>
+          <AppText
+            style={Styles.nameText}
+          >{`${item.startDate} - ${item.endDate}`}</AppText>
+        </View>
+        <View style={[Styles.nameView, { width: "25%" }]}>
+          <AppText
+            style={Styles.nameText}
+          >{`${item.startTime} - ${item.endTime}`}</AppText>
+        </View>
+        <View style={[Styles.nameView, { width: "25%" }]}>
+          <AppText style={Styles.nameText}>{item.state}</AppText>
+        </View>
+      </View>
+    );
     // } else {
     //   return (
     //     <View style={Styles.renderContainer}>
@@ -1124,8 +1225,7 @@ const SchedulerEdit = ({ navigation, route }) => {
     });
   };
 
-
-  const getPlangogramPriority=async()=>{
+  const getPlangogramPriority = async () => {
     let slugId = await getStorageForKey("slugId");
     let params = {
       planogramId: state.planogramId,
@@ -1133,10 +1233,10 @@ const SchedulerEdit = ({ navigation, route }) => {
     };
     setIsLoading(true);
     const succussCallBack = async (response) => {
-      console.log("getPlangogramPriority string------", response);
+      
       setIsLoading(false);
       if (response?.code === 200) {
-        setState({...state,planogramPriorityList:response?.data})
+        setState({ ...state, planogramPriorityList: response?.data });
       } else {
         if (response?.data?.length > 0) {
           alert(response?.data[0]?.message);
@@ -1163,32 +1263,215 @@ const SchedulerEdit = ({ navigation, route }) => {
       succussCallBack,
       failureCallBack
     );
-  }
+  };
 
-
-  
-
- 
-  
-  const btnSubmitPlanogramPriority=async(btnType)=>{
+  const fetchmediaid = async (id) => {
     let slugId = await getStorageForKey("slugId");
-    let postData=[]
-    state?.planogramPriorityList?.map((plan,pInd)=>{
-      postData.push(({
-        planogramId:plan.planogramId,
-        "priority": pInd+1
-      }))
-    })
+    const params = {
+      slugId: slugId,
+      campid: id,
+    };
+    setIsLoading(true);
+    const succussCallBack = async (response) => {
+      if (response && response.data) {
+        setIsLoading(true);
+        console.log(
+          "line 1180--->",
+          response?.data?.regions[0].globalRegionContentPlaylistContents[0]
+        );
+        fetchmediaid1(
+          response?.data?.regions[0].globalRegionContentPlaylistContents[0]
+            .contentId
+        );
+      }
+    };
+
+    const failureCallBack = (error) => {
+      setIsLoading(false);
+      consolr.log("log 1189", error);
+      alert(error?.message);
+    };
+
+    SchedulerManagerService.fetchmediaid(
+      params,
+      succussCallBack,
+      failureCallBack
+    );
+  };
+  const [selcampName, setselCampName] = useState({});
+
+  const fetchmediaid1 = async (id) => {
+    let slugId = await getStorageForKey("slugId");
+    const params = {
+      slugId: slugId,
+      mediaid: id,
+    };
+    const succussCallBack = async (response) => {
+      setIsLoading(false);
+      if (response && response.message == "success") {
+        console.log("line 122214-->", JSON.stringify(response?.data));
+        setselCampName(response?.data);
+        setshowcampmodal(true);
+        setIsLoading(false);
+      }
+    };
+
+    const failureCallBack = (error) => {
+      console.log("line 12223 error-->", JSON.stringify(error?.message));
+      alert(error?.message);
+      setIsLoading(false);
+    };
+
+    SchedulerManagerService.fetchmediaiddetails(
+      params,
+      succussCallBack,
+      failureCallBack
+    );
+  };
+
+  const onDragEnd = (data) => {
+    console.log(data);
+    setaddcampvalue(data);
+  };
+
+  const RemoveCampaign = ({ item, index, drag }) => {
+    const ind = index;
+    if (campaignType == 0) {
+      return (
+        <TouchableOpacity onLongPress={drag}>
+          <View
+            style={{
+              // width: Dimensions.get("window").width * 0.85,
+              backgroundColor: "white",
+              borderWidth: 1,
+              flexDirection: "row",
+              height: 60,
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderRadius: 10,
+              paddingLeft: 16,
+              paddingRight: 5,
+              marginVertical: 5,
+              height: 60,
+            }}
+          >
+            <View style={{ alignItems: "flex-start" }}>
+              <Text
+                style={{
+                  color: "black",
+                  textAlign: "center",
+                  fontSize: 16,
+                  fontWeight: "500",
+                }}
+                numberOfLines={1}
+              >
+                {String(item?.camapignName)}
+              </Text>
+              <Text
+                style={{ color: "black", textAlign: "center" }}
+                numberOfLines={1}
+              >
+                Occurence :{String(item?.occurance)}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={{
+                borderWidth: 0,
+                height: 38,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 10,
+              }}
+              onPress={(index) => {
+                fetchmediaid(item.campaignId);
+                setchoosedata(item);
+              }}
+            >
+              <MaterialIcons
+                name="edit"
+                size={20}
+                color={themeColor.themeColor}
+              />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <TouchableOpacity onLongPress={drag}>
+          <View
+            style={{
+              width: Dimensions.get("window").width * 0.85,
+              height: 60,
+              backgroundColor: "white",
+              borderWidth: 1,
+              borderRadius: 10,
+              paddingLeft: 16,
+              paddingRight: 5,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginVertical: 5,
+            }}
+          >
+            <View style={{ alignItems: "flex-start" }}>
+              <Text
+                style={{
+                  color: "black",
+                  textAlign: "center",
+                  fontSize: 16,
+                  fontWeight: "500",
+                }}
+                numberOfLines={1}
+              >
+                {String(item?.camapignName)}
+              </Text>
+              <Text
+                style={{ color: "black", textAlign: "center" }}
+                numberOfLines={1}
+              >
+                Occurence :{String(item?.occurance)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={{
+                borderWidth: 0,
+                height: 38,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onPress={(index) => {
+                // removeCampaignStringIndex(ind);
+                console.log("close", ind);
+              }}
+            >
+              <Entypo name="cross" color="#000" size={25} />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+  };
+
+  const btnSubmitPlanogramPriority = async (btnType) => {
+    let slugId = await getStorageForKey("slugId");
+    let postData = [];
+    state?.planogramPriorityList?.map((plan, pInd) => {
+      postData.push({
+        planogramId: plan.planogramId,
+        priority: pInd + 1,
+      });
+    });
     let params = {
       postData: postData,
       slugId: slugId,
     };
     setIsLoading(true);
     const succussCallBack = async (response) => {
-      console.log("getPlangogramPriority string------", response);
+      
       setIsLoading(false);
       if (response?.code === 200) {
-        btnSubmittedStatus(btnType)
+        btnSubmittedStatus(btnType);
       } else {
         if (response?.data?.length > 0) {
           alert(response?.data[0]?.message);
@@ -1215,102 +1498,27 @@ const SchedulerEdit = ({ navigation, route }) => {
       succussCallBack,
       failureCallBack
     );
-  }
-
-
-  
-
- const makeUrlData=async(type)=>{
-  const slugId = await getStorageForKey("slugId");
-  let endPoint=''
-  if(type =="group")
-  {
-   endPoint = `device-management/api/deviceGroup/planogram?deviceGroupName=${searchtext}`;
-  }
-  else
-  {
-   endPoint = `device-management/api/device/planogram?mediaPlayerName=${searchtext}`;
-  }
-  let params = {
-    'endpoint':endPoint,
-  }
-  const succussCallBack = async (response) => {
-    setIsLoading(false);
-    if(type =="group")
-    {
-    setdeviceGroupData(response?.result);
-    }
-    else
-    {
-      setdeviceData(response?.result)
-
-    }
-  }
-  const failureCallBack = (error) => {
-    console.log("campaignAddArchiveError", error);
-    if (error?.data?.length > 0) {
-      alert(error?.data[0]?.message);
-    } else {
-      alert(error?.message);
-    }
-    setIsLoading(false);
   };
-  
-  setIsLoading(true);
-  SchedulerManagerService.searchList(
-    params,
-    succussCallBack,
-    failureCallBack
-  );
 
- }
-
-  const btnSubmittedStatus=async(btnType)=>{
-    if(btnType=='DRAFT'){
-      setSuccessModal(true);
-      setSuccessMsg("Scheduler update successfully")
-      setTimeout(()=>{navigation.goBack()},300)
-      // Alert.alert("Info!", 'Planogram update successfully', [
-      //   {
-      //     text: "Ok",
-      //     onPress: () => {
-      //       navigation.goBack();
-      //     },
-      //   },
-      // ]);
-      return false
-    }
-
+  const makeUrlData = async (type) => {
     const slugId = await getStorageForKey("slugId");
+    let endPoint = "";
+    if (type == "group") {
+      endPoint = `device-management/api/deviceGroup/planogram?deviceGroupName=${searchtext}`;
+    } else {
+      endPoint = `device-management/api/device/planogram?mediaPlayerName=${searchtext}`;
+    }
     let params = {
-      'slugId':slugId,
-      'planogramID':state.planogramId
-    }
+      endpoint: endPoint,
+    };
     const succussCallBack = async (response) => {
-      console.log('camp response',response);
-        setIsLoading(false);
-        if (response.code == 200) {
-          setSuccessModal(true);
-          setSuccessMsg("Scheduler update successfully")
-          setTimeout(()=>{navigation.goBack()},300)
-          // Alert.alert("Info!", 'Campaign updated successfully', [
-          //   {
-          //     text: "Ok",
-          //     onPress: () => {
-          //       navigation.goBack();
-          //     },
-          //   },
-          // ]);
-        } else {
-          if (response?.data?.length > 0) {
-            alert(response?.data[0]?.message);
-          } else if(response?.error){
-            alert(response?.error);
-          }else{
-            alert(response?.message);
-          }
-        }
-    }
+      setIsLoading(false);
+      if (type == "group") {
+        setdeviceGroupData(response?.result);
+      } else {
+        setdeviceData(response?.result);
+      }
+    };
     const failureCallBack = (error) => {
       console.log("campaignAddArchiveError", error);
       if (error?.data?.length > 0) {
@@ -1320,200 +1528,559 @@ const SchedulerEdit = ({ navigation, route }) => {
       }
       setIsLoading(false);
     };
-    
+
+    // setIsLoading(true);
+    SchedulerManagerService.searchList(
+      params,
+      succussCallBack,
+      failureCallBack
+    );
+  };
+
+  const btnSubmittedStatus = async (btnType) => {
+    if (btnType == "DRAFT") {
+      setSuccessModal(true);
+      setSuccessMsg("Scheduler update successfully");
+      setTimeout(() => {
+        navigation.goBack();
+      }, 300);
+      // Alert.alert("Info!", 'Planogram update successfully', [
+      //   {
+      //     text: "Ok",
+      //     onPress: () => {
+      //       navigation.goBack();
+      //     },
+      //   },
+      // ]);
+      return false;
+    }
+
+    const slugId = await getStorageForKey("slugId");
+    let params = {
+      slugId: slugId,
+      planogramID: state.planogramId,
+    };
+    const succussCallBack = async (response) => {
+      console.log("camp response", response);
+      setIsLoading(false);
+      if (response.code == 200) {
+        setSuccessModal(true);
+        setSuccessMsg("Scheduler update successfully");
+        setTimeout(() => {
+          navigation.goBack();
+        }, 300);
+        // Alert.alert("Info!", 'Campaign updated successfully', [
+        //   {
+        //     text: "Ok",
+        //     onPress: () => {
+        //       navigation.goBack();
+        //     },
+        //   },
+        // ]);
+      } else {
+        if (response?.data?.length > 0) {
+          alert(response?.data[0]?.message);
+        } else if (response?.error) {
+          alert(response?.error);
+        } else {
+          alert(response?.message);
+        }
+      }
+    };
+    const failureCallBack = (error) => {
+      console.log("campaignAddArchiveError", error);
+      if (error?.data?.length > 0) {
+        alert(error?.data[0]?.message);
+      } else {
+        alert(error?.message);
+      }
+      setIsLoading(false);
+    };
+
     setIsLoading(true);
     SchedulerManagerService.addSubmitStatus(
       params,
       succussCallBack,
       failureCallBack
     );
-  }
+  };
   // End 4th step==============
   return (
     <View style={Styles.mainContainer}>
       <Loader visible={isLoading} />
       <ClockHeader />
-      {successModal && <SuccessModal Msg={successMsg} onComplete={onComplete} />}
+      {showcampmodal && (
+        <Modal
+          showcampmodal
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+          }}
+        >
+          <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+            <View style={Styles.mainContainer}>
+              <View style={Styles.imageContainerView}>
+                {/* <View style={{ padding: 10 }}>
+                  
+                </View> */}
+                <TouchableOpacity
+                  onPress={() => setshowcampmodal(false)}
+                  style={[
+                    Styles.closeStyle,
+                    { alignItems: "flex-end", marginRight: 20 },
+                  ]}
+                >
+                  <Ionicons
+                    name="close"
+                    size={22}
+                    color={themeColor.unselectedText}
+                    style={{
+                      borderWidth: 2,
+                      borderColor: themeColor.unselectedText,
+                      textAlign: "center",
+                      textAlignVertical: "center",
+                      height: 30,
+                      width: 30,
+                      borderRadius: 15,
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={Styles.bodyContainer}>
+                <View style={Styles.campaignHeader}>
+                  <AppText
+                    style={[
+                      Styles.bodyHeaderText,
+                      {
+                        fontFamily: FONT_FAMILY.OPEN_SANS_BOLD,
+                        fontWeight: 700,
+                      },
+                    ]}
+                  >
+                    SELECTED CAMPAIGN
+                  </AppText>
+                  <AppText style={Styles.slotsText}>
+                    {"Available slots:"}
+                    {availablesss}
+                    {"\n"}
+                    {"(Devices:"}
+                    {deviceab}
+                    {")"}
+                  </AppText>
+                </View>
+                <Separator />
+                <View style={Styles.uploadFileHere}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View
+                      style={{
+                        padding: 10,
+                        width: "40%",
+                        marginHorizontal: moderateScale(10),
+                      }}
+                    >
+                     { selcampName?.mediaDetails!=null&&<Image
+                        source={{
+                          uri: selcampName?.mediaDetails[0].thumbnailUrl,
+                        }}
+                        style={{
+                          height: moderateScale(100),
+                          width: moderateScale(100),
+                          borderRadius: moderateScale(10),
+                        }}
+                      />}
+                      <TouchableOpacity
+                        onPress={() => setshowcampmodal(false)}
+                        style={{
+                          position: "absolute",
+                          top: moderateScale(0),
+                          right: moderateScale(0),
+                          backgroundColor: "white",
+                          borderRadius: moderateScale(15),
+                          borderWidth: moderateScale(2),
+                          borderColor: themeColor.unselectedText,
+                        }}
+                      >
+                        <Ionicons
+                          name="close"
+                          size={20}
+                          color={themeColor.unselectedText}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <View style={{ width: "60%" }}>
+                      <AppText style={[Styles.fileName]}>
+                        Name: {choosedata.camapignName}
+                      </AppText>
+                      <AppText style={[Styles.fileName, { color: "black" }]}>
+                        {"Duration:"}
+                        {choosedata?.campaignDuration
+                          ? convertSecondsToMinutes(
+                              choosedata?.campaignDuration
+                            )
+                          : ""}
+                      </AppText>
+                      {/* <AppText style={[Styles.fileName, { color: "black" }]}>
+                        {selcampName?.aspectRatio?.actualHeightInPixel}
+                        {"*"}
+                        {
+                          state.selectedCampaign?.aspectRatio
+                            ?.actualWidthInPixel
+                        }
+                      </AppText> */}
+
+                      {selcampName?.mediaDetails != null && (
+                        <AppText style={[Styles.fileName, { color: "black" }]}>
+                          {selcampName?.mediaDetails[0].fullName}
+                        </AppText>
+                      )}
+                      <AppText
+                        onPress={() => {
+                          setshowcampmodal(false);
+                          // navigation.navigate(NAVIGATION_CONSTANTS.CMP_VIEW, {
+                          //   campaignItem: {campaignId:state.selectedCampaign.campaignId},
+                          // })
+                          navigation.navigate("CmpPreviwe", {
+                            campaigns: [
+                              {
+                                campaignId: choosedata.campaignId,
+                                campaigName: choosedata?.camapignName,
+                                approveState:""
+                              },
+                            ],
+                            viewDetails: true,
+                          });
+                        }}
+                        style={Styles.themeText}
+                      >
+                        Preview
+                      </AppText>
+                    </View>
+                  </View>
+                </View>
+                <View style={Styles.bodyRowsContainer}>
+                  <CommonTitleAndText
+                    title="Aspect Ratio *"
+                    text={ratiovalue}
+                  />
+                  <CommonTitleAndText
+                    title="Start Date"
+                    text={choosedata?.startDate}
+                    isIcon
+                    isCalender={false}
+                    onPress={() => {
+                      // setDatePickerVisible(!isDatePickerVisible);
+                    }}
+                  />
+
+                  <CommonTitleAndText
+                    title="End Date"
+                    text={choosedata?.endDate}
+                    isIcon
+                    isCalender={false}
+                    onPress={() => {
+                      // setDatePickerVisible1(!isDatePickerVisible1);
+                    }}
+                  />
+
+                  <CommonTitleAndText
+                    title="Start Time*"
+                    text={
+                      startTime
+                        ? moment(startTime).format("HH:mm")
+                        : "Select Time"
+                    }
+                    isIcon
+                    isClock
+                    onPress={() => {
+                      setchooseDataTimePick(!chooseDataTimePick);
+                    }}
+                  />
+
+                  <DatePicker
+                    modal
+                    open={chooseDataTimePick}
+                    date={startTime != null ? startTime : new Date()}
+                    mode="time"
+                    placeholder="Select time"
+                    format="HH:mm"
+                    //minuteInterval={30} // Set the minute interval to 30 minutes
+                    onDateChange={(time) => {
+                      setStartTime(time);
+                    }}
+                    onConfirm={(date) => handleTimeChange(date)}
+                    onCancel={() => setchooseDataTimePick(false)}
+                  />
+
+                  <CommonTitleAndText
+                    title="End Time*"
+                    text={
+                      endTime ? moment(endTime).format("HH:mm") : "Select Time"
+                    }
+                    isIcon
+                    isClock
+                    onPress={() => {
+                      setchooseDataTimePickEnd(!chooseDataTimePickEnd);
+                    }}
+                  />
+                  <DatePicker
+                    modal
+                    mode="time"
+                    open={chooseDataTimePickEnd}
+                    minimumDate={new Date()}
+                    date={endTime != null ? endTime : new Date()}
+                    placeholder="Select time"
+                    format="HH:mm"
+                    minuteInterval={30} // Set the minute interval to 30 minutes
+                    onDateChange={(time) => {
+                      setEndTime(time);
+                    }}
+                    onConfirm={handleTimeChange1}
+                    onCancel={() => setchooseDataTimePickEnd(false)}
+                  />
+
+                  <AppTextInput
+                    containerStyle={Styles.eventTitleInput}
+                    value={String(choosedata?.occurance)}
+                    keyboardType="numeric"
+                    onChangeText={(text) => {
+                      setchoosedata({ ...choosedata, occurance: text });
+                    }}
+                    placeHolderText={"Enter occurrence *"}
+                    placeholderTextColor={themeColor.placeHolder}
+                    textInputStyle={{
+                      fontSize: moderateScale(15),
+                      color: "black",
+                    }}
+                  />
+
+                  {/* <AppTextInput
+                    containerStyle={Styles.eventTitleInput}
+                    value={
+                      choosedata?.priority ? String(choosedata.priority) : ""
+                    }
+                    keyboardType="numeric"
+                    onChangeText={(text) => {
+                      setchoosedata({ ...choosedata, priority: text });
+                    }}
+                    placeHolderText="Select Priority *"
+                    placeholderTextColor={themeColor.placeHolder}
+                    textInputStyle={{
+                      fontSize: moderateScale(15),
+                    }}
+                  /> */}
+                </View>
+              </View>
+
+              <ActionContainer
+                isContinue={true}
+                continueText={"Update"}
+                // saveText={""}
+                numOfButtons={2}
+                onPressSave={(item) => {
+                  console.log("opopopo0090==>", JSON.stringify(item));
+                  updateCamapign();
+                }}
+                onPressCancel={() => {
+                  setshowcampmodal(false);
+                }}
+                onPressDraft={() => {}}
+              />
+            </View>
+          </ScrollView>
+        </Modal>
+      )}
+
+      {successModal && (
+        <SuccessModal Msg={successMsg} onComplete={onComplete} />
+      )}
       {modal ? (
         <SelectCampaignModal
-           data = {state.campaignString}
-           setindex={(item) => {
-           
+          data={state.campaignString}
+          setindex={(item) => {
             setState((prev) => {
               return { ...prev, selectedCampaign: item };
             });
-           }}
-          
+          }}
           setCampaign={setSelectedCampaign}
           setModal={setModal}
         />
       ) : null}
-       {imageView ? <ViewImageModal details={state.selectedCampaign?.mediaDetail[0]} setModal={setImageView} /> : null}
-       <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{flex: 1,marginBottom:(Platform.OS === 'ios' && isKeyboardOpen) ? 100 : 0 ,}}
-    >
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <View style={Styles.subContainer}>
-          <View style={Styles.headerContainer}>
-            <CreateNewHeader
-              title="Create New Scheduler"
-              onClickIcon={() => navigation.goBack()}
+      {imageView&&state.selectedCampaign?.mediaDetail!=null ? (
+        <ViewImageModal
+          details={state.selectedCampaign?.mediaDetail[0]}
+          setModal={setImageView}
+        />
+      ) : null}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{
+          flex: 1,
+          marginBottom: Platform.OS === "ios" && isKeyboardOpen ? 100 : 0,
+        }}
+      >
+        <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+          <View style={Styles.subContainer}>
+            <View style={Styles.headerContainer}>
+              <CreateNewHeader
+                title="Edit Scheduler"
+                onClickIcon={() => navigation.goBack()}
+              />
+            </View>
+            <Separator />
+
+            <FlatList
+              data={headers}
+              ref={scrollRef}
+              renderItem={renderItem}
+              horizontal
+              style={{
+                padding: moderateScale(10),
+                backgroundColor: themeColor.white,
+              }}
             />
-          </View>
-          <Separator />
 
-          <FlatList
-            data={headers}
-            ref={scrollRef}
-            renderItem={renderItem}
-            horizontal
-            style={{
-              padding: moderateScale(10),
-              backgroundColor: themeColor.white,
-            }}
-          />
-
-          {currentSection === 0 && (
-            <View style={Styles.bodyContainer}>
-              <AppText style={Styles.bodyHeaderText}>
-              Scheduler details
-              </AppText>
-              <Separator />
-              <View style={Styles.bodyRowsContainer}>
-                <AppTextInput
-                  containerStyle={Styles.eventTitleInput}
-                  value={title}
-                  placeHolderText="Planogram Event Title *"
-                  onChangeText={(text) => setTitle(text)}
-                  placeholderTextColor={themeColor.placeHolder}
-                  textInputStyle={{
-                    fontSize: moderateScale(15),
-                  }}
-                />
-
-                <View style={{ marginVertical: moderateScale(10) }}>
-                  <Dropdown
-                    style={Styles.dropdown}
-                    placeholderStyle={Styles.placeholderStyle}
-                    selectedTextStyle={Styles.selectedTextStyle}
-                    inputSearchStyle={Styles.inputSearchStyle}
-                    iconStyle={Styles.iconStyle}
-                    itemTextStyle={{ color: "#000000" }}
-                    data={resolutionDropdownData}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={"Aspect Ratio"}
-                    searchPlaceholder="Search..."
-                    value={ratioId}
-                    onChange={handleDropdownChange}
+            {currentSection === 0 && (
+              <View style={Styles.bodyContainer}>
+                <AppText style={Styles.bodyHeaderText}>
+                  Scheduler details
+                </AppText>
+                <Separator />
+                <View style={Styles.bodyRowsContainer}>
+                  <AppTextInput
+                    containerStyle={Styles.eventTitleInput}
+                    value={title}
+                    placeHolderText="Planogram Event Title *"
+                    onChangeText={(text) => setTitle(text)}
+                    placeholderTextColor={themeColor.placeHolder}
+                    textInputStyle={{
+                      fontSize: moderateScale(15),
+                    }}
                   />
-                </View>
-                <CommonTitleAndText
-                  title="Start Date*"
-                  text={
-                    startDate
-                    ? getDateFormat(startDate,'DD-MM-YYYY')
-                    : "Select Date"
-                  }
-                  isIcon
-                  isCalender
-                  onPress={() => setDatePickerVisible(true)}
-                />
-                <DatePicker
-                  modal
-                  mode="date"
-                  open={isDatePickerVisible}
-                  minimumDate={dl_min_date}
-                  date={startDate != null ? new Date() : new Date()}
-                  onConfirm={handleDateChange}
-                  onCancel={() => setDatePickerVisible(false)}
-                />
-                
-                
 
-                <CommonTitleAndText
-                  title="End Date*"
-                  text={
-                    endDate
-                    ? getDateFormat(endDate,'DD-MM-YYYY')
-                    : "Select Date"
+                  <View style={{ marginVertical: moderateScale(10) }}>
+                    <Dropdown
+                      style={Styles.dropdown}
+                      placeholderStyle={Styles.placeholderStyle}
+                      selectedTextStyle={Styles.selectedTextStyle}
+                      inputSearchStyle={Styles.inputSearchStyle}
+                      iconStyle={Styles.iconStyle}
+                      itemTextStyle={{ color: "#000000" }}
+                      data={resolutionDropdownData}
+                      search
+                      maxHeight={300}
+                      labelField="label"
+                      valueField="value"
+                      placeholder={"Aspect Ratio"}
+                      searchPlaceholder="Search..."
+                      value={ratioId}
+                      onChange={handleDropdownChange}
+                    />
+                  </View>
+                  <CommonTitleAndText
+                    title="Start Date*"
+                    text={
+                      startDate
+                        ? getDateFormat(startDate, "DD-MM-YYYY")
+                        : "Select Date"
+                    }
+                    isIcon
+                    isCalender
+                    onPress={() => setDatePickerVisible(true)}
+                  />
+                  <DatePicker
+                    modal
+                    mode="date"
+                    open={isDatePickerVisible}
+                    minimumDate={dl_min_date}
+                    date={startDate != null ? new Date() : new Date()}
+                    onConfirm={handleDateChange}
+                    onCancel={() => setDatePickerVisible(false)}
+                  />
 
-                  }
-                  isIcon
-                  isCalender
-                  onPress={() => setDatePickerVisible1(true)}
-                />
-                <DatePicker
-                  modal
-                  mode="date"
-                  minimumDate={new Date()}
-                  open={isDatePickerVisible1}
-                  date={endDate != null ? new Date() : new Date()}
-                  onConfirm={handleDateChange1}
-                  onCancel={() => setDatePickerVisible1(false)}
-                />
+                  <CommonTitleAndText
+                    title="End Date*"
+                    text={
+                      endDate
+                        ? getDateFormat(endDate, "DD-MM-YYYY")
+                        : "Select Date"
+                    }
+                    isIcon
+                    isCalender
+                    onPress={() => setDatePickerVisible1(true)}
+                  />
+                  <DatePicker
+                    modal
+                    mode="date"
+                    minimumDate={new Date()}
+                    open={isDatePickerVisible1}
+                    date={endDate != null ? new Date() : new Date()}
+                    onConfirm={handleDateChange1}
+                    onCancel={() => setDatePickerVisible1(false)}
+                  />
 
-                <CommonTitleAndText
-                  title="Start Time*"
-                  text={startTime?  moment(startTime).format("HH:mm") : "Select Time"
-                  }
-                  isIcon
-                  isClock
-                  onPress={() => {
-                    console.log("Start Time button pressed");
-                    setTimePickerVisible(!isTimePickerVisible);
-                  }}
-                />
-                <DatePicker
-                  modal
-                  open={isTimePickerVisible}
-                  date={startTime != null ? startTime : new Date()}
-                  mode="time"
-                  placeholder="Select time"
-                  format="HH:mm"
-                  minuteInterval={30} // Set the minute interval to 30 minutes
-                  onDateChange={(time) => {
-                    console.log(time)
-                    setStartTime(time);
-                  }}
-                
-                  onConfirm={(date) => handleTimeChange(date)}
-                  onCancel={() => setTimePickerVisible(false)}
-                />
+                  <CommonTitleAndText
+                    title="Start Time*"
+                    text={
+                      startTime
+                        ? moment(startTime).format("HH:mm")
+                        : "Select Time"
+                    }
+                    isIcon
+                    isClock
+                    onPress={() => {
+                      console.log("Start Time button pressed");
+                      setTimePickerVisible(!isTimePickerVisible);
+                    }}
+                  />
+                  <DatePicker
+                    modal
+                    open={isTimePickerVisible}
+                    date={startTime != null ? startTime : new Date()}
+                    mode="time"
+                    placeholder="Select time"
+                    format="HH:mm"
+                    minuteInterval={30} // Set the minute interval to 30 minutes
+                    onDateChange={(time) => {
+                      console.log(time);
+                      setStartTime(time);
+                    }}
+                    onConfirm={(date) => handleTimeChange(date)}
+                    onCancel={() => setTimePickerVisible(false)}
+                  />
 
-                <CommonTitleAndText
-                  title="End Time*"
-                  text={
-                    endTime
-                      ?  moment(endTime).format("HH:mm") 
-                         
-                      : "Select Time"
-                  }
-                  isIcon
-                  isClock
-                  onPress={() => setTimePickerVisible1(true)}
-                />
-                <DatePicker
-                  modal
-                  mode="time"
-                  open={isTimePickerVisible1}
-                  minimumDate={new Date()}
-                  date={endTime != null ? endTime : new Date()}
-                  placeholder="Select time"
-                  format="HH:mm"
-                  minuteInterval={30} // Set the minute interval to 30 minutes
-                  onDateChange={(time) => {
-                    setEndTime(time);
-                  }}
-
-                  onConfirm={handleTimeChange1}
-                  onCancel={() => setTimePickerVisible1(false)}
-                />
-                <>
-                  {/* <View style={{ width: "100%", marginTop: moderateScale(2) }}>
+                  <CommonTitleAndText
+                    title="End Time*"
+                    text={
+                      endTime ? moment(endTime).format("HH:mm") : "Select Time"
+                    }
+                    isIcon
+                    isClock
+                    onPress={() => setTimePickerVisible1(true)}
+                  />
+                  <DatePicker
+                    modal
+                    mode="time"
+                    open={isTimePickerVisible1}
+                    minimumDate={new Date()}
+                    date={endTime != null ? endTime : new Date()}
+                    placeholder="Select time"
+                    format="HH:mm"
+                    minuteInterval={30} // Set the minute interval to 30 minutes
+                    onDateChange={(time) => {
+                      setEndTime(time);
+                    }}
+                    onConfirm={handleTimeChange1}
+                    onCancel={() => setTimePickerVisible1(false)}
+                  />
+                  <>
+                    {/* <View style={{ width: "100%", marginTop: moderateScale(2) }}>
                   <CampaignDropDown
                     dataList={[
                       { label: "1", value: "1" },
@@ -1556,226 +2123,306 @@ const SchedulerEdit = ({ navigation, route }) => {
                     value={filterData?.proirity}
                   />
                 </View> */}
-                </>
-
-                <AppText style={Styles.notesText}>
-                  {
-                    "* In case the end time crosses midnight, the schedule will end on end date+1"
-                  }
-                </AppText>
-              </View>
-            </View>
-          )}
-          {currentSection === 1 && (
-            <View style={Styles.bodyContainer}>
-              <AppText style={Styles.bodyHeaderText}>
-                SELECT MEDIA PLAYER/DEVICE
-              </AppText>
-              <Separator />
-              <View style={Styles.subHeaderText}>
-                <Pressable
-                  onPress={() => setSearchType("location")}
-                  style={[Styles.searchHeaderView(searchType === "location")]}
-                >
-                  <AppText
-                    style={[Styles.searchHeaderText(searchType === "location")]}
-                  >
-                    {"Search by Location"}
-                  </AppText>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setSearchType("device")}
-                  style={[Styles.searchHeaderView(searchType === "device")]}
-                >
-                  <AppText
-                    style={[Styles.searchHeaderText(searchType === "device")]}
-                  >
-                    {"Search by Device"}
-                  </AppText>
-                </Pressable>
-              </View>
-
-              <View style={Styles.locationContainer}>
-                {searchType === "location" ? (
-                  <>
-                    <TextInput
-                      style={{ fontSize: moderateScale(14),
-                      fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
-                      paddingVertical: moderateScale(8),
-                      width: "90%",marginLeft:1,borderRadius:5,
-                      color:'#000000',borderWidth:1,borderColor:'#00000026'}}
-                      placeholder={`Search by Location`}
-                      placeholderTextColor={"#00000026"}
-                      value={searchLocation}
-                      onSubmitEditing={(e) => {
-                        searchLocationApi(searchLocation)
-                      }}
-                      onChangeText={(value) => {
-                         setSearchLocation(value)
-                      //onchange(item, value);
-                      }}
-                    />
-                    {locationData && (
-                      <LocationsListForPlanogram
-                        data={locationData}
-                        setIsLoading={setIsLoading}
-                        selectedLocations={selectedLocations}
-                        setSelectedLocations={setSelectedLocations}
-                      />
-                    )}
                   </>
-                ) : (
-                  <View style={Styles.deviceContainer}>
-                    <View style={Styles.deviceHeaderPart}>
-                      <AppText style={Styles.deviceSelectedTop}>
-                        <AppText
-                          style={[Styles.deviceSelectedTop, Styles.boldText]}
-                        >
-                          {showGroupOrMedia == "group"
-                            ? `(${state.selectedDeviceGroups.length})`
-                            : `(${state.selectedDevice.length})`}{" "}
-                        </AppText>
-                        of{" "}
-                        {showGroupOrMedia == "group"
-                          ? ` (${
-                              deviceGroupData ? deviceGroupData.length : 0
-                            }) `
-                          : ` (${deviceData ? deviceData.length : 0}) `}{" "}
-                        {showGroupOrMedia} selected
-                      </AppText>
-                      <View style={Styles.iconContainer}>
-                        <Pressable
-                          onPress={() => {
-                            setShowGroupOrMedia("group");
-                          }}
-                        >
-                          <FontAwesome
-                            name={"navicon"}
-                            size={25}
-                            color={themeColor.themeColor}
-                          />
-                        </Pressable>
-                        <Pressable
-                          onPress={() => {
-                            setShowGroupOrMedia("device");
-                          }}
-                        >
-                          <Image
-                            source={AppIcon}
-                            style={{
-                              height: 40,
-                              width: 40,
-                              tintColor: themeColor.themeColor,
-                            }}
-                          />
-                        </Pressable>
-                      </View>
-                    </View>
-                    <TextInput
-                  style={{ fontSize: moderateScale(14),
-                    fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
-                    paddingVertical: moderateScale(8),
-                    width: "80%",marginLeft:20,borderRadius:5,
-                    color:'#000000',borderWidth:1,borderColor:'#00000026'}}
-                  placeholder={showGroupOrMedia == "group" ? `Search by Device Group` :`Search by Device list`}
-                  placeholderTextColor={"#00000026"}
-                  value={searchtext}
-                  onSubmitEditing={(e) => {
-                    makeUrlData(showGroupOrMedia);
-                  }}
-                  onChangeText={(value) => {
-                    setsearchtext(value)
-                    //onchange(item, value);
-                  }}
-                />
 
-
-                    {showGroupOrMedia == "group" ? (
-                      <View style={Styles.deviceBodyContainer}>
-                        {deviceGroupData &&
-                          deviceGroupData?.map((item, dIndex) => {
-                            return (
-                              <View key={dIndex + "device"}>
-                                <CustomIconText
-                                  onPress={() => {
-                                    btnAddDeviceGroup(item.deviceGroupId);
-                                  }}
-                                  name={item.deviceGroupName}
-                                  icon={() =>
-                                    getIcon(
-                                      isGroupDeviceCheked(item.deviceGroupId)
-                                    )
-                                  }
-                                />
-                                {dIndex + 1 != deviceGroupData.length &&
-                                  deviceGroupData.length != 1 && <Separator />}
-                              </View>
-                            );
-                          })}
-                      </View>
-                    ) : (
-                      <View style={Styles.deviceBodyContainer}>
-                        {deviceData &&
-                          deviceData?.map((item, dIndex) => {
-                            return (
-                              <View key={dIndex + "device"}>
-                                <CustomIconText
-                                  onPress={() => {
-                                    btnAddDevice(item.deviceId);
-                                  }}
-                                  name={item.deviceName}
-                                  icon={() =>
-                                    getIcon(isDeviceCheked(item.deviceId))
-                                  }
-                                />
-                                {dIndex + 1 != deviceData.length &&
-                                  deviceData.length != 1 && <Separator />}
-                              </View>
-                            );
-                          })}
-                      </View>
-                    )}
-                  </View>
-                )}
+                  <AppText style={Styles.notesText}>
+                    {
+                      "* In case the end time crosses midnight, the schedule will end on end date+1"
+                    }
+                  </AppText>
+                </View>
               </View>
-            </View>
-          )}
+            )}
+            {currentSection === 1 && (
+              <View style={Styles.bodyContainer}>
+                <AppText style={Styles.bodyHeaderText}>
+                  SELECT MEDIA PLAYER/DEVICE
+                </AppText>
+                <Separator />
+                <View style={Styles.subHeaderText}>
+                  <Pressable
+                    onPress={() => setSearchType("location")}
+                    style={[Styles.searchHeaderView(searchType === "location")]}
+                  >
+                    <AppText
+                      style={[
+                        Styles.searchHeaderText(searchType === "location"),
+                      ]}
+                    >
+                      {"Search by Location"}
+                    </AppText>
+                  </Pressable>
 
-          {currentSection === 2 && (
+                  <Pressable
+                    onPress={() => setSearchType("device")}
+                    style={[Styles.searchHeaderView(searchType === "device")]}
+                  >
+                    <AppText
+                      style={[Styles.searchHeaderText(searchType === "device")]}
+                    >
+                      {"Search by Device"}
+                    </AppText>
+                  </Pressable>
+                </View>
+
+                <View
+                  style={{ justifyContent: "center", paddingHorizontal: 5 }}
+                >
+                  {searchType === "location" ? (
+                    <>
+                      <TextInput
+                        style={{
+                          fontSize: moderateScale(14),
+                          fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
+                          paddingVertical: moderateScale(8),
+                          width: "99%",
+                          marginLeft: 1,
+                          borderRadius: 5,
+                          color: "#000000",
+                          borderWidth: 1,
+                          borderColor: "#00000026",
+                        }}
+                        placeholder={`Search by Location`}
+                        placeholderTextColor={"#00000026"}
+                        value={searchLocation}
+                        onSubmitEditing={(e) => {
+                          searchLocationApi(searchLocation);
+                        }}
+                        onChangeText={(value) => {
+                          setSearchLocation(value);
+                          searchLocationApi(value);
+                          //onchange(item, value);
+                        }}
+                      />
+                      {locationData && (
+                        <LocationsListForPlanogram
+                          data={locationData}
+                          setIsLoading={setIsLoading}
+                          selectedLocations={selectedLocations}
+                          setSelectedLocations={setSelectedLocations}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <View style={Styles.deviceContainer}>
+                      <View style={Styles.deviceHeaderPart}>
+                        <AppText style={Styles.deviceSelectedTop}>
+                          <AppText
+                            style={[Styles.deviceSelectedTop, Styles.boldText]}
+                          >
+                            {showGroupOrMedia == "group"
+                              ? `(${state.selectedDeviceGroups.length})`
+                              : `(${state.selectedDevice.length})`}{" "}
+                          </AppText>
+                          of{" "}
+                          {showGroupOrMedia == "group"
+                            ? ` (${
+                                deviceGroupData ? deviceGroupData.length : 0
+                              }) `
+                            : ` (${deviceData ? deviceData.length : 0}) `}{" "}
+                          {showGroupOrMedia} selected
+                        </AppText>
+                        <View style={Styles.iconContainer}>
+                          <Pressable
+                            onPress={() => {
+                              setShowGroupOrMedia("group");
+                            }}
+                          >
+                            <FontAwesome
+                              name={"navicon"}
+                              size={25}
+                              color={
+                                showGroupOrMedia == "group"
+                                  ? themeColor.themeColor
+                                  : "#888888"
+                              }
+                            />
+                          </Pressable>
+                          <Pressable
+                            onPress={() => {
+                              setShowGroupOrMedia("device");
+                            }}
+                          >
+                            <Image
+                              source={AppIcon}
+                              style={{
+                                height: 40,
+                                width: 40,
+                                tintColor:
+                                  showGroupOrMedia != "group"
+                                    ? themeColor.themeColor
+                                    : "#888888",
+                              }}
+                            />
+                          </Pressable>
+                        </View>
+                      </View>
+                      <TextInput
+                        style={{
+                          fontSize: moderateScale(14),
+                          fontFamily: FONT_FAMILY.OPEN_SANS_MEDIUM,
+                          paddingVertical: moderateScale(8),
+                          width: "80%",
+                          marginLeft: 20,
+                          borderRadius: 5,
+                          color: "#000000",
+                          borderWidth: 1,
+                          borderColor: "#00000026",
+                        }}
+                        placeholder={
+                          showGroupOrMedia == "group"
+                            ? `Search by Device Group`
+                            : `Search by Device list`
+                        }
+                        placeholderTextColor={"#00000026"}
+                        value={searchtext}
+                        onSubmitEditing={(e) => {
+                          makeUrlData(showGroupOrMedia);
+                        }}
+                        onChangeText={(value) => {
+                          setsearchtext(value);
+                          makeUrlData(showGroupOrMedia);
+                          //onchange(item, value);
+                        }}
+                      />
+
+                      {showGroupOrMedia == "group" ? (
+                        <View style={Styles.deviceBodyContainer}>
+                          {deviceGroupData.length > 0 ? (
+                            deviceGroupData?.map((item, dIndex) => {
+                              return (
+                                <View key={dIndex + "device"}>
+                                  <CustomIconText
+                                    onPress={() => {
+                                      btnAddDeviceGroup(item.deviceGroupId);
+                                    }}
+                                    name={item.deviceGroupName}
+                                    containerStyle={{maxWidth:"95%"}}
+                                    icon={() =>
+                                      getIcon(
+                                        isGroupDeviceCheked(item.deviceGroupId)
+                                      )
+                                    }
+                                  />
+                                  {dIndex + 1 != deviceGroupData.length &&
+                                    deviceGroupData.length != 1 && (
+                                      <Separator />
+                                    )}
+                                </View>
+                              );
+                            })
+                          ) : (
+                            <View
+                              style={{
+                                height: 50,
+                                alignItems: "center",
+                                paddingVertical: 5,
+                              }}
+                            >
+                              <Text style={{ fontSize: 15, color: "black" }}>
+                                No Device Group Found
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      ) : (
+                        <View style={Styles.deviceBodyContainer}>
+                          {deviceData.length > 0 ? (
+                            deviceData?.map((item, dIndex) => {
+                              return (
+                                <View key={dIndex + "device"}>
+                                  <CustomIconText
+                                    onPress={() => {
+                                      btnAddDevice(item.deviceId);
+                                    }}
+                                    name={item.deviceName}
+                                    icon={() =>
+                                      getIcon(isDeviceCheked(item.deviceId))
+                                    }
+                                  />
+                                  {dIndex + 1 != deviceData.length &&
+                                    deviceData.length != 1 && <Separator />}
+                                </View>
+                              );
+                            })
+                          ) : (
+                            <View
+                              style={{
+                                height: 50,
+                                alignItems: "center",
+                                paddingVertical: 5,
+                              }}
+                            >
+                              <Text style={{ fontSize: 15, color: "black" }}>
+                                No Device Found
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {currentSection === 2 && (
               <View style={Styles.bodyContainer}>
                 <View style={Styles.campaignHeader}>
                   <AppText style={Styles.bodyHeaderText}>
                     SELECT CAMPAIGN
                   </AppText>
                   <AppText style={Styles.slotsText}>
-                   {'Available slots:'}{availablesss}{'\n'}
-                   {'(Devices:'}{deviceab}{')'}
+                    {"Available slots:"}
+                    {availablesss}
+                    {"\n"}
+                    {"(Devices:"}
+                    {deviceab}
+                    {")"}
                   </AppText>
                 </View>
                 <Separator />
                 <View style={Styles.uploadFileHere}>
                   {selectedCampaign ? (
-                    <View style={{flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',}}>
-                      <View style={{padding: 10,width:'40%',
-                          marginHorizontal: moderateScale(10)}}>
-                        <Image
-                          source={{ uri: state.selectedCampaign?.mediaDetail[0].thumbnailUrl }}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <View
+                        style={{
+                          padding: 10,
+                          width: "40%",
+                          marginHorizontal: moderateScale(10),
+                        }}
+                      >
+                        {state.selectedCampaign?.mediaDetail != null ? (
+                          <Image
+                            source={{
+                              uri: state.selectedCampaign?.mediaDetail[0]
+                                .thumbnailUrl,
+                            }}
+                            style={{
+                              height: moderateScale(100),
+                              width: moderateScale(100),
+                              borderRadius: moderateScale(10),
+                            }}
+                          />):<View style={{width:40, height:50}}/>
+                        }
+                        <TouchableOpacity
+                          onPress={() => setSelectedCampaign(false)}
                           style={{
-                            height: moderateScale(100),
-                            width: moderateScale(100),
-                            borderRadius: moderateScale(10),
+                            position: "absolute",
+                            top: moderateScale(0),
+                            right: moderateScale(0),
+                            backgroundColor: "white",
+                            borderRadius: moderateScale(15),
+                            borderWidth: moderateScale(2),
+                            borderColor: themeColor.unselectedText,
                           }}
-                        />
-                        <TouchableOpacity  onPress={() => setSelectedCampaign(false)} style={{  position: 'absolute',
-                          top: moderateScale(0),
-                          right: moderateScale(0),
-                          backgroundColor: 'white',
-                          borderRadius: moderateScale(15),
-                          borderWidth: moderateScale(2),
-                          borderColor: themeColor.unselectedText,}}>
+                        >
                           <Ionicons
                             name="close"
                             size={20}
@@ -1783,22 +2430,54 @@ const SchedulerEdit = ({ navigation, route }) => {
                           />
                         </TouchableOpacity>
                       </View>
-                      <View style={{width:'60%',}}>
+                      <View style={{ width: "60%" }}>
                         <AppText style={[Styles.fileName]}>
                           {state.selectedCampaign?.campaignTitle}
                         </AppText>
-                        <AppText style={[Styles.fileName,{color:'black'}]}>{'Duration:'}{state.selectedCampaign?.duration}{'sec'}</AppText>
-                        <AppText style={[Styles.fileName,{color:'black'}]}>{state.selectedCampaign?.aspectRatio.actualHeightInPixel}{'*'}{state.selectedCampaign?.aspectRatio.actualWidthInPixel}</AppText>
-                       
-                        <AppText style={[Styles.fileName,{color:'black'}]}>{state.selectedCampaign?.mediaDetail[0].fullName}</AppText>
+                        <AppText style={[Styles.fileName, { color: "black" }]}>
+                          {"Duration:"}
+                          {state.selectedCampaign?.duration}
+                          {"sec"}
+                        </AppText>
+                        <AppText style={[Styles.fileName, { color: "black" }]}>
+                          {
+                            state.selectedCampaign?.aspectRatio
+                              .actualHeightInPixel
+                          }
+                          {"*"}
+                          {
+                            state.selectedCampaign?.aspectRatio
+                              .actualWidthInPixel
+                          }
+                        </AppText>
+
+                        {state.selectedCampaign?.mediaDetail != null && (
+                          <AppText
+                            style={[Styles.fileName, { color: "black" }]}
+                          >
+                            {state.selectedCampaign?.mediaDetail[0].fullName}
+                          </AppText>
+                        )}
                         <AppText
-                            onPress={() => {
-                              navigation.navigate(NAVIGATION_CONSTANTS.CMP_VIEW, {
-                                campaignItem: {campaignId:state.selectedCampaign.campaignId},
-                              })
+                          onPress={() => {
+                            // navigation.navigate(NAVIGATION_CONSTANTS.CMP_VIEW, {
+                            //   campaignItem: {campaignId:state.selectedCampaign.campaignId},
+                            // })
+                            navigation.navigate("CmpPreviwe", {
+                              campaigns: [
+                                {
+                                  campaignId: state.selectedCampaign.campaignId,
+                                  campaigName:
+                                    state.selectedCampaign?.campaignTitle,
+                                  approveState:""
+                                },
+                              ],
+                              viewDetails: true,
+                            });
                           }}
-                          style={Styles.themeText}>
-                          Preview 
+                          style={Styles.themeText}
+                        >
+                          Preview
                         </AppText>
                       </View>
                     </View>
@@ -1813,113 +2492,114 @@ const SchedulerEdit = ({ navigation, route }) => {
                           fontSize: moderateScale(14),
                           color: themeColor.unselectedText,
                           marginVertical: moderateScale(10),
-                        }}>
+                        }}
+                      >
                         <AppText
                           onPress={() => {
                             planogramCampaignStringList();
-                            setModal(true)}}
+                            setModal(true);
+                          }}
                           style={{
-                            textDecorationLine: 'underline',
-                          }}>
+                            textDecorationLine: "underline",
+                          }}
+                        >
                           Click here
-                        </AppText>{' '}
+                        </AppText>{" "}
                         to choose file
                       </AppText>
                     </View>
                   )}
                 </View>
                 <View style={Styles.bodyRowsContainer}>
-                  <CommonTitleAndText title="Aspect Ratio *" text={ratiovalue} />
+                  <CommonTitleAndText
+                    title="Aspect Ratio *"
+                    text={ratiovalue}
+                  />
                   <CommonTitleAndText
                     title="Start Date*"
-                    text={getDateFormat(startDate,'DD-MM-YYYY')}
+                    text={getDateFormat(startDate, "DD-MM-YYYY")}
                     isIcon
                     isCalender
                     onPress={() => {
-                     setDatePickerVisible(!isDatePickerVisible);
+                      setDatePickerVisible(!isDatePickerVisible);
                     }}
                   />
-                    <DatePicker
-                  modal
-                  mode="date"
-                  open={isDatePickerVisible}
-                  date={startDate != null ? startDate : new Date()}
-                  minimumDate={new Date()}
-                  onConfirm={handleDateChange}
-                  onCancel={() => setDatePickerVisible(false)}
-                />
+                  <DatePicker
+                    modal
+                    mode="date"
+                    open={isDatePickerVisible}
+                    date={startDate != null ? startDate : new Date()}
+                    minimumDate={new Date()}
+                    onConfirm={handleDateChange}
+                    onCancel={() => setDatePickerVisible(false)}
+                  />
 
                   <CommonTitleAndText
                     title="End Date*"
-                    text={getDateFormat(endDate,'DD-MM-YYYY')}
+                    text={getDateFormat(endDate, "DD-MM-YYYY")}
                     isIcon
                     isCalender
                     onPress={() => {
-                     
                       setDatePickerVisible1(!isDatePickerVisible1);
                     }}
                   />
 
-                <DatePicker
-                  modal
-                  mode="date"
-                  open={isDatePickerVisible1}
-                  date={endDate != null ? endDate : new Date()}
-                  minimumDate={new Date()}
-                  onConfirm={handleDateChange1}
-                  onCancel={() => setDatePickerVisible1(false)}
-                />
+                  <DatePicker
+                    modal
+                    mode="date"
+                    open={isDatePickerVisible1}
+                    date={endDate != null ? endDate : new Date()}
+                    minimumDate={new Date()}
+                    onConfirm={handleDateChange1}
+                    onCancel={() => setDatePickerVisible1(false)}
+                  />
                   <CommonTitleAndText
-                    title="Start Time*"
-                    text={ moment(startTime).format("HH:mm")}
+                    title="Start Time*--"
+                    text={moment(startTime).format("HH:mm")}
                     isIcon
                     isClock
                     onPress={() => {
-                     
                       setTimePickerVisible(!isTimePickerVisible);
                     }}
                   />
-                   <DatePicker
-                  modal
-                  open={isTimePickerVisible}
-                  date={startTime != null ? startTime : new Date()}
-                  mode="time"
-                  placeholder="Select time"
-                  format="HH:mm"
-                  //minuteInterval={30} // Set the minute interval to 30 minutes
-                  onDateChange={(time) => {
-                    setStartTime(time);
-                  }}
-                 
-                  onConfirm={(date) => handleTimeChange(date)}
-                  onCancel={() => setTimePickerVisible(false)}
-                />
+                  <DatePicker
+                    modal
+                    open={isTimePickerVisible}
+                    date={startTime != null ? startTime : new Date()}
+                    mode="time"
+                    placeholder="Select time"
+                    format="HH:mm"
+                    //minuteInterval={30} // Set the minute interval to 30 minutes
+                    onDateChange={(time) => {
+                      setStartTime(time);
+                    }}
+                    onConfirm={(date) => handleTimeChange(date)}
+                    onCancel={() => setTimePickerVisible(false)}
+                  />
 
                   <CommonTitleAndText
                     title="End Time*"
-                    text={ moment(endTime).format("HH:mm")}
+                    text={moment(endTime).format("HH:mm")}
                     isIcon
                     isClock
                     onPress={() => {
-                     
                       setTimePickerVisible1(!isTimePickerVisible1);
                     }}
                   />
-                   <DatePicker
-                  modal
-                  open={isTimePickerVisible1}
-                  date={endTime != null ? endTime : new Date()}
-                  mode="time"
-                  placeholder="Select time"
-                  format="HH:mm"
-                 // minuteInterval={30} // Set the minute interval to 30 minutes
-                  onDateChange={(time) => {
-                    setStartTime(time);
-                  }}
-                 
-                  onConfirm={(date) => handleTimeChange1(date)}
-                  onCancel={() => setTimePickerVisible1(false)}
-                />
+                  <DatePicker
+                    modal
+                    open={isTimePickerVisible1}
+                    date={endTime != null ? endTime : new Date()}
+                    mode="time"
+                    placeholder="Select time"
+                    format="HH:mm"
+                    // minuteInterval={30} // Set the minute interval to 30 minutes
+                    onDateChange={(time) => {
+                      setStartTime(time);
+                    }}
+                    onConfirm={(date) => handleTimeChange1(date)}
+                    onCancel={() => setTimePickerVisible1(false)}
+                  />
                   <AppTextInput
                     containerStyle={Styles.eventTitleInput}
                     value={occurance}
@@ -1932,8 +2612,7 @@ const SchedulerEdit = ({ navigation, route }) => {
                     }}
                   />
 
-
-                   <AppTextInput
+                  {/* <AppTextInput
                     containerStyle={Styles.eventTitleInput}
                     value={priority}
                     keyboardType="numeric"
@@ -1943,18 +2622,60 @@ const SchedulerEdit = ({ navigation, route }) => {
                     textInputStyle={{
                       fontSize: moderateScale(15),
                     }}
-                  />
-
-
+                  /> */}
                 </View>
+                {addcampvalue.length > 0 && (
+                  <View style={{ paddingHorizontal: 16 }}>
+                    <AppText
+                      style={{
+                        color: "black",
+                        fontSize: moderateScale(16),
+                        marginVertical: 5,
+                      }}
+                    >
+                      Campaign Sequence
+                    </AppText>
+                    <AppText
+                      style={{
+                        color: themeColor.themeColor,
+                        fontSize: moderateScale(16),
+                        marginBottom: 10,
+                      }}
+                    >
+                      (Drag to prioritize)
+                    </AppText>
+
+                    <View style={{ marginBottom: 10, width: "100%" }}>
+                      <Separator />
+                    </View>
+                    <DraggableFlatList
+                      data={addcampvalue}
+                      scrollEnabled={false}
+                      keyExtractor={(item, index) => {
+                        return "index" + index;
+                      }}
+                      renderItem={RemoveCampaign}
+                      onDragEnd={({ data }) => onDragEnd(data)}
+                    />
+
+                    {/* <FlatList
+                    keyExtractor={(item, index) => {
+                      return "index" + index;
+                    }}
+                    scrollEnabled={false}
+                    numColumns={1}
+                    data={addcampvalue}
+                    renderItem={RemoveCampaign}
+                  /> */}
+                  </View>
+                )}
               </View>
             )}
-        
-        </View>
-      </ScrollView>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
       <ActionContainer
-        isContinue={currentSection === 2 }
+        isContinue={currentSection === 2}
         draftText={currentSection === 1 ? "Reset" : undefined}
         continueText={
           currentSection === 2 ? "Add Campaign" : "Send For Approval"
@@ -1967,8 +2688,9 @@ const SchedulerEdit = ({ navigation, route }) => {
           } else if (currentSection == 1) {
             btnSubmitDeviceGroup();
           } else if (currentSection == 2) {
+            console.log("--> add Campaign");
             btnSubmitCampainPlanogram();
-          }else {
+          } else {
             navigation.goBack();
           }
         }}
@@ -1979,50 +2701,62 @@ const SchedulerEdit = ({ navigation, route }) => {
           if (currentSection == 1) {
             resetLocationAndGroupDevice();
           }
-          
         }}
         onPressCancel={() => {
-          console.log("currentSection",currentSection)
+          console.log("currentSection", currentSection);
           if (currentSection === 0) {
             navigation.goBack();
-          }
-          else if (currentSection === 2) {
-           if(planogramItem?.state != 'PUBLISHED')
-           {
-            setCurrentSection(currentSection - 1);
-           }else{
-            Alert.alert("Warning","Scheduler already published, Can't go back")
-           }
-          }
-          
-          else {
+          } else if (currentSection === 2) {
+            if (planogramItem?.state != "PUBLISHED") {
+              setCurrentSection(currentSection - 1);
+            } else {
+              Alert.alert(
+                "Warning",
+                "Scheduler already published, Can't go back"
+              );
+            }
+          } else {
             setCurrentSection(currentSection - 1);
           }
         }}
       />
-      {showpublishbtn && currentSection === 2 &&
-      <View style={{  
-        justifyContent: 'center',
-        alignItems: 'center',}}>
-       <TouchableOpacity
-           onPress={() => {
-           navigation.navigate(NAVIGATION_CONSTANTS.SCHEDULER_VIEW1,{item: planogramItem})}}
-          style={ { width: '48%', backgroundColor: themeColor.themeColor,
-          paddingHorizontal: moderateScale(25), borderRadius: moderateScale(10),
-          borderWidth: 1,
-          paddingVertical: moderateScale(10),
-          paddingHorizontal: moderateScale(20),}}
+      {showpublishbtn && currentSection === 2 && (
+        <View
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
-          <AppText style={{fontFamily: FONT_FAMILY.OPEN_SANS_SEMI_BOLD,
-      fontSize: moderateScale(13),
-      alignSelf: "center",color: themeColor.white}}>
-            {"Continue"}
-          </AppText>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate(NAVIGATION_CONSTANTS.SCHEDULER_VIEW1, {
+                item: planogramItem,
+                campvalue: addcampvalue,
+              });
+            }}
+            style={{
+              width: "48%",
+              backgroundColor: themeColor.themeColor,
+              paddingHorizontal: moderateScale(25),
+              borderRadius: moderateScale(10),
+              borderWidth: 1,
+              paddingVertical: moderateScale(10),
+              paddingHorizontal: moderateScale(20),
+            }}
+          >
+            <AppText
+              style={{
+                fontFamily: FONT_FAMILY.OPEN_SANS_SEMI_BOLD,
+                fontSize: moderateScale(13),
+                alignSelf: "center",
+                color: themeColor.white,
+              }}
+            >
+              {"Continue"}
+            </AppText>
+          </TouchableOpacity>
         </View>
-
-
-}
+      )}
     </View>
   );
 };

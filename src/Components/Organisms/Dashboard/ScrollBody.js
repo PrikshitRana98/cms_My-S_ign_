@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React,{useState,useRef,useEffect} from 'react';
-import {FlatList, Image, ScrollView, StyleSheet, View} from 'react-native';
+import {FlatList, Image, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {FONT_FAMILY} from '../../../Assets/Fonts/fontNames';
 import ReportImage from '../../../Assets/Images/PNG/profit-report.png';
 import {moderateScale, width} from '../../../Helper/scaling';
@@ -67,6 +67,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
                 :item.type.toLowerCase()=="audio"?audioIcon
                 :item.type.toLowerCase()=="ppt"?pptIcon
                 :item.type.toLowerCase()=="doc"?docIcon
+                :item.type.toLowerCase()=="video"?videoIcon
                 :docIcon 
               }
             resizeMode="contain"
@@ -150,7 +151,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
     return (
       (recentCampaignString != null  && recentCampaignString?.length>0) ? (
 
-      <View style={Styles.renderBody}>
+      <View style={[Styles.renderBody,{backgroundColor:"white"}]}>
         <View style={Styles.iconAndText}>
           <View style={Styles.iconView}>
             <Image
@@ -158,10 +159,10 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
               style={{width: moderateScale(16), height: moderateScale(20)}}
             />
           </View>
-          <AppText style={Styles.mediaName}>{item.campaignStringName}</AppText>
+          <AppText style={[Styles.mediaName]}>{item.campaignStringName}</AppText>
         </View>
-        <AppText style={Styles.commonText1}>{duration}</AppText>
-        <AppText style={Styles.commonText1}>{item.state}</AppText>
+        <AppText style={[Styles.commonText1,]}>{duration}</AppText>
+        <AppText style={[Styles.commonText1,]}>{item.state}</AppText>
         
       </View>
       ) : (
@@ -176,7 +177,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
   const renderRowRegistered = ({item, index}) => {
     return (
       (recentDevices != null && recentDevices?.length>0)  ? (
-      <View style={Styles.renderBody}>
+      <View style={[Styles.renderBody,{backgroundColor:"white"}]}>
         <View style={Styles.iconAndText}>
           <View style={Styles.iconView}>
             <Image
@@ -207,7 +208,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
     return (
       (recentInactiveDevices != null && recentInactiveDevices?.length>0 )  ? 
         (
-          <View style={Styles.renderBody}>
+          <View style={[Styles.renderBody,{backgroundColor:"white"}]}>
             <View style={Styles.iconAndText}>
               <View style={Styles.iconView}>
                 <Image
@@ -235,7 +236,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
     const formattedCreatedOn = moment(item?.startDate).format("YYYY/MM/DD");
 
     return (
-          <View style={[Styles.renderBody,{width:'100%'}]}>
+          <View style={[Styles.renderBody,{width:'100%',backgroundColor:"white"}]}>
             <View style={[Styles.iconAndText,{width:'33.3%'}]}>
               <View style={Styles.iconView}>
                 <Image
@@ -247,7 +248,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
             </View>
 
             <AppText style={Styles.commonText1}>{item?.startDate}</AppText>
-            <AppText style={[Styles.commonText,{width:'44%',textAlign:'flex-start',paddingLeft:25}]}>{item?.state}</AppText>
+            <AppText style={[Styles.commonText,{width:'44%',textAlign:'left',paddingLeft:25}]}>{item?.state}</AppText>
           </View>
     );
   }
@@ -287,6 +288,23 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
     );
   };
 
+  const ListEmptyComponent = ({ item }) => {
+    return (
+     <View style={{backgroundColor:themeColor.appBackground}}>
+       <Text
+        style={{
+          padding: 10,
+          fontSize: 18,
+          marginLeft: 30 ,
+          color: "black",
+        }}
+      >
+        No Data Found
+      </Text>
+     </View>
+    );
+  };
+
   
   const flatListRef = useRef(null)
   useEffect(()=>{
@@ -314,6 +332,7 @@ const ScrollBody = ({recentMedia, selectedValue, recentCampaign,recentCampaignSt
        }
         renderItem={selectedValue === 'Media Uploads'? renderRow : selectedValue === 'Campaign'? renderRowCamapign : selectedValue === "Campaign String" ? renderRowCamapignString : selectedValue === "Recently Registered MP" ? renderRowRegistered : (selectedValue=="Planograms" || selectedValue=="Schedulers") ? renderPlanoSchedul : renderRowActive }
         ListHeaderComponent={headerComp}
+        ListEmptyComponent={ListEmptyComponent}
       />
     </ScrollView>
   );

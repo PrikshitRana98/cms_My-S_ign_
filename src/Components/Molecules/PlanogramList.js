@@ -35,7 +35,6 @@ const PlanogramsList = ({ planogramApprovalFlag,containerStyle = {}, data = [],i
   return (
     <View style={Styles.listContainer}>
       {data.map((item, index) => {
-        console.log("planogramLive",item.title)
         return (
           <View key={item.name + index}>
             <View style={[Styles.mainContainer, containerStyle]}>

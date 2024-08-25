@@ -90,12 +90,12 @@ const CampaignString = ({ navigation }) => {
   }, []);
   useEffect(() => {
     btnCampaignStringData();
-  }, [filterData.state,filterData.name]);
+  }, [filterData.state,filterData.name,filterData.created_by]);
 
   const workFlow = useSelector((state) => state.userReducer.workFlow);
   const btnCampaignStringData = async () => {
     let slugId = await getStorageForKey("slugId");
-    let endPoint = `content-management/cms/${slugId}/campaignString`;
+    let endPoint = `service-gateway/cms/${slugId}/campaignString`;
     for (const key in filterData) {
       if (
         filterData[key] != undefined &&
@@ -264,7 +264,10 @@ const CampaignString = ({ navigation }) => {
       slugId: slugId,
     };
     const succussCallBack = async (response) => {
+     
       if (response?.code == 200) {
+        setSuccessMsg("Campaign String cloned successfully.")
+        setSuccessModal(true)
         setConfirmBoxData({
           ...confirmBoxData,
           confirmModalFlag: false,
@@ -279,6 +282,7 @@ const CampaignString = ({ navigation }) => {
           actionType: "",
         });
         btnCampaignStringData();
+
       }
     };
 
@@ -362,7 +366,7 @@ const CampaignString = ({ navigation }) => {
 
   const handlePageApi = async (index) => {
     let slugId = await getStorageForKey("slugId");
-    let endPoint = `content-management/cms/${slugId}/campaignString`;
+    let endPoint = `service-gateway/cms/${slugId}/campaignString`;
     setFilterData({ ...filterData, currPage: index });
     for (const key in filterData) {
       if (

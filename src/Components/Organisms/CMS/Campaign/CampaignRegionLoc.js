@@ -179,8 +179,6 @@ import {
               if(item?.regionTransparencyInPercentage < 1){
                 tp=1-item?.regionTransparencyInPercentage;
               }
-            
-              
               return (
                 <TouchableOpacity
                   onPress={() => {
